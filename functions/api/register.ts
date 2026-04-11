@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { AppwriteError } from "../_shared/appwrite";
 import { createAdminClient } from "../_shared/appwrite";
 import type { Env } from "../_shared/env";
 import { OrpError, toErrorResponse } from "../_shared/errors";
@@ -36,7 +37,14 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       payload.display_name,
     );
 
-    await client.users.updateLabels(String(user.$id), ["contributor"]);
+    try {
+      await client.users.updateLabels(String(user.$id), ["contributor"]);
+    } catch (err) {
+      // Some Appwrite deployments do not expose the labels endpoint.
+      if (!(err instanceof AppwriteError && err.status === 404)) {
+        throw err;
+      }
+    }
 
     const accountStatus = REQUIRES_GUARDIAN.has(payload.consent_tier)
       ? "pending_parental"
