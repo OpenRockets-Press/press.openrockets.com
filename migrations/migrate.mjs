@@ -570,11 +570,18 @@ async function deployFunctions(config) {
   const fnRootDir = path.join(rootDir, "functions");
 
   // Each function's deployment tarball contains:
-  //   src/        — function-specific source (functions/{name}/src/)
-  //   shared/     — shared utilities (functions/shared/)
-  //   package.json — workspace functions package.json
+  //   src/          — function-specific source (functions/{name}/src/)
+  //   shared/       — shared utilities (functions/shared/)
+  //   node_modules/ — pre-installed deps (functions/node_modules/)
+  //   package.json  — workspace functions package.json
   const sharedDir = path.join(fnRootDir, "shared");
   const fnPackageJson = path.join(fnRootDir, "package.json");
+  const fnNodeModules = path.join(fnRootDir, "node_modules");
+
+  if (!fs.existsSync(fnNodeModules)) {
+    console.log("[deploy] node_modules not found in functions/ — running bun install...");
+    execSync("bun install", { cwd: fnRootDir, stdio: "inherit" });
+  }
 
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "orp-deploy-"));
 
@@ -597,6 +604,8 @@ async function deployFunctions(config) {
       fs.cpSync(fnSrcDir, path.join(stagingDir, "src"), { recursive: true });
       fs.cpSync(sharedDir, path.join(stagingDir, "shared"), { recursive: true });
       fs.copyFileSync(fnPackageJson, path.join(stagingDir, "package.json"));
+      // Include node_modules so Appwrite doesn't need to install deps at runtime
+      fs.cpSync(fnNodeModules, path.join(stagingDir, "node_modules"), { recursive: true });
 
       // Create tarball (-C changes base so paths inside are relative)
       execSync(`tar -czf "${tarPath}" -C "${stagingDir}" .`, { stdio: "pipe" });

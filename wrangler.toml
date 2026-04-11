@@ -1,0 +1,21 @@
+name = "press-openrockets"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "dist"
+
+# Non-secret defaults (override in Cloudflare dashboard for prod)
+[vars]
+APPWRITE_DATABASE_ID = "orp_db"
+APPWRITE_BUCKET_PUB_FILES = "pub_files"
+APPWRITE_BUCKET_PUB_COVERS = "pub_covers"
+APPWRITE_BUCKET_CASE_ATTACHMENTS = "case_attachments"
+APP_BASE_URL = "https://press.openrockets.com"
+
+# Secrets (set via: wrangler pages secret put SECRET_NAME)
+# APPWRITE_ENDPOINT
+# APPWRITE_PROJECT_ID
+# APPWRITE_API_KEY
+# CONSENT_TOKEN_SECRET
+# GUARDIAN_EMAIL_SECRET
+# PLAUSIBLE_DOMAIN
+# PLAUSIBLE_API_KEY

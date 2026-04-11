@@ -20,7 +20,6 @@ import {
   account,
   appwriteConfig,
   databases,
-  functions,
   ID,
   isAppwriteConfigured,
   Query,
@@ -28,68 +27,92 @@ import {
 } from "@/lib/appwrite";
 import type { HomeFeedFilters } from "@/lib/queryKeys";
 
-interface FunctionResponseEnvelope<T> {
-  data: T;
-}
-
-interface FunctionErrorEnvelope {
-  error: string;
-}
-
 interface AppwriteDocument {
   $id: string;
   [key: string]: unknown;
 }
 
-const FUNCTION_TIMEOUT_MS = 20_000;
+// ── JWT cache ────────────────────────────────────────────────────────────────
+
+let jwtCache: { token: string; expiresAt: number } | null = null;
+
+async function getJWT(): Promise<string | null> {
+  if (!account) return null;
+  if (jwtCache && Date.now() < jwtCache.expiresAt) return jwtCache.token;
+
+  try {
+    const result = await account.createJWT();
+    jwtCache = { token: result.jwt, expiresAt: Date.now() + 14 * 60 * 1000 };
+    return result.jwt;
+  } catch {
+    return null;
+  }
+}
+
+function invalidateJWT() {
+  jwtCache = null;
+}
+
+// ── API call helper ──────────────────────────────────────────────────────────
+
+async function callApi<T>(
+  path: string,
+  body?: unknown,
+  opts?: { method?: string; skipAuth?: boolean },
+): Promise<T> {
+  const method = opts?.method ?? (body !== undefined ? "POST" : "GET");
+  const headers: Record<string, string> = {};
+
+  if (body !== undefined) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  if (!opts?.skipAuth) {
+    const jwt = await getJWT();
+    if (jwt) headers["X-Appwrite-JWT"] = jwt;
+  }
+
+  const res = await fetch(`/api/${path}`, {
+    method,
+    headers,
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({ error: `Request failed ${res.status}` }));
+    throw new Error(
+      (data as { error?: string }).error || `Request failed ${res.status}`,
+    );
+  }
+
+  return res.json() as Promise<T>;
+}
+
+// ── Appwrite utilities ───────────────────────────────────────────────────────
 
 function requireBaseConfig() {
   if (!isAppwriteConfigured) {
     throw new Error(
-      "Appwrite is not configured. Set VITE_APPWRITE_ENDPOINT and VITE_APPWRITE_PROJECT_ID in your environment.",
+      "Appwrite is not configured. Set VITE_APPWRITE_ENDPOINT and VITE_APPWRITE_PROJECT_ID.",
     );
   }
 }
 
 function requireDatabaseServices() {
   requireBaseConfig();
-
   if (!databases || !appwriteConfig.databaseId) {
-    throw new Error("Appwrite database is not configured. Set VITE_APPWRITE_DATABASE_ID.");
+    throw new Error("Appwrite database is not configured.");
   }
-
-  return {
-    db: databases,
-    databaseId: appwriteConfig.databaseId,
-  };
-}
-
-function requireFunctionsService(functionId: string | undefined, functionName: string) {
-  requireBaseConfig();
-
-  if (!functions) {
-    throw new Error("Appwrite Functions service is not configured for this client.");
-  }
-
-  if (!functionId) {
-    throw new Error(`Missing Appwrite function id for ${functionName}. Check your VITE_FUNCTION_* variables.`);
-  }
-
-  return {
-    functionsClient: functions,
-    functionId,
-  };
+  return { db: databases, databaseId: appwriteConfig.databaseId };
 }
 
 function requireStorageService() {
   requireBaseConfig();
-
-  if (!storage) {
-    throw new Error("Appwrite Storage service is not configured for this client.");
-  }
-
+  if (!storage) throw new Error("Appwrite Storage service is not configured.");
   return storage;
 }
+
+// ── Type helpers ─────────────────────────────────────────────────────────────
 
 function parseRoleFromLabels(labels: unknown): Role {
   if (!Array.isArray(labels)) return "contributor";
@@ -106,9 +129,9 @@ function mapPublication(doc: AppwriteDocument): Publication {
     abstract: (doc.abstract as string) || undefined,
     authorDisplayName: (doc.author_display_name as string) || "Open Rockets Contributor",
     authorUserId: (doc.author_user_id as string) || "",
-    type: ((doc.type as Publication["type"]) ?? "other"),
-    status: ((doc.status as Publication["status"]) ?? "draft"),
-    license: ((doc.license as Publication["license"]) ?? "CC_BY"),
+    type: (doc.type as Publication["type"]) ?? "other",
+    status: (doc.status as Publication["status"]) ?? "draft",
+    license: (doc.license as Publication["license"]) ?? "CC_BY",
     tags: Array.isArray(doc.tags) ? (doc.tags as string[]) : [],
     submittedAt: (doc.submitted_at as string) || new Date().toISOString(),
     reviewedAt: (doc.reviewed_at as string) || undefined,
@@ -153,7 +176,6 @@ function mapCaseSummary(doc: AppwriteDocument): CaseSummary {
 
 function mapCaseMessage(doc: AppwriteDocument): CaseMessage {
   const senderRole = String(doc.sender_role || "system");
-
   return {
     id: doc.$id,
     caseId: (doc.case_id as string) || "",
@@ -197,12 +219,9 @@ async function hydrateCurrentUserFromRemote() {
   }
 
   const authUser = await account.get().catch(() => null);
-  if (!authUser) {
-    return null;
-  }
+  if (!authUser) return null;
 
   const labels = (authUser as unknown as { labels?: unknown }).labels;
-
   const userDoc = await databases
     .getDocument(appwriteConfig.databaseId, "users", authUser.$id)
     .catch(() => null);
@@ -211,190 +230,45 @@ async function hydrateCurrentUserFromRemote() {
 
   const next = {
     userId: authUser.$id,
-    displayName: (userDoc?.display_name as string | undefined) ?? authUser.name ?? "Contributor",
+    displayName:
+      (userDoc?.display_name as string | undefined) ?? authUser.name ?? "Contributor",
     email: authUser.email,
     role,
-    accountStatus: (userDoc?.account_status as "pending_parental" | "active" | "suspended" | "deletion_requested") ?? "active",
-    consentTier: (userDoc?.consent_tier as "coppa" | "gdpr_eu" | "gdpr_es" | "general") ?? "general",
+    accountStatus:
+      (userDoc?.account_status as
+        | "pending_parental"
+        | "active"
+        | "suspended"
+        | "deletion_requested") ?? "active",
+    consentTier:
+      (userDoc?.consent_tier as "coppa" | "gdpr_eu" | "gdpr_es" | "general") ?? "general",
   };
 
   setSessionUser(next);
   return next;
 }
 
-function readError(message: unknown): string {
-  if (!(message instanceof Error)) {
-    return "Unexpected request failure";
-  }
-
-  const lower = message.message.toLowerCase();
-
-  if (lower.includes("too small") && lower.includes(">=3")) {
-    return "Display name must be at least 3 characters.";
-  }
-
-  if (lower.includes("too small") && lower.includes(">=10")) {
-    return "Password must be at least 10 characters.";
-  }
-
-  if (lower.includes("invalid email") || lower.includes("must be a valid email")) {
-    return "Please enter a valid email address.";
-  }
-
-  if (lower.includes("invalid request payload")) {
-    return "Please review the form fields and try again.";
-  }
-
-  if (lower.includes("invalid credentials") || lower.includes("user_invalid_credentials")) {
-    return "The email or password is incorrect.";
-  }
-
-  if (lower.includes("user_session_already_exists")) {
-    return "You are already signed in on this device.";
-  }
-
-  if (lower.includes("network") || lower.includes("failed to fetch")) {
-    return "Network request failed. Check your connection and try again.";
-  }
-
-  if (
-    lower.includes("function with the requested id could not be found") ||
-    lower.includes("requested id could not be found") ||
-    lower.includes("function_not_found")
-  ) {
-    return "A required backend function was not found. Verify your VITE_FUNCTION_* IDs and deploy the matching Appwrite functions.";
-  }
-
-  if (lower.includes("not configured")) {
-    return message.message;
-  }
-
-  return message.message || "Unexpected request failure";
-}
-
-async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, timeoutMessage: string): Promise<T> {
-  let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
-
-  try {
-    return await Promise.race([
-      promise,
-      new Promise<T>((_, reject) => {
-        timeoutHandle = setTimeout(() => reject(new Error(timeoutMessage)), timeoutMs);
-      }),
-    ]);
-  } finally {
-    if (timeoutHandle) {
-      clearTimeout(timeoutHandle);
-    }
-  }
-}
-
-async function executeFunction<T>(functionId: string, body: unknown): Promise<T> {
-  const { functionsClient } = requireFunctionsService(functionId, functionId);
-
-  const execution = await withTimeout(
-    functionsClient.createExecution(functionId, JSON.stringify(body), false),
-    FUNCTION_TIMEOUT_MS,
-    `Function execution timed out after ${Math.floor(FUNCTION_TIMEOUT_MS / 1000)} seconds.`,
-  );
-
-  if (execution.status !== "completed" || !execution.responseBody) {
-    throw new Error(`Function execution failed with status: ${execution.status}`);
-  }
-
-  try {
-    const parsed = JSON.parse(execution.responseBody) as
-      | T
-      | FunctionResponseEnvelope<T>
-      | FunctionErrorEnvelope;
-
-    if (
-      typeof parsed === "object" &&
-      parsed !== null &&
-      "error" in parsed &&
-      typeof parsed.error === "string"
-    ) {
-      throw new Error(parsed.error);
-    }
-
-    if (typeof parsed === "object" && parsed !== null && "data" in parsed) {
-      return (parsed as FunctionResponseEnvelope<T>).data;
-    }
-
-    return parsed as T;
-  } catch (error) {
-    if (error instanceof Error && error.message !== "") {
-      throw error;
-    }
-    throw new Error("Function returned an invalid JSON payload.");
-  }
-}
-
 async function requireCurrentUser() {
   const user = await getCurrentUser();
-  if (!user) {
-    throw new Error("You must be signed in to continue.");
-  }
-
+  if (!user) throw new Error("You must be signed in to continue.");
   return user;
 }
 
+// ── Exported API ─────────────────────────────────────────────────────────────
+
 export async function getHomeFeed(filters: HomeFeedFilters): Promise<HomeFeedResponse> {
-  const q = (filters.q ?? "").trim().toLowerCase();
+  const q = (filters.q ?? "").trim();
   const type = filters.type ?? "all";
 
-  if (appwriteConfig.homeFeedFunctionId) {
-    return executeFunction<HomeFeedResponse>(appwriteConfig.homeFeedFunctionId, { q, type });
-  }
+  const params = new URLSearchParams();
+  if (q) params.set("q", q);
+  if (type !== "all") params.set("type", type);
+  const qs = params.toString();
 
-  const { db, databaseId } = requireDatabaseServices();
-
-  const baseQueries = [Query.equal("status", "approved")];
-  if (type !== "all") {
-    baseQueries.push(Query.equal("type", type));
-  }
-
-  const [newReleaseDocs, featuredDocs] = await Promise.all([
-    db.listDocuments(databaseId, "publications", [
-      ...baseQueries,
-      Query.orderDesc("published_at"),
-      Query.limit(12),
-    ]),
-    db.listDocuments(databaseId, "publications", [
-      ...baseQueries,
-      Query.equal("is_featured", true),
-      Query.orderAsc("featured_rank"),
-      Query.orderDesc("published_at"),
-      Query.limit(12),
-    ]),
-  ]);
-
-  const toCard = (doc: AppwriteDocument): PublicationCardDTO => ({
-    id: doc.$id,
-    pubId: (doc.pub_id as string) || undefined,
-    title: (doc.title as string) || "Untitled",
-    authorDisplayName: (doc.author_display_name as string) || "Open Rockets Contributor",
-    type: ((doc.type as Publication["type"]) ?? "other"),
-    license: ((doc.license as Publication["license"]) ?? undefined),
+  return callApi<HomeFeedResponse>(`home-feed${qs ? `?${qs}` : ""}`, undefined, {
+    method: "GET",
+    skipAuth: true,
   });
-
-  const applySearch = (items: PublicationCardDTO[]) => {
-    if (!q) return items;
-
-    return items.filter((item) => {
-      return (
-        item.title.toLowerCase().includes(q) ||
-        item.authorDisplayName.toLowerCase().includes(q) ||
-        item.type.toLowerCase().includes(q)
-      );
-    });
-  };
-
-  return {
-    newReleases: applySearch(newReleaseDocs.documents.map((doc) => toCard(doc as unknown as AppwriteDocument))),
-    featuredContributions: applySearch(featuredDocs.documents.map((doc) => toCard(doc as unknown as AppwriteDocument))),
-    availableTypes: ["book", "research_paper", "magazine", "poster", "other"],
-  };
 }
 
 export interface SubmitPublicationPayload {
@@ -408,20 +282,14 @@ export interface SubmitPublicationPayload {
 }
 
 export async function submitPublication(payload: SubmitPublicationPayload) {
-  const user = await requireCurrentUser();
-
-  if (!payload.file) {
-    throw new Error("A publication file is required.");
-  }
+  if (!payload.file) throw new Error("A publication file is required.");
 
   const storageClient = requireStorageService();
-  const { functionId } = requireFunctionsService(
-    appwriteConfig.submitPublicationFunctionId,
-    "submit publication",
-  );
 
   if (!appwriteConfig.pubFilesBucketId) {
-    throw new Error("Publication files bucket is not configured. Set VITE_APPWRITE_BUCKET_PUB_FILES.");
+    throw new Error(
+      "Publication files bucket is not configured. Set VITE_APPWRITE_BUCKET_PUB_FILES.",
+    );
   }
 
   const publicationUpload = await storageClient.createFile(
@@ -440,19 +308,15 @@ export async function submitPublication(payload: SubmitPublicationPayload) {
     coverStorageId = coverUpload.$id;
   }
 
-  return executeFunction<{ publication_id: string; status: string }>(
-    functionId,
-    {
-      title: payload.title.trim(),
-      abstract: payload.abstract.trim(),
-      type: payload.type,
-      license: payload.license,
-      file_storage_id: publicationUpload.$id,
-      cover_storage_id: coverStorageId,
-      tags: payload.tags,
-      contributor_user_id: user.userId,
-    },
-  );
+  return callApi<{ publication_id: string; status: string }>("submit-publication", {
+    title: payload.title.trim(),
+    abstract: payload.abstract.trim(),
+    type: payload.type,
+    license: payload.license,
+    file_storage_id: publicationUpload.$id,
+    cover_storage_id: coverStorageId,
+    tags: payload.tags,
+  });
 }
 
 export async function registerAccount(payload: RegisterPayload): Promise<RegisterResult> {
@@ -460,24 +324,29 @@ export async function registerAccount(payload: RegisterPayload): Promise<Registe
     throw new Error("Guardian email is required for this consent tier.");
   }
 
-  const { functionId } = requireFunctionsService(appwriteConfig.registerFunctionId, "register account");
-
-  const result = await executeFunction<{
+  const result = await callApi<{
     user_id: string;
     status: "pending_parental" | "active";
     consent_token?: string;
-  }>(functionId, {
-    display_name: payload.displayName,
-    email: payload.email,
-    password: payload.password,
-    consent_tier: payload.consentTier,
-    guardian_email: payload.guardianEmail,
-  });
+  }>(
+    "register",
+    {
+      display_name: payload.displayName,
+      email: payload.email,
+      password: payload.password,
+      consent_tier: payload.consentTier,
+      guardian_email: payload.guardianEmail,
+    },
+    { skipAuth: true },
+  );
 
   const normalized: RegisterResult = {
     userId: result.user_id,
     status: result.status,
-    consentToken: typeof result.consent_token === "string" && result.consent_token ? result.consent_token : undefined,
+    consentToken:
+      typeof result.consent_token === "string" && result.consent_token
+        ? result.consent_token
+        : undefined,
   };
 
   setSessionUser({
@@ -497,23 +366,16 @@ export async function confirmConsent(payload: ConsentConfirmPayload): Promise<{ 
     throw new Error("Guardian email is required.");
   }
 
-  const { functionId } = requireFunctionsService(
-    appwriteConfig.confirmConsentFunctionId,
-    "confirm parental consent",
+  const result = await callApi<{ status: "active" }>(
+    "confirm-consent",
+    { token: payload.token, guardian_email: payload.guardianEmail },
+    { skipAuth: true },
   );
-
-  const result = await executeFunction<{ status: "active" }>(functionId, {
-    token: payload.token,
-    guardian_email: payload.guardianEmail,
-  });
 
   await getCurrentUser(true).catch(() => undefined);
   const currentSession = getSessionUser();
   if (currentSession) {
-    setSessionUser({
-      ...currentSession,
-      accountStatus: "active",
-    });
+    setSessionUser({ ...currentSession, accountStatus: "active" });
   }
 
   return result;
@@ -521,16 +383,9 @@ export async function confirmConsent(payload: ConsentConfirmPayload): Promise<{ 
 
 export async function login(email: string, password: string): Promise<{ ok: true }> {
   requireBaseConfig();
+  if (!account) throw new Error("Appwrite Account service is not configured.");
 
-  if (!account) {
-    throw new Error("Appwrite Account service is not configured for this client.");
-  }
-
-  await withTimeout(
-    account.createEmailPasswordSession(email, password),
-    FUNCTION_TIMEOUT_MS,
-    `Sign-in timed out after ${Math.floor(FUNCTION_TIMEOUT_MS / 1000)} seconds.`,
-  );
+  await account.createEmailPasswordSession(email, password);
   await hydrateCurrentUserFromRemote();
 
   return { ok: true };
@@ -540,6 +395,7 @@ export async function logout(): Promise<void> {
   if (isAppwriteConfigured && account) {
     await account.deleteSession("current").catch(() => undefined);
   }
+  invalidateJWT();
   clearSessionUser();
 }
 
@@ -590,12 +446,14 @@ export async function getCaseMessages(caseId: string): Promise<CaseMessage[]> {
     Query.limit(1),
   ]);
 
-  if (cases.total === 0) {
-    throw new Error("Case not found.");
-  }
+  if (cases.total === 0) throw new Error("Case not found.");
 
   const targetCase = mapCaseSummary(cases.documents[0] as unknown as AppwriteDocument);
-  if (targetCase.contributorUserId !== user.userId && user.role !== "moderator" && user.role !== "admin") {
+  if (
+    targetCase.contributorUserId !== user.userId &&
+    user.role !== "moderator" &&
+    user.role !== "admin"
+  ) {
     throw new Error("You do not have access to this case.");
   }
 
@@ -610,24 +468,18 @@ export async function getCaseMessages(caseId: string): Promise<CaseMessage[]> {
 
 export async function replyToCase(caseId: string, body: string) {
   const user = await requireCurrentUser();
+  if (!body.trim()) throw new Error("Message body cannot be empty.");
 
-  if (!body.trim()) {
-    throw new Error("Message body cannot be empty.");
-  }
+  const senderRole =
+    user.role === "admin" || user.role === "moderator" ? user.role : "contributor";
 
-  const { functionId } = requireFunctionsService(appwriteConfig.replyCaseFunctionId, "reply case");
-  const senderRole = user.role === "admin" || user.role === "moderator" ? user.role : "contributor";
-
-  return executeFunction<{ message_id: string; case_status: CaseStatus }>(
-    functionId,
-    {
-      case_id: caseId,
-      sender_user_id: user.userId,
-      sender_role: senderRole,
-      body: body.trim(),
-      attachment_storage_id: "",
-    },
-  );
+  return callApi<{ message_id: string; case_status: CaseStatus }>("reply-case", {
+    case_id: caseId,
+    sender_user_id: user.userId,
+    sender_role: senderRole,
+    body: body.trim(),
+    attachment_storage_id: "",
+  });
 }
 
 export async function getContributorDashboard(): Promise<ContributorDashboardData> {
@@ -658,7 +510,9 @@ export async function getContributorDashboard(): Promise<ContributorDashboardDat
     recentPublications: recentPublications.documents.map((doc) =>
       mapPublication(doc as unknown as AppwriteDocument),
     ),
-    recentCases: recentCases.documents.map((doc) => mapCaseSummary(doc as unknown as AppwriteDocument)),
+    recentCases: recentCases.documents.map((doc) =>
+      mapCaseSummary(doc as unknown as AppwriteDocument),
+    ),
   };
 }
 
@@ -682,7 +536,9 @@ export async function getModerationDashboard(): Promise<ModerationDashboardData>
     pendingPublications: pendingPublications.documents.map((doc) =>
       mapPublication(doc as unknown as AppwriteDocument),
     ),
-    openCases: openCases.documents.map((doc) => mapCaseSummary(doc as unknown as AppwriteDocument)),
+    openCases: openCases.documents.map((doc) =>
+      mapCaseSummary(doc as unknown as AppwriteDocument),
+    ),
   };
 }
 
@@ -691,12 +547,7 @@ export async function reviewPublication(
   decision: "approved" | "rejected",
   rejectionReason = "",
 ) {
-  const { functionId } = requireFunctionsService(
-    appwriteConfig.reviewPublicationFunctionId,
-    "review publication",
-  );
-
-  return executeFunction<{ status: string; pub_id?: string }>(functionId, {
+  return callApi<{ status: string; pub_id?: string }>("review-publication", {
     publication_id: publicationId,
     decision,
     rejection_reason: rejectionReason,
@@ -711,26 +562,19 @@ export async function openCase(payload: {
   relatedPubId?: string;
   labels?: string[];
 }) {
-  const { functionId } = requireFunctionsService(appwriteConfig.openCaseFunctionId, "open case");
-
-  return executeFunction<{ case_id: string; case_number: string; status: string }>(
-    functionId,
-    {
-      contributor_user_id: payload.contributorUserId,
-      subject: payload.subject,
-      opening_message: payload.openingMessage,
-      priority: payload.priority ?? "normal",
-      related_pub_id: payload.relatedPubId ?? "",
-      labels: payload.labels ?? [],
-      related_case_ids: [],
-    },
-  );
+  return callApi<{ case_id: string; case_number: string; status: string }>("open-case", {
+    contributor_user_id: payload.contributorUserId,
+    subject: payload.subject,
+    opening_message: payload.openingMessage,
+    priority: payload.priority ?? "normal",
+    related_pub_id: payload.relatedPubId ?? "",
+    labels: payload.labels ?? [],
+    related_case_ids: [],
+  });
 }
 
 export async function resolveCase(caseId: string, resolutionNote: string) {
-  const { functionId } = requireFunctionsService(appwriteConfig.resolveCaseFunctionId, "resolve case");
-
-  return executeFunction<{ case_id: string; status: string }>(functionId, {
+  return callApi<{ case_id: string; status: string }>("resolve-case", {
     case_id: caseId,
     status: "resolved",
     resolution_note: resolutionNote,
@@ -740,49 +584,58 @@ export async function resolveCase(caseId: string, resolutionNote: string) {
 export async function getAdminDashboard(): Promise<AdminDashboardData> {
   const { db, databaseId } = requireDatabaseServices();
 
-  const [usersRes, pendingPublicationsRes, openCasesRes, topDownloadsRes, analyticsRes] = await Promise.all([
-    db.listDocuments(databaseId, "users", [Query.limit(500)]),
-    db.listDocuments(databaseId, "publications", [
-      Query.equal("status", "pending_review"),
-      Query.limit(1),
-    ]),
-    db.listDocuments(databaseId, "cases", [
-      Query.equal("status", ["open", "pending_contributor", "pending_moderator"]),
-      Query.limit(1),
-    ]),
-    db.listDocuments(databaseId, "publications", [
-      Query.equal("status", "approved"),
-      Query.orderDesc("download_count"),
-      Query.limit(5),
-    ]),
-    db.listDocuments(databaseId, "analytics_events", [
-      Query.equal("event_type", ["consent_started", "consent_completed", "consent_expired"]),
-      Query.limit(500),
-    ]),
-  ]);
+  const [usersRes, pendingPublicationsRes, openCasesRes, topDownloadsRes, analyticsRes] =
+    await Promise.all([
+      db.listDocuments(databaseId, "users", [Query.limit(500)]),
+      db.listDocuments(databaseId, "publications", [
+        Query.equal("status", "pending_review"),
+        Query.limit(1),
+      ]),
+      db.listDocuments(databaseId, "cases", [
+        Query.equal("status", ["open", "pending_contributor", "pending_moderator"]),
+        Query.limit(1),
+      ]),
+      db.listDocuments(databaseId, "publications", [
+        Query.equal("status", "approved"),
+        Query.orderDesc("download_count"),
+        Query.limit(5),
+      ]),
+      db.listDocuments(databaseId, "analytics_events", [
+        Query.equal("event_type", [
+          "consent_started",
+          "consent_completed",
+          "consent_expired",
+        ]),
+        Query.limit(500),
+      ]),
+    ]);
 
   const allUsers = usersRes.documents as unknown as AppwriteDocument[];
   const pendingParentalAccounts = allUsers
-    .filter((user) => String(user.account_status) === "pending_parental")
+    .filter((u) => String(u.account_status) === "pending_parental")
     .slice(0, 8)
-    .map((user) => ({
-      userId: (user.user_id as string) || user.$id,
-      displayName: (user.display_name as string) || "Contributor",
-      consentTier: (user.consent_tier as "coppa" | "gdpr_eu" | "gdpr_es" | "general") || "general",
-      createdAt: (user.created_at as string) || new Date().toISOString(),
+    .map((u) => ({
+      userId: (u.user_id as string) || u.$id,
+      displayName: (u.display_name as string) || "Contributor",
+      consentTier:
+        (u.consent_tier as "coppa" | "gdpr_eu" | "gdpr_es" | "general") || "general",
+      createdAt: (u.created_at as string) || new Date().toISOString(),
     }));
 
   const analytics = analyticsRes.documents as unknown as AppwriteDocument[];
-
-  const consentStarted = analytics.filter((event) => event.event_type === "consent_started").length;
-  const consentCompleted = analytics.filter((event) => event.event_type === "consent_completed").length;
-  const consentExpired = analytics.filter((event) => event.event_type === "consent_expired").length;
+  const consentStarted = analytics.filter((e) => e.event_type === "consent_started").length;
+  const consentCompleted = analytics.filter(
+    (e) => e.event_type === "consent_completed",
+  ).length;
+  const consentExpired = analytics.filter((e) => e.event_type === "consent_expired").length;
 
   return {
     totalUsers: allUsers.length,
-    activeUsers: allUsers.filter((user) => String(user.account_status) === "active").length,
-    pendingParentalUsers: allUsers.filter((user) => String(user.account_status) === "pending_parental").length,
-    suspendedUsers: allUsers.filter((user) => String(user.account_status) === "suspended").length,
+    activeUsers: allUsers.filter((u) => String(u.account_status) === "active").length,
+    pendingParentalUsers: allUsers.filter(
+      (u) => String(u.account_status) === "pending_parental",
+    ).length,
+    suspendedUsers: allUsers.filter((u) => String(u.account_status) === "suspended").length,
     openCases: openCasesRes.total,
     pendingReviewPublications: pendingPublicationsRes.total,
     consentStarted,
@@ -796,9 +649,7 @@ export async function getAdminDashboard(): Promise<AdminDashboardData> {
 }
 
 export async function createDsarRequest(userId: string, action: "export" | "delete") {
-  const { functionId } = requireFunctionsService(appwriteConfig.dsarHandlerFunctionId, "DSAR handler");
-
-  return executeFunction<{ status: string; case_id: string }>(functionId, {
+  return callApi<{ status: string; case_id: string }>("dsar-handler", {
     user_id: userId,
     action,
   });
@@ -814,32 +665,22 @@ export async function getPublicationByPubId(pubId: string): Promise<Publication>
   ]);
 
   const doc = results.documents[0];
-  if (!doc) {
-    throw new Error("Publication not found or not yet approved.");
-  }
+  if (!doc) throw new Error("Publication not found or not yet approved.");
 
   return mapPublication(doc as unknown as AppwriteDocument);
 }
 
 export async function downloadPublication(pubId: string): Promise<void> {
-  const { functionsClient, functionId } = requireFunctionsService(
-    appwriteConfig.servePdfFunctionId,
-    "serve PDF",
-  );
+  const res = await fetch(`/api/serve-pdf?pub_id=${encodeURIComponent(pubId)}`);
 
-  const execution = await withTimeout(
-    functionsClient.createExecution(functionId, JSON.stringify({ pub_id: pubId }), false),
-    FUNCTION_TIMEOUT_MS,
-    `PDF download timed out after ${Math.floor(FUNCTION_TIMEOUT_MS / 1000)} seconds.`,
-  );
-
-  if (execution.status !== "completed" || !execution.responseBody) {
-    throw new Error("PDF could not be retrieved.");
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({ error: "PDF could not be retrieved." }));
+    throw new Error(
+      (data as { error?: string }).error || "PDF could not be retrieved.",
+    );
   }
 
-  // Function returns raw PDF bytes; encode to a downloadable Blob.
-  const bytes = Uint8Array.from(execution.responseBody, (c) => c.charCodeAt(0));
-  const blob = new Blob([bytes], { type: "application/pdf" });
+  const blob = await res.blob();
   const url = URL.createObjectURL(blob);
 
   const anchor = document.createElement("a");
@@ -850,5 +691,34 @@ export async function downloadPublication(pubId: string): Promise<void> {
 }
 
 export function toUserFacingError(error: unknown): string {
-  return readError(error);
+  if (!(error instanceof Error)) return "Unexpected request failure";
+
+  const lower = error.message.toLowerCase();
+
+  if (lower.includes("too small") && lower.includes(">=3")) {
+    return "Display name must be at least 3 characters.";
+  }
+  if (lower.includes("too small") && lower.includes(">=10")) {
+    return "Password must be at least 10 characters.";
+  }
+  if (lower.includes("invalid email") || lower.includes("must be a valid email")) {
+    return "Please enter a valid email address.";
+  }
+  if (lower.includes("invalid request payload")) {
+    return "Please review the form fields and try again.";
+  }
+  if (lower.includes("invalid credentials") || lower.includes("user_invalid_credentials")) {
+    return "The email or password is incorrect.";
+  }
+  if (lower.includes("user_session_already_exists")) {
+    return "You are already signed in on this device.";
+  }
+  if (lower.includes("network") || lower.includes("failed to fetch")) {
+    return "Network request failed. Check your connection and try again.";
+  }
+  if (lower.includes("not configured")) {
+    return error.message;
+  }
+
+  return error.message || "Unexpected request failure";
 }
