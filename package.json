@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vite",
     "pages:dev": "wrangler pages dev dist --compatibility-flag=nodejs_compat",
-    "build": "bun run typecheck:web && vite build",
+    "build": "bun install --frozen-lockfile && bun run typecheck:web && vite build",
     "preview": "vite preview",
     "migrate": "bun migrations/migrate.mjs",
     "migrate:strict": "bun migrations/migrate.mjs --strict",
