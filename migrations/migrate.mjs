@@ -292,7 +292,7 @@ function createClient(config) {
 
     if (check.status !== 404) {
       // Function exists — update execute permissions in case they were wrong
-      await request("PUT", `/functions/${fn.id}`, { execute });
+      await request("PUT", `/functions/${fn.id}`, { name: fn.name, execute });
       console.log(`[functions] Function ${fn.id} already exists (updated execute permissions)`);
       return;
     }
