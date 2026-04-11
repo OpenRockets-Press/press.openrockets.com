@@ -713,6 +713,9 @@ export function toUserFacingError(error: unknown): string {
   if (lower.includes("user_session_already_exists")) {
     return "You are already signed in on this device.";
   }
+  if (lower.includes("already exists") || lower.includes("user_already_exists")) {
+    return "An account with that email already exists. Try logging in.";
+  }
   if (lower.includes("network") || lower.includes("failed to fetch")) {
     return "Network request failed. Check your connection and try again.";
   }
