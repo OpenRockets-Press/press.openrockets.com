@@ -1,0 +1,10 @@
+{
+  "name": "@orp/migrations",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "migrate": "node migrate.mjs",
+    "setup": "node setup.mjs"
+  }
+}
