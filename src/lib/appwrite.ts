@@ -22,6 +22,7 @@ export const appwriteConfig = {
   replyCaseFunctionId: import.meta.env.VITE_FUNCTION_REPLY_CASE_ID as string | undefined,
   resolveCaseFunctionId: import.meta.env.VITE_FUNCTION_RESOLVE_CASE_ID as string | undefined,
   dsarHandlerFunctionId: import.meta.env.VITE_FUNCTION_DSAR_HANDLER_ID as string | undefined,
+  servePdfFunctionId: import.meta.env.VITE_FUNCTION_SERVE_PDF_ID as string | undefined,
   pubFilesBucketId: (import.meta.env.VITE_APPWRITE_BUCKET_PUB_FILES as string | undefined) ?? "pub_files",
   pubCoversBucketId: (import.meta.env.VITE_APPWRITE_BUCKET_PUB_COVERS as string | undefined) ?? "pub_covers",
 };
