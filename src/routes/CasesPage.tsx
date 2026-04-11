@@ -25,7 +25,7 @@ export function CasesPage() {
   const { data: cases, isLoading } = useQuery({
     queryKey: queryKeys.contributor.cases(),
     queryFn: () => getContributorCases(),
-    staleTime: 15_000,
+    staleTime: 45_000,
     enabled: Boolean(user),
   });
 

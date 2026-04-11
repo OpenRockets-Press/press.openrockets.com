@@ -9,7 +9,22 @@
       content="Open Rockets Press is a youth-led publication platform protecting intellectual property with compliant publishing workflows."
     />
     <title>Open Rockets Press</title>
-    <script defer data-domain="press.openrockets.com" src="https://plausible.io/js/script.outbound-links.js"></script>
+    <script>
+      (() => {
+        const doNotTrack =
+          navigator.doNotTrack === "1" ||
+          window.doNotTrack === "1" ||
+          navigator.globalPrivacyControl === true;
+
+        if (doNotTrack) return;
+
+        const script = document.createElement("script");
+        script.defer = true;
+        script.dataset.domain = "press.openrockets.com";
+        script.src = "https://plausible.io/js/script.outbound-links.js";
+        document.head.appendChild(script);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -35,6 +35,28 @@ interface AppwriteDocument {
 // ── JWT cache ────────────────────────────────────────────────────────────────
 
 let jwtCache: { token: string; expiresAt: number } | null = null;
+let remoteAuthBackoffUntil = 0;
+
+const AUTH_PROBE_COOLDOWN_MS = 10_000;
+const AUTH_PROBE_CORS_COOLDOWN_MS = 60_000;
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message.toLowerCase();
+  return String(error).toLowerCase();
+}
+
+function isLikelyCorsOrTrackingBlock(error: unknown): boolean {
+  const message = getErrorMessage(error);
+  return (
+    message.includes("access-control-allow-origin") ||
+    message.includes("cross-origin") ||
+    message.includes("cors") ||
+    message.includes("failed to fetch") ||
+    message.includes("network request failed") ||
+    message.includes("load failed") ||
+    message.includes("blocked")
+  );
+}
 
 async function getJWT(): Promise<string | null> {
   if (!account) return null;
@@ -43,14 +65,18 @@ async function getJWT(): Promise<string | null> {
   try {
     const result = await account.createJWT();
     jwtCache = { token: result.jwt, expiresAt: Date.now() + 14 * 60 * 1000 };
+    remoteAuthBackoffUntil = 0;
     return result.jwt;
-  } catch {
+  } catch (error) {
+    remoteAuthBackoffUntil = Date.now() +
+      (isLikelyCorsOrTrackingBlock(error) ? AUTH_PROBE_CORS_COOLDOWN_MS : AUTH_PROBE_COOLDOWN_MS);
     return null;
   }
 }
 
 function invalidateJWT() {
   jwtCache = null;
+  remoteAuthBackoffUntil = 0;
 }
 
 // ── API call helper ──────────────────────────────────────────────────────────
@@ -213,13 +239,23 @@ function toCasePriority(value: unknown): CasePriority {
   return "normal";
 }
 
-async function hydrateCurrentUserFromRemote() {
+async function hydrateCurrentUserFromRemote(forceProbe = false) {
   if (!isAppwriteConfigured || !account || !databases || !appwriteConfig.databaseId) {
     return null;
   }
 
-  const authUser = await account.get().catch(() => null);
+  if (!forceProbe && Date.now() < remoteAuthBackoffUntil) {
+    return null;
+  }
+
+  const authUser = await account.get().catch((error: unknown) => {
+    remoteAuthBackoffUntil = Date.now() +
+      (isLikelyCorsOrTrackingBlock(error) ? AUTH_PROBE_CORS_COOLDOWN_MS : AUTH_PROBE_COOLDOWN_MS);
+    return null;
+  });
   if (!authUser) return null;
+
+  remoteAuthBackoffUntil = 0;
 
   const labels = (authUser as unknown as { labels?: unknown }).labels;
   const userDoc = await databases
@@ -385,8 +421,9 @@ export async function login(email: string, password: string): Promise<{ ok: true
   requireBaseConfig();
   if (!account) throw new Error("Appwrite Account service is not configured.");
 
+  remoteAuthBackoffUntil = 0;
   await account.createEmailPasswordSession(email, password);
-  await hydrateCurrentUserFromRemote();
+  await hydrateCurrentUserFromRemote(true);
 
   return { ok: true };
 }
@@ -405,7 +442,7 @@ export async function getCurrentUser(forceRefresh = false) {
     if (local) return local;
   }
 
-  const remote = await hydrateCurrentUserFromRemote();
+  const remote = await hydrateCurrentUserFromRemote(forceRefresh);
   if (remote) return remote;
 
   return getSessionUser();
@@ -716,7 +753,13 @@ export function toUserFacingError(error: unknown): string {
   if (lower.includes("already exists") || lower.includes("user_already_exists")) {
     return "An account with that email already exists. Try logging in.";
   }
+  if (lower.includes("access-control-allow-origin") || lower.includes("cors") || lower.includes("cross-origin")) {
+    return "Connection to Appwrite is blocked by browser policy. Add this origin in Appwrite Platforms (Web), including https://press.openrockets.com and https://press-openrockets-com.pages.dev.";
+  }
   if (lower.includes("network") || lower.includes("failed to fetch")) {
+    if (isAppwriteConfigured) {
+      return "Could not reach Appwrite. Check browser tracking protection and confirm both site origins are allowed in Appwrite Platforms (Web).";
+    }
     return "Network request failed. Check your connection and try again.";
   }
   if (lower.includes("not configured")) {

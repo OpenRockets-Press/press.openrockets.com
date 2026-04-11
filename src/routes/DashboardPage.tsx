@@ -13,7 +13,7 @@ export function DashboardPage() {
   const { data: dashboard, isLoading: dashboardLoading } = useQuery({
     queryKey: queryKeys.contributor.dashboard(),
     queryFn: getContributorDashboard,
-    staleTime: 20_000,
+    staleTime: 60_000,
     enabled: Boolean(user),
   });
 
