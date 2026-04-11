@@ -18,6 +18,8 @@ function logInternalError(error: unknown): void {
           message: error.message,
           status: error.status,
           type: error.type,
+          method: error.method,
+          path: error.path,
           stack: error.stack,
         }
       : error instanceof Error

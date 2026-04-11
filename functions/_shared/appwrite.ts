@@ -5,6 +5,8 @@ export class AppwriteError extends Error {
     message: string,
     public readonly status: number,
     public readonly type?: string,
+    public readonly method?: string,
+    public readonly path?: string,
   ) {
     super(message);
     this.name = "AppwriteError";
@@ -39,6 +41,8 @@ export function createAdminClient(env: Env) {
         String(d?.message ?? `Request failed ${res.status}`),
         res.status,
         String(d?.type ?? ""),
+        method,
+        path,
       );
     }
 
@@ -84,7 +88,7 @@ export function createAdminClient(env: Env) {
 
   const users = {
     create: (userId: string, email: string, password: string, name: string) =>
-      req<Record<string, unknown>>("POST", `/users/email`, { userId, email, password, name }),
+      req<Record<string, unknown>>("POST", `/users`, { userId, email, password, name }),
 
     get: (userId: string) => req<Record<string, unknown>>("GET", `/users/${userId}`),
 
