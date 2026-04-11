@@ -411,6 +411,33 @@ button { font: inherit; cursor: pointer; }
   to   { opacity: 1; transform: translateY(0);    }
 }
 
+/* ── Page skeleton (Suspense fallback) ──────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+
+.page-skeleton {
+  min-height: 100dvh;
+  background: var(--parch);
+  padding: 4rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 640px;
+  margin-inline: auto;
+}
+
+.skeleton-bar {
+  border-radius: 4px;
+  background: linear-gradient(90deg, #e8e3d8 25%, #f0ece3 50%, #e8e3d8 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+.skeleton-bar-title { height: 2rem;   width: 55%; }
+.skeleton-bar-md    { height: 1rem;   width: 80%; }
+.skeleton-bar-sm    { height: 1rem;   width: 40%; }
+
 /* Outer container — sets the warm background for all inner pages */
 .page-wrap {
   min-height: 100dvh;

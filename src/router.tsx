@@ -7,14 +7,15 @@ import {
   redirect,
 } from "@tanstack/react-router";
 import { getSessionUser } from "@/lib/authStore";
+// Critical path routes — imported eagerly so there's no chunk-fetch delay on first load
+import { RootLayout } from "@/routes/RootLayout";
+import { HomePage } from "@/routes/HomePage";
+import { LoginPage } from "@/routes/LoginPage";
+import { RegisterPage } from "@/routes/RegisterPage";
 
-const RootLayout = lazy(() => import("@/routes/RootLayout").then((module) => ({ default: module.RootLayout })));
-const HomePage = lazy(() => import("@/routes/HomePage").then((module) => ({ default: module.HomePage })));
-const RegisterPage = lazy(() => import("@/routes/RegisterPage").then((module) => ({ default: module.RegisterPage })));
 const ConsentInSessionPage = lazy(() =>
   import("@/routes/ConsentInSessionPage").then((module) => ({ default: module.ConsentInSessionPage })),
 );
-const LoginPage = lazy(() => import("@/routes/LoginPage").then((module) => ({ default: module.LoginPage })));
 const PublishPage = lazy(() => import("@/routes/PublishPage").then((module) => ({ default: module.PublishPage })));
 const AboutPage = lazy(() => import("@/routes/AboutPage").then((module) => ({ default: module.AboutPage })));
 const PrivacyPolicyPage = lazy(() =>
@@ -35,8 +36,18 @@ const SuspendedPage = lazy(() =>
 );
 const NotFoundPage = lazy(() => import("@/routes/NotFoundPage").then((module) => ({ default: module.NotFoundPage })));
 
+function PageSkeleton() {
+  return (
+    <main className="page-skeleton" aria-hidden="true">
+      <div className="skeleton-bar skeleton-bar-title" />
+      <div className="skeleton-bar skeleton-bar-md" />
+      <div className="skeleton-bar skeleton-bar-sm" />
+    </main>
+  );
+}
+
 function withRouteSuspense(element: ReactNode): ReactNode {
-  return <Suspense fallback={<main className="page-wrap"><p>Loading...</p></main>}>{element}</Suspense>;
+  return <Suspense fallback={<PageSkeleton />}>{element}</Suspense>;
 }
 
 const rootRoute = createRootRoute({

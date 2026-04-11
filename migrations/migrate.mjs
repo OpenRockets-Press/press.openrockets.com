@@ -271,11 +271,29 @@ function createClient(config) {
   }
 
   async function ensureFunction(fn, resolvedRuntime) {
+    // Functions callable by unauthenticated users (register, home feed, etc.)
+    const publicFunctions = new Set([
+      "register",
+      "confirm-consent",
+      "get-home-feed",
+      "track-event",
+    ]);
+    // deletion-cron only runs on schedule — no client execution needed
+    const cronOnlyFunctions = new Set(["deletion-cron"]);
+
+    const execute = cronOnlyFunctions.has(fn.id)
+      ? []
+      : publicFunctions.has(fn.id)
+        ? ["any"]
+        : ["users"];
+
     // GET first — avoids the rate-limited POST on idempotent re-runs
     const check = await request("GET", `/functions/${fn.id}`, undefined, { allowStatuses: [404] });
 
     if (check.status !== 404) {
-      console.log(`[functions] Function ${fn.id} already exists`);
+      // Function exists — update execute permissions in case they were wrong
+      await request("PUT", `/functions/${fn.id}`, { execute });
+      console.log(`[functions] Function ${fn.id} already exists (updated execute permissions)`);
       return;
     }
 
@@ -284,7 +302,7 @@ function createClient(config) {
       name: fn.name,
       runtime: resolvedRuntime,
       entrypoint: fn.entrypoint,
-      execute: [],
+      execute,
       enabled: true,
     };
 
