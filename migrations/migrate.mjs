@@ -1,8 +1,6 @@
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 import process from "node:process";
-import { execSync } from "node:child_process";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const MIGRATIONS_COLLECTION_ID = "migrations";
@@ -16,14 +14,9 @@ function readConfig() {
     projectId: process.env.APPWRITE_PROJECT_ID || "",
     apiKey: process.env.APPWRITE_API_KEY || "",
     databaseId: process.env.APPWRITE_DATABASE_ID || "",
-    appBaseUrl: process.env.APP_BASE_URL || "",
-    consentTokenSecret: process.env.CONSENT_TOKEN_SECRET || "",
-    guardianEmailSecret: process.env.GUARDIAN_EMAIL_SECRET || "",
     bucketPubFiles: process.env.APPWRITE_BUCKET_PUB_FILES || "pub_files",
     bucketPubCovers: process.env.APPWRITE_BUCKET_PUB_COVERS || "pub_covers",
     bucketCaseAttachments: process.env.APPWRITE_BUCKET_CASE_ATTACHMENTS || "case_attachments",
-    plausibleDomain: process.env.PLAUSIBLE_DOMAIN || "",
-    plausibleApiKey: process.env.PLAUSIBLE_API_KEY || "",
   };
 }
 
@@ -231,111 +224,6 @@ function createClient(config) {
     );
   }
 
-  // ── Function helpers ───────────────────────────────────────────────────────
-
-  async function resolveNodeRuntime(preferredRuntime) {
-    // Query the runtimes actually available on this Appwrite instance
-    let available;
-    try {
-      const result = await request("GET", `/functions/runtimes`, undefined, { allowStatuses: [404] });
-      available = result.data?.runtimes ?? result.data ?? [];
-    } catch {
-      return preferredRuntime; // fallback to whatever was requested
-    }
-
-    if (!Array.isArray(available) || available.length === 0) return preferredRuntime;
-
-    const runtimeIds = available.map((r) => (typeof r === "string" ? r : r.$id ?? r.id ?? ""));
-
-    // If the preferred runtime is available, use it directly
-    if (runtimeIds.includes(preferredRuntime)) return preferredRuntime;
-
-    // Otherwise, pick the highest node version that IS available
-    // Preferred order (newest first): node-22, node-21.0, node-20.0, node-18.0
-    const fallbackOrder = ["node-22", "node-21.0", "node-20.0", "node-18.0", "node-16.0"];
-    for (const candidate of fallbackOrder) {
-      if (runtimeIds.includes(candidate)) {
-        console.log(`[functions] Runtime ${preferredRuntime} not available — using ${candidate}`);
-        return candidate;
-      }
-    }
-
-    // Last resort: any node runtime
-    const anyNode = runtimeIds.find((id) => id.startsWith("node-"));
-    if (anyNode) {
-      console.log(`[functions] Runtime ${preferredRuntime} not available — using ${anyNode}`);
-      return anyNode;
-    }
-
-    return preferredRuntime;
-  }
-
-  async function ensureFunction(fn, resolvedRuntime) {
-    // Functions callable by unauthenticated users (register, home feed, etc.)
-    const publicFunctions = new Set([
-      "register",
-      "confirm-consent",
-      "get-home-feed",
-      "track-event",
-    ]);
-    // deletion-cron only runs on schedule — no client execution needed
-    const cronOnlyFunctions = new Set(["deletion-cron"]);
-
-    const execute = cronOnlyFunctions.has(fn.id)
-      ? []
-      : publicFunctions.has(fn.id)
-        ? ["any"]
-        : ["users"];
-
-    // GET first — avoids the rate-limited POST on idempotent re-runs
-    const check = await request("GET", `/functions/${fn.id}`, undefined, { allowStatuses: [404] });
-
-    if (check.status !== 404) {
-      // Function exists — update execute permissions in case they were wrong
-      await request("PUT", `/functions/${fn.id}`, { name: fn.name, execute });
-      console.log(`[functions] Function ${fn.id} already exists (updated execute permissions)`);
-      return;
-    }
-
-    const body = {
-      functionId: fn.id,
-      name: fn.name,
-      runtime: resolvedRuntime,
-      entrypoint: fn.entrypoint,
-      execute,
-      enabled: true,
-    };
-
-    if (fn.schedule) body.schedule = fn.schedule;
-
-    await request("POST", `/functions`, body);
-    console.log(`[functions] Created function ${fn.id} (${resolvedRuntime})`);
-  }
-
-  async function setFunctionVariable(functionId, key, value) {
-    // List existing vars, update if exists, create if not
-    const listResult = await request("GET", `/functions/${functionId}/variables`, undefined, {
-      allowStatuses: [],
-    });
-
-    const existing = listResult.data?.variables ?? [];
-    const existingVar = existing.find((v) => v.key === key);
-
-    if (existingVar) {
-      await request(
-        "PUT",
-        `/functions/${functionId}/variables/${existingVar.$id}`,
-        { key, value },
-      );
-    } else {
-      await request("POST", `/functions/${functionId}/variables`, { key, value });
-    }
-  }
-
-  async function updateFunctionSchedule(functionId, schedule) {
-    await request("PUT", `/functions/${functionId}`, { schedule });
-  }
-
   return {
     ensureCollection,
     ensureAttribute,
@@ -343,10 +231,6 @@ function createClient(config) {
     getDocument,
     createDocument,
     ensureBucket,
-    ensureFunction,
-    setFunctionVariable,
-    updateFunctionSchedule,
-    resolveNodeRuntime,
     request,
   };
 }
@@ -485,169 +369,6 @@ async function ensureStorageBuckets(client, config) {
   console.log("[buckets] Storage buckets ready");
 }
 
-// ─── Phase 3: Functions ───────────────────────────────────────────────────────
-
-function loadAppwriteJson() {
-  const currentDir = path.dirname(fileURLToPath(import.meta.url));
-  const appwriteJsonPath = path.join(currentDir, "..", "appwrite.json");
-
-  if (!fs.existsSync(appwriteJsonPath)) {
-    console.warn("[functions] appwrite.json not found — skipping function provisioning");
-    return null;
-  }
-
-  return JSON.parse(fs.readFileSync(appwriteJsonPath, "utf8"));
-}
-
-async function ensureFunctions(client, config) {
-  console.log("\n[functions] Ensuring Appwrite functions...");
-
-  const appwriteJson = loadAppwriteJson();
-  if (!appwriteJson) return;
-
-  const functions = appwriteJson.functions ?? [];
-
-  // Shared env vars injected into every function
-  const sharedVars = {
-    APPWRITE_ENDPOINT: config.endpoint,
-    APPWRITE_DATABASE_ID: config.databaseId,
-    APPWRITE_BUCKET_PUB_FILES: config.bucketPubFiles,
-    APPWRITE_BUCKET_PUB_COVERS: config.bucketPubCovers,
-    APPWRITE_BUCKET_CASE_ATTACHMENTS: config.bucketCaseAttachments,
-    APP_BASE_URL: config.appBaseUrl,
-    CONSENT_TOKEN_SECRET: config.consentTokenSecret,
-    GUARDIAN_EMAIL_SECRET: config.guardianEmailSecret,
-    PLAUSIBLE_DOMAIN: config.plausibleDomain,
-    PLAUSIBLE_API_KEY: config.plausibleApiKey,
-  };
-
-  // Sensitive: only inject if set, so we don't clobber with empty strings
-  if (config.apiKey) sharedVars.APPWRITE_API_KEY = config.apiKey;
-
-  // Resolve the runtime once — all functions share the same language/version
-  const preferredRuntime = functions[0]?.runtime ?? "node-22";
-  const resolvedRuntime = await client.resolveNodeRuntime(preferredRuntime);
-
-  for (const fn of functions) {
-    const schedule = fn.$id === "deletion-cron" ? "0 2 * * *" : undefined;
-
-    await client.ensureFunction(
-      {
-        id: fn.$id,
-        name: fn.name,
-        entrypoint: fn.entrypoint,
-        schedule,
-      },
-      resolvedRuntime,
-    );
-
-    // Apply env vars
-    for (const [key, value] of Object.entries(sharedVars)) {
-      if (!value) continue; // skip empty env vars rather than overwriting with blank
-      await client.setFunctionVariable(fn.$id, key, value);
-    }
-
-    console.log(`[functions] Vars set for ${fn.$id}`);
-
-    // Brief pause between functions to stay under Appwrite's rate limit
-    await new Promise((resolve) => setTimeout(resolve, 300));
-  }
-
-  console.log("[functions] Function metadata ready");
-}
-
-// ─── Phase 4: Deploy function code via REST API ───────────────────────────────
-
-async function deployFunctions(config) {
-  console.log("\n[deploy] Deploying functions via Appwrite REST API...");
-
-  const appwriteJson = loadAppwriteJson();
-  if (!appwriteJson) return;
-
-  const functions = appwriteJson.functions ?? [];
-  const currentDir = path.dirname(fileURLToPath(import.meta.url));
-  const rootDir = path.join(currentDir, "..");
-  const fnRootDir = path.join(rootDir, "functions");
-
-  // Each function's deployment tarball contains:
-  //   src/          — function-specific source (functions/{name}/src/)
-  //   shared/       — shared utilities (functions/shared/)
-  //   node_modules/ — pre-installed deps (functions/node_modules/)
-  //   package.json  — workspace functions package.json
-  const sharedDir = path.join(fnRootDir, "shared");
-  const fnPackageJson = path.join(fnRootDir, "package.json");
-  const fnNodeModules = path.join(fnRootDir, "node_modules");
-
-  if (!fs.existsSync(fnNodeModules)) {
-    console.log("[deploy] node_modules not found in functions/ — running bun install...");
-    execSync("bun install", { cwd: fnRootDir, stdio: "inherit" });
-  }
-
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "orp-deploy-"));
-
-  try {
-    for (const fn of functions) {
-      const fnSrcDir = path.join(rootDir, fn.path, "src");
-
-      if (!fs.existsSync(fnSrcDir)) {
-        console.warn(`[deploy] Skipping ${fn.$id} — src/ directory not found at ${fnSrcDir}`);
-        continue;
-      }
-
-      console.log(`[deploy] Packaging ${fn.$id}...`);
-
-      const stagingDir = path.join(tmpDir, fn.$id);
-      const tarPath = path.join(tmpDir, `${fn.$id}.tar.gz`);
-
-      // Stage files
-      fs.mkdirSync(path.join(stagingDir, "src"), { recursive: true });
-      fs.cpSync(fnSrcDir, path.join(stagingDir, "src"), { recursive: true });
-      fs.cpSync(sharedDir, path.join(stagingDir, "shared"), { recursive: true });
-      fs.copyFileSync(fnPackageJson, path.join(stagingDir, "package.json"));
-      // Include node_modules so Appwrite doesn't need to install deps at runtime
-      fs.cpSync(fnNodeModules, path.join(stagingDir, "node_modules"), { recursive: true });
-
-      // Create tarball (-C changes base so paths inside are relative)
-      execSync(`tar -czf "${tarPath}" -C "${stagingDir}" .`, { stdio: "pipe" });
-
-      // Upload via REST API using the API key — no CLI session needed
-      const fileBytes = fs.readFileSync(tarPath);
-      const formData = new FormData();
-      formData.append("entrypoint", fn.entrypoint);
-      formData.append("activate", "true");
-      formData.append(
-        "code",
-        new Blob([fileBytes], { type: "application/gzip" }),
-        `${fn.$id}.tar.gz`,
-      );
-
-      const response = await fetch(`${config.endpoint}/functions/${fn.$id}/deployments`, {
-        method: "POST",
-        headers: {
-          "X-Appwrite-Project": config.projectId,
-          "X-Appwrite-Key": config.apiKey,
-        },
-        body: formData,
-      });
-
-      const text = await response.text();
-      let data = null;
-      try { data = JSON.parse(text); } catch { data = text; }
-
-      if (!response.ok) {
-        console.error(`[deploy] ✗ ${fn.$id} (${response.status}): ${JSON.stringify(data?.message ?? data)}`);
-      } else {
-        console.log(`[deploy] ✓ ${fn.$id} — build queued (deployment ${data?.$id ?? "?"})`);
-      }
-    }
-
-    console.log("\n[deploy] All uploads complete. Appwrite will build each function in the background.");
-    console.log("[deploy] Check build status in the Appwrite console → Functions.");
-  } finally {
-    fs.rmSync(tmpDir, { recursive: true, force: true });
-  }
-}
-
 // ─── Orchestrator ─────────────────────────────────────────────────────────────
 
 export async function runMigrations(options = {}) {
@@ -670,31 +391,17 @@ export async function runMigrations(options = {}) {
 
   const client = createClient(config);
 
-  const skipDeploy = options.skipDeploy ?? process.argv.includes("--no-deploy");
-
   console.log("╔══════════════════════════════════════════╗");
   console.log("║      Open Rockets Press  ·  Migrate      ║");
   console.log("╚══════════════════════════════════════════╝\n");
 
   // Phase 1 — DB schema
-  console.log("[phase 1/4] Database migrations");
+  console.log("[phase 1/2] Database migrations");
   await runDbMigrations(client);
 
   // Phase 2 — Storage
-  console.log("\n[phase 2/4] Storage buckets");
+  console.log("\n[phase 2/2] Storage buckets");
   await ensureStorageBuckets(client, config);
-
-  // Phase 3 — Functions metadata + env vars
-  console.log("\n[phase 3/4] Function provisioning");
-  await ensureFunctions(client, config);
-
-  // Phase 4 — Deploy code
-  console.log("\n[phase 4/4] Function deployment");
-  if (skipDeploy) {
-    console.log("[deploy] Skipped (--no-deploy flag)");
-  } else {
-    await deployFunctions(config);
-  }
 
   console.log("\n╔══════════════════════════════════════════╗");
   console.log("║            Provisioning complete         ║");
