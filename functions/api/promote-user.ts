@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { createAdminClient, getSessionUser } from "../_shared/appwrite";
+import { getActorRole, requireAdmin } from "../_shared/authHelpers";
 import type { Env } from "../_shared/env";
 import { OrpError, toErrorResponse } from "../_shared/errors";
 import { errorResponse, json, parseBody } from "../_shared/http";
@@ -15,14 +16,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const actor = await getSessionUser(context.request, context.env);
     if (!actor) throw new OrpError("Unauthorized", 401);
 
-    const actorLabels = Array.isArray((actor as { labels?: unknown }).labels)
-      ? (actor as { labels: string[] }).labels
-      : [];
-    if (!actorLabels.includes("admin")) throw new OrpError("Forbidden", 403);
+    const client = createAdminClient(context.env);
+    requireAdmin(await getActorRole(actor, client));
 
     const body = await parseBody(context.request);
     const payload = schema.parse(body);
-    const client = createAdminClient(context.env);
     const dbId = context.env.APPWRITE_DATABASE_ID;
     const q = client.query;
 
