@@ -15,15 +15,18 @@ export class AppwriteError extends Error {
 
 export function createAdminClient(env: Env) {
   const adminHeaders = {
-    "Content-Type": "application/json",
     "X-Appwrite-Project": env.APPWRITE_PROJECT_ID,
     "X-Appwrite-Key": env.APPWRITE_API_KEY,
   };
 
   async function req<T = unknown>(method: string, path: string, body?: unknown): Promise<T> {
+    const headers = body !== undefined
+      ? { ...adminHeaders, "Content-Type": "application/json" }
+      : adminHeaders;
+
     const res = await fetch(`${env.APPWRITE_ENDPOINT}${path}`, {
       method,
-      headers: adminHeaders,
+      headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
 
@@ -58,7 +61,11 @@ export function createAdminClient(env: Env) {
       colId: string,
       queries: string[] = [],
     ) => {
-      const qs = queries.map((q) => `queries[]=${encodeURIComponent(q)}`).join("&");
+      const params = new URLSearchParams();
+      queries.forEach((q, index) => {
+        params.append(`queries[${index}]`, q);
+      });
+      const qs = params.toString();
       return req<T>("GET", `/databases/${dbId}/collections/${colId}/documents${qs ? `?${qs}` : ""}`);
     },
 
@@ -114,17 +121,27 @@ export function createAdminClient(env: Env) {
       req("DELETE", `/storage/buckets/${bucketId}/files/${fileId}`),
   };
 
-  // Query builder matching Appwrite SDK format
+  // Query builder matching Appwrite SDK v24 JSON query format
+  const buildQuery = (method: string, attribute?: string, values?: unknown): string => {
+    const payload: {
+      method: string;
+      attribute?: string;
+      values?: unknown[];
+    } = { method };
+
+    if (attribute !== undefined) payload.attribute = attribute;
+    if (values !== undefined) payload.values = Array.isArray(values) ? values : [values];
+
+    return JSON.stringify(payload);
+  };
+
   const query = {
-    // For single values: equal("status", ["pending_review"])
-    // For array IN queries: equal("status", ["open","pending_contributor"])
-    equal: (attr: string, value: unknown) =>
-      `equal("${attr}", ${Array.isArray(value) ? JSON.stringify(value) : `[${JSON.stringify(value)}]`})`,
-    orderDesc: (attr: string) => `orderDesc("${attr}")`,
-    orderAsc: (attr: string) => `orderAsc("${attr}")`,
-    limit: (n: number) => `limit(${n})`,
-    lessThan: (attr: string, value: unknown) => `lessThan("${attr}", [${JSON.stringify(value)}])`,
-    isNotNull: (attr: string) => `isNotNull("${attr}")`,
+    equal: (attr: string, value: unknown) => buildQuery("equal", attr, value),
+    orderDesc: (attr: string) => buildQuery("orderDesc", attr),
+    orderAsc: (attr: string) => buildQuery("orderAsc", attr),
+    limit: (n: number) => buildQuery("limit", undefined, n),
+    lessThan: (attr: string, value: unknown) => buildQuery("lessThan", attr, value),
+    isNotNull: (attr: string) => buildQuery("isNotNull", attr),
   };
 
   const id = {
