@@ -7,6 +7,14 @@ import {
   redirect,
 } from "@tanstack/react-router";
 import { getSessionUser } from "@/lib/authStore";
+import { queryClient } from "@/lib/queryClient";
+import { queryKeys } from "@/lib/queryKeys";
+import {
+  getCurrentUser,
+  getContributorDashboard,
+  getModerationDashboard,
+  getAdminDashboard,
+} from "@/lib/api";
 // Critical path routes — imported eagerly so there's no chunk-fetch delay on first load
 import { RootLayout } from "@/routes/RootLayout";
 import { HomePage } from "@/routes/HomePage";
@@ -36,6 +44,8 @@ const SuspendedPage = lazy(() =>
 );
 const NotFoundPage = lazy(() => import("@/routes/NotFoundPage").then((module) => ({ default: module.NotFoundPage })));
 
+// ── Skeleton components ──────────────────────────────────────────────────────
+
 function PageSkeleton() {
   return (
     <main className="page-skeleton" aria-hidden="true">
@@ -46,9 +56,70 @@ function PageSkeleton() {
   );
 }
 
+function DashboardSkeleton() {
+  return (
+    <main className="page-wrap dashboard-wrap" aria-hidden="true">
+      <section className="panel">
+        <div className="skeleton-bar" style={{ height: "10px", width: "120px", marginBottom: "0.5rem" }} />
+        <div className="skeleton-bar skeleton-bar-title" />
+        <div className="skeleton-bar skeleton-bar-sm" style={{ marginTop: "0.4rem" }} />
+        <div className="stats-grid" style={{ marginTop: "1.5rem" }}>
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="stat-card skeleton-stat-card">
+              <div className="skeleton-bar" style={{ height: "10px", width: "60%" }} />
+              <div className="skeleton-bar" style={{ height: "28px", width: "40%", marginTop: "0.5rem" }} />
+            </div>
+          ))}
+        </div>
+        <div className="skeleton-table-block" style={{ marginTop: "1.75rem" }}>
+          <div className="skeleton-bar" style={{ height: "10px", width: "30%", marginBottom: "0.75rem" }} />
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="skeleton-row-line" />
+          ))}
+        </div>
+        <div className="skeleton-table-block" style={{ marginTop: "1.5rem" }}>
+          <div className="skeleton-bar" style={{ height: "10px", width: "20%", marginBottom: "0.75rem" }} />
+          {[1, 2].map((i) => (
+            <div key={i} className="skeleton-row-line" />
+          ))}
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function PanelPageSkeleton() {
+  return (
+    <main className="page-wrap" aria-hidden="true">
+      <section className="panel">
+        <div className="skeleton-bar" style={{ height: "10px", width: "100px", marginBottom: "0.5rem" }} />
+        <div className="skeleton-bar skeleton-bar-title" />
+        <div className="skeleton-bar skeleton-bar-sm" style={{ marginTop: "0.4rem" }} />
+        <div className="kpi-grid" style={{ marginTop: "1.5rem" }}>
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="kpi-card" style={{ minHeight: "72px" }}>
+              <div className="skeleton-bar" style={{ height: "10px", width: "60%" }} />
+              <div className="skeleton-bar" style={{ height: "28px", width: "35%", marginTop: "0.5rem" }} />
+            </div>
+          ))}
+        </div>
+        <div className="skeleton-table-block" style={{ marginTop: "1.75rem" }}>
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="skeleton-row-line" />
+          ))}
+        </div>
+      </section>
+    </main>
+  );
+}
+
+// ── Route helpers ────────────────────────────────────────────────────────────
+
 function withRouteSuspense(element: ReactNode): ReactNode {
   return <Suspense fallback={<PageSkeleton />}>{element}</Suspense>;
 }
+
+// ── Routes ───────────────────────────────────────────────────────────────────
 
 const rootRoute = createRootRoute({
   component: () => withRouteSuspense(<RootLayout />),
@@ -84,17 +155,9 @@ const publishRoute = createRoute({
   path: "/publish",
   beforeLoad: () => {
     const session = getSessionUser();
-    if (!session) {
-      throw redirect({ to: "/login" });
-    }
-
-    if (session.accountStatus === "pending_parental") {
-      throw redirect({ to: "/consent/in-session" });
-    }
-
-    if (session.accountStatus === "suspended") {
-      throw redirect({ to: "/" });
-    }
+    if (!session) throw redirect({ to: "/login" });
+    if (session.accountStatus === "pending_parental") throw redirect({ to: "/consent/in-session" });
+    if (session.accountStatus === "suspended") throw redirect({ to: "/" });
   },
   component: () => withRouteSuspense(<PublishPage />),
 });
@@ -122,18 +185,27 @@ const dashboardRoute = createRoute({
   path: "/dashboard",
   beforeLoad: () => {
     const session = getSessionUser();
-    if (!session) {
-      throw redirect({ to: "/login" });
-    }
-
-    if (session.accountStatus === "pending_parental") {
-      throw redirect({ to: "/consent/in-session" });
-    }
-
-    if (session.accountStatus === "suspended") {
-      throw redirect({ to: "/suspended" });
-    }
+    if (!session) throw redirect({ to: "/login" });
+    if (session.accountStatus === "pending_parental") throw redirect({ to: "/consent/in-session" });
+    if (session.accountStatus === "suspended") throw redirect({ to: "/suspended" });
   },
+  loader: async () => {
+    await Promise.all([
+      queryClient.prefetchQuery({
+        queryKey: queryKeys.auth.currentUser(),
+        queryFn: getCurrentUser,
+        staleTime: 60_000,
+      }),
+      queryClient.prefetchQuery({
+        queryKey: queryKeys.contributor.dashboard(),
+        queryFn: getContributorDashboard,
+        staleTime: 60_000,
+      }),
+    ]);
+  },
+  pendingComponent: DashboardSkeleton,
+  pendingMs: 150,
+  pendingMinMs: 250,
   component: () => withRouteSuspense(<DashboardPage />),
 });
 
@@ -142,18 +214,20 @@ const casesRoute = createRoute({
   path: "/cases",
   beforeLoad: () => {
     const session = getSessionUser();
-    if (!session) {
-      throw redirect({ to: "/login" });
-    }
-
-    if (session.accountStatus === "pending_parental") {
-      throw redirect({ to: "/consent/in-session" });
-    }
-
-    if (session.accountStatus === "suspended") {
-      throw redirect({ to: "/suspended" });
-    }
+    if (!session) throw redirect({ to: "/login" });
+    if (session.accountStatus === "pending_parental") throw redirect({ to: "/consent/in-session" });
+    if (session.accountStatus === "suspended") throw redirect({ to: "/suspended" });
   },
+  loader: async () => {
+    await queryClient.prefetchQuery({
+      queryKey: queryKeys.auth.currentUser(),
+      queryFn: getCurrentUser,
+      staleTime: 60_000,
+    });
+  },
+  pendingComponent: PanelPageSkeleton,
+  pendingMs: 150,
+  pendingMinMs: 250,
   component: () => withRouteSuspense(<CasesPage />),
 });
 
@@ -162,14 +236,21 @@ const moderationRoute = createRoute({
   path: "/moderation",
   beforeLoad: () => {
     const session = getSessionUser();
-    if (!session) {
-      throw redirect({ to: "/login" });
-    }
-
+    if (!session) throw redirect({ to: "/login" });
     if (session.role !== "moderator" && session.role !== "admin") {
       throw redirect({ to: "/dashboard" });
     }
   },
+  loader: async () => {
+    await queryClient.prefetchQuery({
+      queryKey: queryKeys.moderation.dashboard(),
+      queryFn: getModerationDashboard,
+      staleTime: 30_000,
+    });
+  },
+  pendingComponent: PanelPageSkeleton,
+  pendingMs: 150,
+  pendingMinMs: 250,
   component: () => withRouteSuspense(<ModerationPage />),
 });
 
@@ -178,14 +259,19 @@ const adminRoute = createRoute({
   path: "/admin",
   beforeLoad: () => {
     const session = getSessionUser();
-    if (!session) {
-      throw redirect({ to: "/login" });
-    }
-
-    if (session.role !== "admin") {
-      throw redirect({ to: "/dashboard" });
-    }
+    if (!session) throw redirect({ to: "/login" });
+    if (session.role !== "admin") throw redirect({ to: "/dashboard" });
   },
+  loader: async () => {
+    await queryClient.prefetchQuery({
+      queryKey: queryKeys.admin.dashboard(),
+      queryFn: getAdminDashboard,
+      staleTime: 30_000,
+    });
+  },
+  pendingComponent: PanelPageSkeleton,
+  pendingMs: 150,
+  pendingMinMs: 250,
   component: () => withRouteSuspense(<AdminPanelPage />),
 });
 
@@ -221,6 +307,7 @@ const routeTree = rootRoute.addChildren([
 export const router = createRouter({
   routeTree,
   defaultPreload: "intent",
+  defaultPreloadDelay: 0,
 });
 
 declare module "@tanstack/react-router" {

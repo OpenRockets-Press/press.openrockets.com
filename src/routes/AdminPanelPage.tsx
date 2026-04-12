@@ -4,6 +4,35 @@ import { Modal } from "@/components/ui/Modal";
 import { createDsarRequest, getAdminDashboard, toUserFacingError } from "@/lib/api";
 import { queryKeys } from "@/lib/queryKeys";
 
+function KpiSkeleton() {
+  return (
+    <div className="kpi-grid" aria-hidden="true" style={{ marginTop: "1.25rem" }}>
+      {Array.from({ length: 9 }).map((_, i) => (
+        <div key={i} className="kpi-card">
+          <div className="skeleton-bar" style={{ height: "10px", width: "60%" }} />
+          <div className="skeleton-bar" style={{ height: "28px", width: "35%", marginTop: "0.5rem" }} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TableSkeletonRows({ cols, rows = 3 }: { cols: number; rows?: number }) {
+  return (
+    <>
+      {Array.from({ length: rows }).map((_, i) => (
+        <tr key={i} className="skeleton-tr">
+          {Array.from({ length: cols }).map((__, j) => (
+            <td key={j}>
+              <div className="skeleton-bar" style={{ height: "13px", width: j === 0 ? "65%" : "45%" }} />
+            </td>
+          ))}
+        </tr>
+      ))}
+    </>
+  );
+}
+
 export function AdminPanelPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -44,7 +73,7 @@ export function AdminPanelPage() {
         {error ? <p className="error-text">{error}</p> : null}
         {success ? <p className="muted">{success}</p> : null}
 
-        <div className="kpi-grid">
+        {isLoading ? <KpiSkeleton /> : <div className="kpi-grid">
           <article className="kpi-card">
             <span>Total users</span>
             <strong>{data?.totalUsers ?? 0}</strong>
@@ -81,7 +110,7 @@ export function AdminPanelPage() {
             <span>Consent expired</span>
             <strong>{data?.consentExpired ?? 0}</strong>
           </article>
-        </div>
+        </div>}
 
         <div className="table-wrap">
           <table className="table" aria-label="Top downloads">
@@ -93,20 +122,23 @@ export function AdminPanelPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.topDownloads ?? []).map((item) => (
-                <tr key={item.id}>
-                  <td>{item.title}</td>
-                  <td>{item.type}</td>
-                  <td>{item.license ?? "-"}</td>
-                </tr>
-              ))}
-              {!isLoading && (data?.topDownloads.length ?? 0) === 0 ? (
+              {isLoading ? (
+                <TableSkeletonRows cols={3} rows={3} />
+              ) : (data?.topDownloads.length ?? 0) === 0 ? (
                 <tr>
                   <td colSpan={3}>
                     <div className="empty-state">No approved publications with downloads yet.</div>
                   </td>
                 </tr>
-              ) : null}
+              ) : (
+                (data?.topDownloads ?? []).map((item) => (
+                  <tr key={item.id}>
+                    <td>{item.title}</td>
+                    <td>{item.type}</td>
+                    <td>{item.license ?? "-"}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -122,7 +154,10 @@ export function AdminPanelPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.pendingParentalAccounts ?? []).map((item) => (
+              {isLoading ? (
+                <TableSkeletonRows cols={4} rows={4} />
+              ) : (
+              (data?.pendingParentalAccounts ?? []).map((item) => (
                 <tr key={item.userId}>
                   <td>{item.displayName}</td>
                   <td>
@@ -142,7 +177,8 @@ export function AdminPanelPage() {
                     </div>
                   </td>
                 </tr>
-              ))}
+              ))
+              )}
               {!isLoading && (data?.pendingParentalAccounts.length ?? 0) === 0 ? (
                 <tr>
                   <td colSpan={4}>

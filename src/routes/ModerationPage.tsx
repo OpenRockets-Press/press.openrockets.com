@@ -4,6 +4,22 @@ import { Modal } from "@/components/ui/Modal";
 import { getModerationDashboard, openCase, resolveCase, reviewPublication, toUserFacingError } from "@/lib/api";
 import { queryKeys } from "@/lib/queryKeys";
 
+function TableSkeletonRows({ cols, rows = 3 }: { cols: number; rows?: number }) {
+  return (
+    <>
+      {Array.from({ length: rows }).map((_, i) => (
+        <tr key={i} className="skeleton-tr">
+          {Array.from({ length: cols }).map((__, j) => (
+            <td key={j}>
+              <div className="skeleton-bar" style={{ height: "13px", width: j === 0 ? "65%" : "45%" }} />
+            </td>
+          ))}
+        </tr>
+      ))}
+    </>
+  );
+}
+
 export function ModerationPage() {
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
@@ -109,58 +125,61 @@ export function ModerationPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.pendingPublications ?? []).map((publication) => (
-                <tr key={publication.id}>
-                  <td>
-                    <strong>{publication.title}</strong>
-                    <div className="muted">Submitted: {new Date(publication.submittedAt).toLocaleDateString()}</div>
-                  </td>
-                  <td>{publication.authorDisplayName}</td>
-                  <td>{publication.type}</td>
-                  <td>
-                    <span className={`chip status-${publication.status}`}>{publication.status}</span>
-                  </td>
-                  <td>
-                    <div className="actions-row">
-                      <button
-                        type="button"
-                        className="small-button primary"
-                        disabled={submitting}
-                        onClick={() => approveMutation.mutate(publication.id)}
-                      >
-                        Approve
-                      </button>
-                      <button
-                        type="button"
-                        className="small-button"
-                        disabled={submitting}
-                        onClick={() => setRejectModalPublicationId(publication.id)}
-                      >
-                        Reject
-                      </button>
-                      <button
-                        type="button"
-                        className="small-button"
-                        disabled={submitting}
-                        onClick={() => {
-                          setOpenCasePublicationId(publication.id);
-                          setOpenCaseSubject(`Follow-up for ${publication.title}`);
-                          setOpenCaseMessage("Please review moderator guidance and submit an updated revision.");
-                        }}
-                      >
-                        Open Case
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {!isLoading && (data?.pendingPublications.length ?? 0) === 0 ? (
+              {isLoading ? (
+                <TableSkeletonRows cols={5} rows={4} />
+              ) : (data?.pendingPublications.length ?? 0) === 0 ? (
                 <tr>
                   <td colSpan={5}>
                     <div className="empty-state">No submissions are waiting for moderation review.</div>
                   </td>
                 </tr>
-              ) : null}
+              ) : (
+                (data?.pendingPublications ?? []).map((publication) => (
+                  <tr key={publication.id}>
+                    <td>
+                      <strong>{publication.title}</strong>
+                      <div className="muted">Submitted: {new Date(publication.submittedAt).toLocaleDateString()}</div>
+                    </td>
+                    <td>{publication.authorDisplayName}</td>
+                    <td>{publication.type}</td>
+                    <td>
+                      <span className={`chip status-${publication.status}`}>{publication.status}</span>
+                    </td>
+                    <td>
+                      <div className="actions-row">
+                        <button
+                          type="button"
+                          className="small-button primary"
+                          disabled={submitting}
+                          onClick={() => approveMutation.mutate(publication.id)}
+                        >
+                          Approve
+                        </button>
+                        <button
+                          type="button"
+                          className="small-button"
+                          disabled={submitting}
+                          onClick={() => setRejectModalPublicationId(publication.id)}
+                        >
+                          Reject
+                        </button>
+                        <button
+                          type="button"
+                          className="small-button"
+                          disabled={submitting}
+                          onClick={() => {
+                            setOpenCasePublicationId(publication.id);
+                            setOpenCaseSubject(`Follow-up for ${publication.title}`);
+                            setOpenCaseMessage("Please review moderator guidance and submit an updated revision.");
+                          }}
+                        >
+                          Open Case
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -177,39 +196,42 @@ export function ModerationPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.openCases ?? []).map((caseItem) => (
-                <tr key={caseItem.id}>
-                  <td>
-                    <strong>{caseItem.caseNumber}</strong>
-                    <div className="muted">{caseItem.subject}</div>
-                  </td>
-                  <td>{caseItem.priority}</td>
-                  <td>
-                    <span className={`chip status-${caseItem.status}`}>{caseItem.status}</span>
-                  </td>
-                  <td>{new Date(caseItem.lastActivityAt).toLocaleString()}</td>
-                  <td>
-                    <button
-                      type="button"
-                      className="small-button"
-                      disabled={submitting}
-                      onClick={() => {
-                        setResolveCaseId(caseItem.id);
-                        setResolutionNote("Resolved after moderator follow-up and contributor acknowledgement.");
-                      }}
-                    >
-                      Resolve
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {!isLoading && (data?.openCases.length ?? 0) === 0 ? (
+              {isLoading ? (
+                <TableSkeletonRows cols={5} rows={3} />
+              ) : (data?.openCases.length ?? 0) === 0 ? (
                 <tr>
                   <td colSpan={5}>
                     <div className="empty-state">No active moderation cases right now.</div>
                   </td>
                 </tr>
-              ) : null}
+              ) : (
+                (data?.openCases ?? []).map((caseItem) => (
+                  <tr key={caseItem.id}>
+                    <td>
+                      <strong>{caseItem.caseNumber}</strong>
+                      <div className="muted">{caseItem.subject}</div>
+                    </td>
+                    <td>{caseItem.priority}</td>
+                    <td>
+                      <span className={`chip status-${caseItem.status}`}>{caseItem.status}</span>
+                    </td>
+                    <td>{new Date(caseItem.lastActivityAt).toLocaleString()}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="small-button"
+                        disabled={submitting}
+                        onClick={() => {
+                          setResolveCaseId(caseItem.id);
+                          setResolutionNote("Resolved after moderator follow-up and contributor acknowledgement.");
+                        }}
+                      >
+                        Resolve
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

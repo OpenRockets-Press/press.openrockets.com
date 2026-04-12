@@ -54,7 +54,8 @@ body {
   font-weight: 400;
   font-size: 1rem;
   line-height: 1.55;
-  background: var(--bg);
+  /* Parchment base prevents white flash during page transitions */
+  background: var(--parch);
   color: var(--text);
 }
 
@@ -438,6 +439,35 @@ button { font: inherit; cursor: pointer; }
 .skeleton-bar-md    { height: 1rem;   width: 80%; }
 .skeleton-bar-sm    { height: 1rem;   width: 40%; }
 
+/* Skeleton table rows */
+.skeleton-tr td { padding: 0.7rem 0.875rem; vertical-align: middle; }
+
+/* Skeleton block (used in route pending components) */
+.skeleton-table-block {
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  padding: 0.875rem;
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+.skeleton-row-line {
+  height: 14px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #e8e3d8 25%, #f0ece3 50%, #e8e3d8 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  width: 100%;
+}
+.skeleton-row-line:nth-child(2) { width: 85%; }
+.skeleton-row-line:nth-child(3) { width: 70%; }
+.skeleton-row-line:nth-child(4) { width: 80%; }
+
+/* Stat card skeleton (no ::before accent visible while loading) */
+.skeleton-stat-card::before { display: none; }
+
 /* Outer container — sets the warm background for all inner pages */
 .page-wrap {
   min-height: 100dvh;
@@ -792,6 +822,66 @@ button { font: inherit; cursor: pointer; }
   border-color: rgba(124, 85, 0, 0.25);
 }
 
+/* ── Dashboard header ── */
+.dash-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.dash-identity { flex: 1; }
+.dash-identity h1 { margin-top: 0.3rem; }
+.dash-signout {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  padding: 0.45rem 0.9rem;
+  margin-top: 0.2rem;
+}
+
+/* Status dot next to account status */
+.dash-status-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 0.4rem;
+  vertical-align: middle;
+  position: relative;
+  top: -1px;
+}
+.dot-active { background: var(--success); }
+.dot-warn   { background: var(--warn); }
+
+/* Action row */
+.dash-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+  margin-bottom: 1.75rem;
+}
+.dash-role-link {
+  border-color: rgba(29, 52, 97, 0.3);
+  color: var(--navy);
+}
+.dash-role-link:hover:not(:disabled) {
+  background: rgba(29, 52, 97, 0.06);
+  border-color: var(--navy);
+  color: var(--navy);
+}
+
+/* Section labels above tables */
+.dash-section { margin-top: 1.75rem; }
+.dash-section-label {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 0.5rem;
+}
+
 /* ── Dashboard stat cards ── */
 .stats-grid {
   margin-top: 1.5rem;
@@ -804,9 +894,12 @@ button { font: inherit; cursor: pointer; }
   background: var(--panel-2);
   border: 1.5px solid var(--line);
   border-radius: 10px;
-  padding: 1.1rem 1rem;
+  padding: 1.1rem 1rem 1rem 1.25rem;
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
 }
 .stat-card::before {
   content: '';
@@ -819,13 +912,34 @@ button { font: inherit; cursor: pointer; }
 }
 .stat-card h2 {
   font-family: 'Jost', sans-serif;
-  font-size: 0.72rem;
+  font-size: 0.69rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--text-3);
-  margin-bottom: 0.5rem;
 }
+
+/* Big number in stat cards */
+.stat-value {
+  font-family: 'Cormorant', serif;
+  font-size: 2.4rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--text);
+  display: block;
+  margin-top: 0.25rem;
+}
+.stat-value-sm  { font-size: 1.6rem; }
+.stat-value-warn { color: var(--rust); }
+
+.stat-sub {
+  font-size: 0.75rem;
+  color: var(--text-3);
+  font-weight: 500;
+  margin-top: 0.15rem;
+}
+
+/* Legacy: keep for compatibility with any old .stat-card p usage */
 .stat-card p {
   font-family: 'Cormorant', serif;
   font-size: 1.9rem;

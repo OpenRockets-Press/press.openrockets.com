@@ -9,7 +9,6 @@ import type {
   HomeFeedResponse,
   ModerationDashboardData,
   Publication,
-  PublicationCardDTO,
   Role,
   RegisterPayload,
   RegisterResult,
@@ -173,16 +172,6 @@ function mapPublication(doc: AppwriteDocument): Publication {
   };
 }
 
-function toPublicationCard(doc: Publication): PublicationCardDTO {
-  return {
-    id: doc.id,
-    pubId: doc.pubId,
-    title: doc.title,
-    authorDisplayName: doc.authorDisplayName,
-    type: doc.type,
-    license: doc.license,
-  };
-}
 
 function mapCaseSummary(doc: AppwriteDocument): CaseSummary {
   return {
@@ -554,29 +543,7 @@ export async function getContributorDashboard(): Promise<ContributorDashboardDat
 }
 
 export async function getModerationDashboard(): Promise<ModerationDashboardData> {
-  const { db, databaseId } = requireDatabaseServices();
-
-  const [pendingPublications, openCases] = await Promise.all([
-    db.listDocuments(databaseId, "publications", [
-      Query.equal("status", "pending_review"),
-      Query.orderDesc("submitted_at"),
-      Query.limit(30),
-    ]),
-    db.listDocuments(databaseId, "cases", [
-      Query.equal("status", ["open", "pending_contributor", "pending_moderator"]),
-      Query.orderDesc("last_activity_at"),
-      Query.limit(30),
-    ]),
-  ]);
-
-  return {
-    pendingPublications: pendingPublications.documents.map((doc) =>
-      mapPublication(doc as unknown as AppwriteDocument),
-    ),
-    openCases: openCases.documents.map((doc) =>
-      mapCaseSummary(doc as unknown as AppwriteDocument),
-    ),
-  };
+  return callApi<ModerationDashboardData>("moderation-dashboard", undefined, { method: "GET" });
 }
 
 export async function reviewPublication(
@@ -619,70 +586,7 @@ export async function resolveCase(caseId: string, resolutionNote: string) {
 }
 
 export async function getAdminDashboard(): Promise<AdminDashboardData> {
-  const { db, databaseId } = requireDatabaseServices();
-
-  const [usersRes, pendingPublicationsRes, openCasesRes, topDownloadsRes, analyticsRes] =
-    await Promise.all([
-      db.listDocuments(databaseId, "users", [Query.limit(500)]),
-      db.listDocuments(databaseId, "publications", [
-        Query.equal("status", "pending_review"),
-        Query.limit(1),
-      ]),
-      db.listDocuments(databaseId, "cases", [
-        Query.equal("status", ["open", "pending_contributor", "pending_moderator"]),
-        Query.limit(1),
-      ]),
-      db.listDocuments(databaseId, "publications", [
-        Query.equal("status", "approved"),
-        Query.orderDesc("download_count"),
-        Query.limit(5),
-      ]),
-      db.listDocuments(databaseId, "analytics_events", [
-        Query.equal("event_type", [
-          "consent_started",
-          "consent_completed",
-          "consent_expired",
-        ]),
-        Query.limit(500),
-      ]),
-    ]);
-
-  const allUsers = usersRes.documents as unknown as AppwriteDocument[];
-  const pendingParentalAccounts = allUsers
-    .filter((u) => String(u.account_status) === "pending_parental")
-    .slice(0, 8)
-    .map((u) => ({
-      userId: (u.user_id as string) || u.$id,
-      displayName: (u.display_name as string) || "Contributor",
-      consentTier:
-        (u.consent_tier as "coppa" | "gdpr_eu" | "gdpr_es" | "general") || "general",
-      createdAt: (u.created_at as string) || new Date().toISOString(),
-    }));
-
-  const analytics = analyticsRes.documents as unknown as AppwriteDocument[];
-  const consentStarted = analytics.filter((e) => e.event_type === "consent_started").length;
-  const consentCompleted = analytics.filter(
-    (e) => e.event_type === "consent_completed",
-  ).length;
-  const consentExpired = analytics.filter((e) => e.event_type === "consent_expired").length;
-
-  return {
-    totalUsers: allUsers.length,
-    activeUsers: allUsers.filter((u) => String(u.account_status) === "active").length,
-    pendingParentalUsers: allUsers.filter(
-      (u) => String(u.account_status) === "pending_parental",
-    ).length,
-    suspendedUsers: allUsers.filter((u) => String(u.account_status) === "suspended").length,
-    openCases: openCasesRes.total,
-    pendingReviewPublications: pendingPublicationsRes.total,
-    consentStarted,
-    consentCompleted,
-    consentExpired,
-    topDownloads: topDownloadsRes.documents.map((doc) =>
-      toPublicationCard(mapPublication(doc as unknown as AppwriteDocument)),
-    ),
-    pendingParentalAccounts,
-  };
+  return callApi<AdminDashboardData>("admin-dashboard", undefined, { method: "GET" });
 }
 
 export async function createDsarRequest(userId: string, action: "export" | "delete") {

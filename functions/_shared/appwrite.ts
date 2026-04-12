@@ -116,7 +116,10 @@ export function createAdminClient(env: Env) {
 
   // Query builder matching Appwrite SDK format
   const query = {
-    equal: (attr: string, value: unknown) => `equal("${attr}", [${JSON.stringify(value)}])`,
+    // For single values: equal("status", ["pending_review"])
+    // For array IN queries: equal("status", ["open","pending_contributor"])
+    equal: (attr: string, value: unknown) =>
+      `equal("${attr}", ${Array.isArray(value) ? JSON.stringify(value) : `[${JSON.stringify(value)}]`})`,
     orderDesc: (attr: string) => `orderDesc("${attr}")`,
     orderAsc: (attr: string) => `orderAsc("${attr}")`,
     limit: (n: number) => `limit(${n})`,
