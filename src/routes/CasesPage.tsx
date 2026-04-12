@@ -11,6 +11,39 @@ import {
 } from "@/lib/api";
 import { queryKeys } from "@/lib/queryKeys";
 
+function TableSkeletonRows({ cols, rows = 3 }: { cols: number; rows?: number }) {
+  return (
+    <>
+      {Array.from({ length: rows }).map((_, i) => (
+        <tr key={i} className="skeleton-tr">
+          {Array.from({ length: cols }).map((__, j) => (
+            <td key={j}>
+              <div className="skeleton-bar" style={{ height: "13px", width: j === 0 ? "65%" : "45%" }} />
+            </td>
+          ))}
+        </tr>
+      ))}
+    </>
+  );
+}
+
+function MessageSkeleton() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "0.625rem" }}>
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="case-message" style={{ opacity: 0.7 }}>
+          <div className="case-message-head">
+            <div className="skeleton-bar" style={{ height: "10px", width: "80px" }} />
+            <div className="skeleton-bar" style={{ height: "10px", width: "100px" }} />
+          </div>
+          <div className="skeleton-bar" style={{ height: "13px", width: "90%", marginTop: "0.375rem" }} />
+          <div className="skeleton-bar" style={{ height: "13px", width: "60%", marginTop: "0.25rem" }} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function CasesPage() {
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
@@ -108,38 +141,41 @@ export function CasesPage() {
               </tr>
             </thead>
             <tbody>
-              {(cases ?? []).map((caseItem) => (
-                <tr key={caseItem.id}>
-                  <td>
-                    <strong>{caseItem.caseNumber}</strong>
-                    <div className="muted">{caseItem.subject}</div>
-                  </td>
-                  <td>{caseItem.priority}</td>
-                  <td>
-                    <span className={`chip status-${caseItem.status}`}>{caseItem.status}</span>
-                  </td>
-                  <td>{new Date(caseItem.lastActivityAt).toLocaleString()}</td>
-                  <td>
-                    <button
-                      type="button"
-                      className="small-button"
-                      onClick={() => {
-                        setError(null);
-                        setActiveCaseId(caseItem.id);
-                      }}
-                    >
-                      Open Thread
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {!isLoading && (cases?.length ?? 0) === 0 ? (
+              {isLoading ? (
+                <TableSkeletonRows cols={5} rows={4} />
+              ) : (cases?.length ?? 0) === 0 ? (
                 <tr>
                   <td colSpan={5}>
                     <div className="empty-state">No cases yet. Moderators will open one if a submission needs follow-up.</div>
                   </td>
                 </tr>
-              ) : null}
+              ) : (
+                (cases ?? []).map((caseItem) => (
+                  <tr key={caseItem.id}>
+                    <td>
+                      <strong>{caseItem.caseNumber}</strong>
+                      <div className="muted">{caseItem.subject}</div>
+                    </td>
+                    <td>{caseItem.priority}</td>
+                    <td>
+                      <span className={`chip status-${caseItem.status}`}>{caseItem.status}</span>
+                    </td>
+                    <td>{new Date(caseItem.lastActivityAt).toLocaleDateString()}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="small-button"
+                        onClick={() => {
+                          setError(null);
+                          setActiveCaseId(caseItem.id);
+                        }}
+                      >
+                        Open Thread
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -157,7 +193,7 @@ export function CasesPage() {
         {activeCase ? (
           <div className="form-grid">
             <div className="case-thread" aria-live="polite">
-              {isLoadingMessages ? <p className="muted">Loading conversation...</p> : null}
+              {isLoadingMessages ? <MessageSkeleton /> : null}
               {(messages ?? []).map((message) => (
                 <article key={message.id} className="case-message">
                   <div className="case-message-head">

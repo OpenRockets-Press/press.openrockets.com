@@ -15,6 +15,7 @@ import type {
 } from "@shared/types";
 import { REQUIRES_GUARDIAN } from "@/lib/consent";
 import { clearSessionUser, getSessionUser, setSessionUser } from "@/lib/authStore";
+import type { SessionUser } from "@/lib/authStore";
 import {
   account,
   appwriteConfig,
@@ -139,12 +140,6 @@ function requireStorageService() {
 
 // ── Type helpers ─────────────────────────────────────────────────────────────
 
-function parseRoleFromLabels(labels: unknown): Role {
-  if (!Array.isArray(labels)) return "contributor";
-  if (labels.includes("admin")) return "admin";
-  if (labels.includes("moderator")) return "moderator";
-  return "contributor";
-}
 
 function mapPublication(doc: AppwriteDocument): Publication {
   return {
@@ -229,48 +224,52 @@ function toCasePriority(value: unknown): CasePriority {
 }
 
 async function hydrateCurrentUserFromRemote(forceProbe = false) {
-  if (!isAppwriteConfigured || !account || !databases || !appwriteConfig.databaseId) {
-    return null;
-  }
+  if (!isAppwriteConfigured || !account) return null;
+  if (!forceProbe && Date.now() < remoteAuthBackoffUntil) return null;
 
-  if (!forceProbe && Date.now() < remoteAuthBackoffUntil) {
-    return null;
-  }
+  // Use the server-side /api/me endpoint for reliable role resolution.
+  // It runs under the admin API key so it can read labels and the users
+  // collection without browser-level permission issues.
+  try {
+    const profile = await callApi<{
+      userId: string;
+      displayName: string;
+      email: string;
+      role: Role;
+      accountStatus: string;
+      consentTier: string;
+    }>("me", undefined, { method: "GET" });
 
-  const authUser = await account.get().catch((error: unknown) => {
-    remoteAuthBackoffUntil = Date.now() +
-      (isLikelyCorsOrTrackingBlock(error) ? AUTH_PROBE_CORS_COOLDOWN_MS : AUTH_PROBE_COOLDOWN_MS);
-    return null;
-  });
-  if (!authUser) return null;
+    remoteAuthBackoffUntil = 0;
 
-  remoteAuthBackoffUntil = 0;
-
-  const labels = (authUser as unknown as { labels?: unknown }).labels;
-  const userDoc = await databases
-    .getDocument(appwriteConfig.databaseId, "users", authUser.$id)
-    .catch(() => null);
-
-  const role = (userDoc?.role as Role | undefined) ?? parseRoleFromLabels(labels);
-
-  const next = {
-    userId: authUser.$id,
-    displayName:
-      (userDoc?.display_name as string | undefined) ?? authUser.name ?? "Contributor",
-    email: authUser.email,
-    role,
-    accountStatus:
-      (userDoc?.account_status as
+    const next = {
+      userId: profile.userId,
+      displayName: profile.displayName,
+      email: profile.email,
+      role: profile.role,
+      accountStatus: profile.accountStatus as
         | "pending_parental"
         | "active"
         | "suspended"
-        | "deletion_requested") ?? "active",
-    consentTier:
-      (userDoc?.consent_tier as "coppa" | "gdpr_eu" | "gdpr_es" | "general") ?? "general",
-  };
+        | "deletion_requested",
+      consentTier: profile.consentTier as "coppa" | "gdpr_eu" | "gdpr_es" | "general",
+    };
 
-  setSessionUser(next);
-  return next;
+    setSessionUser(next);
+    return next;
+  } catch (error: unknown) {
+    // 401 means no active session — clear local state so the UI reflects reality
+    if (getErrorMessage(error).includes("request failed 401")) {
+      clearSessionUser();
+      return null;
+    }
+    remoteAuthBackoffUntil =
+      Date.now() +
+      (isLikelyCorsOrTrackingBlock(error)
+        ? AUTH_PROBE_CORS_COOLDOWN_MS
+        : AUTH_PROBE_COOLDOWN_MS);
+    return null;
+  }
 }
 
 async function requireCurrentUser() {
@@ -594,6 +593,15 @@ export async function createDsarRequest(userId: string, action: "export" | "dele
     user_id: userId,
     action,
   });
+}
+
+export async function adminBootstrap(secret: string): Promise<{ ok: boolean; role: string }> {
+  return callApi<{ ok: boolean; role: string }>("admin-bootstrap", { secret });
+}
+
+export async function refreshCurrentUser(): Promise<SessionUser | null> {
+  invalidateJWT();
+  return hydrateCurrentUserFromRemote(true);
 }
 
 export async function getPublicationByPubId(pubId: string): Promise<Publication> {

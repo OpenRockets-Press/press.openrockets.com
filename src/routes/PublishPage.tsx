@@ -5,8 +5,19 @@ import type { Publication } from "@shared/types";
 import { getCurrentUser, submitPublication, toUserFacingError } from "@/lib/api";
 import { queryKeys } from "@/lib/queryKeys";
 
-const publicationTypes: Publication["type"][] = ["book", "research_paper", "magazine", "poster", "other"];
-const publicationLicenses: Publication["license"][] = ["CC_BY", "CC0", "ORP_ND"];
+const publicationTypes: { value: Publication["type"]; label: string }[] = [
+  { value: "book", label: "Book" },
+  { value: "research_paper", label: "Research Paper" },
+  { value: "magazine", label: "Magazine" },
+  { value: "poster", label: "Poster" },
+  { value: "other", label: "Other" },
+];
+
+const publicationLicenses: { value: Publication["license"]; label: string }[] = [
+  { value: "CC_BY", label: "CC BY — Attribution" },
+  { value: "CC0", label: "CC0 — Public Domain" },
+  { value: "ORP_ND", label: "ORP ND — No Derivatives" },
+];
 
 export function PublishPage() {
   const queryClient = useQueryClient();
@@ -117,7 +128,7 @@ export function PublishPage() {
         </p>
 
         {error ? <p className="error-text">{error}</p> : null}
-        {success ? <p className="muted">{success}</p> : null}
+        {success ? <p className="success-text">{success}</p> : null}
 
         <form
           className="form-grid"
@@ -150,10 +161,8 @@ export function PublishPage() {
             <label className="field-group">
               <span>Type</span>
               <select value={type} onChange={(event) => setType(event.target.value as Publication["type"])}>
-                {publicationTypes.map((publicationType) => (
-                  <option key={publicationType} value={publicationType}>
-                    {publicationType}
-                  </option>
+                {publicationTypes.map(({ value, label }) => (
+                  <option key={value} value={value}>{label}</option>
                 ))}
               </select>
             </label>
@@ -161,10 +170,8 @@ export function PublishPage() {
             <label className="field-group">
               <span>License</span>
               <select value={license} onChange={(event) => setLicense(event.target.value as Publication["license"])}>
-                {publicationLicenses.map((publicationLicense) => (
-                  <option key={publicationLicense} value={publicationLicense}>
-                    {publicationLicense}
-                  </option>
+                {publicationLicenses.map(({ value, label }) => (
+                  <option key={value} value={value}>{label}</option>
                 ))}
               </select>
             </label>

@@ -11,4 +11,6 @@ export interface Env {
   APPWRITE_BUCKET_CASE_ATTACHMENTS: string;
   PLAUSIBLE_DOMAIN?: string;
   PLAUSIBLE_API_KEY?: string;
+  /** One-time secret to claim admin role on first deploy. Remove after use. */
+  ADMIN_BOOTSTRAP_SECRET?: string;
 }
