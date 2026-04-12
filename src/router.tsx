@@ -193,7 +193,7 @@ const dashboardRoute = createRoute({
     await Promise.all([
       queryClient.prefetchQuery({
         queryKey: queryKeys.auth.currentUser(),
-        queryFn: getCurrentUser,
+        queryFn: () => getCurrentUser(),
         staleTime: 60_000,
       }),
       queryClient.prefetchQuery({
@@ -221,7 +221,7 @@ const casesRoute = createRoute({
   loader: async () => {
     await queryClient.prefetchQuery({
       queryKey: queryKeys.auth.currentUser(),
-      queryFn: getCurrentUser,
+      queryFn: () => getCurrentUser(),
       staleTime: 60_000,
     });
   },
