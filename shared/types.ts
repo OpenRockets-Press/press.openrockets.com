@@ -153,6 +153,15 @@ export interface PendingParentalAccount {
   createdAt: string;
 }
 
+export interface UserListItem {
+  userId: string;
+  displayName: string;
+  accountStatus: AccountStatus;
+  consentTier: ConsentTier;
+  role: "contributor" | "moderator" | "admin";
+  createdAt: string;
+}
+
 export interface AdminDashboardData {
   totalUsers: number;
   activeUsers: number;

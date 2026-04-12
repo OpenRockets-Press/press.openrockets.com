@@ -20,6 +20,7 @@ export const queryKeys = {
   },
   moderation: {
     dashboard: () => ["moderation", "dashboard"] as const,
+    users: () => ["moderation", "users"] as const,
   },
   admin: {
     dashboard: () => ["admin", "dashboard"] as const,

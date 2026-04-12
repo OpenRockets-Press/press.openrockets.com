@@ -1,0 +1,52 @@
+import { createAdminClient, getSessionUser } from "../_shared/appwrite";
+import type { Env } from "../_shared/env";
+import { OrpError, toErrorResponse } from "../_shared/errors";
+import { errorResponse, json } from "../_shared/http";
+
+export const onRequestPost: PagesFunction<Env> = async (context) => {
+  try {
+    const user = await getSessionUser(context.request, context.env);
+    if (!user) throw new OrpError("Unauthorized", 401);
+
+    const labels = Array.isArray((user as { labels?: unknown }).labels)
+      ? (user as { labels: string[] }).labels
+      : [];
+    if (!labels.includes("moderator") && !labels.includes("admin")) {
+      throw new OrpError("Forbidden", 403);
+    }
+
+    const body = await context.request.json() as Record<string, unknown>;
+    const targetUserId = typeof body.user_id === "string" ? body.user_id.trim() : "";
+    const action = typeof body.action === "string" ? body.action : "";
+
+    if (!targetUserId) throw new OrpError("user_id is required", 400);
+    if (action !== "suspend" && action !== "activate") {
+      throw new OrpError("action must be 'suspend' or 'activate'", 400);
+    }
+
+    const client = createAdminClient(context.env);
+    const dbId = context.env.APPWRITE_DATABASE_ID;
+    const q = client.query;
+
+    // Find the user document by user_id field
+    const res = await client.db.listDocuments(dbId, "users", [
+      q.equal("user_id", targetUserId),
+      q.limit(1),
+    ]);
+
+    const doc = (res.documents as Record<string, unknown>[])[0];
+    if (!doc) throw new OrpError("User not found", 404);
+
+    const docId = String(doc.$id);
+    const newStatus = action === "suspend" ? "suspended" : "active";
+
+    await client.db.updateDocument(dbId, "users", docId, {
+      account_status: newStatus,
+    });
+
+    return json({ status: newStatus, user_id: targetUserId });
+  } catch (err) {
+    const { statusCode, message } = toErrorResponse(err);
+    return errorResponse(message, statusCode);
+  }
+};

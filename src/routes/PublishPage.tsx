@@ -5,6 +5,8 @@ import type { Publication } from "@shared/types";
 import { getCurrentUser, submitPublication, toUserFacingError } from "@/lib/api";
 import { queryKeys } from "@/lib/queryKeys";
 import { AppShell } from "@/components/AppShell";
+import { FloatInput } from "@/components/ui/FloatInput";
+import { FloatTextarea } from "@/components/ui/FloatTextarea";
 
 const publicationTypes: { value: Publication["type"]; label: string }[] = [
   { value: "book", label: "Book" },
@@ -85,12 +87,8 @@ export function PublishPage() {
         <h1>Publish</h1>
         <p>Sign in to submit a publication to Open Rockets Press.</p>
         <div className="button-row">
-          <Link className="solid-button" to="/login">
-            Go to Sign In
-          </Link>
-          <Link className="ghost-button" to="/register">
-            Create Account
-          </Link>
+          <Link className="solid-button" to="/login">Go to Sign In</Link>
+          <Link className="ghost-button" to="/register">Create Account</Link>
         </div>
       </main>
     );
@@ -101,16 +99,12 @@ export function PublishPage() {
       <main className="page-wrap legal-wrap">
         <h1>Account Pending Activation</h1>
         <p>
-          Your account status is <strong>{user.accountStatus}</strong>. Complete consent and activation before
-          uploading submissions.
+          Your account status is <strong>{user.accountStatus}</strong>. Complete consent and
+          activation before uploading submissions.
         </p>
         <div className="button-row">
-          <Link className="solid-button" to="/consent/in-session">
-            Continue Consent
-          </Link>
-          <Link className="ghost-button" to="/dashboard">
-            Back to Dashboard
-          </Link>
+          <Link className="solid-button" to="/consent/in-session">Continue Consent</Link>
+          <Link className="ghost-button" to="/dashboard">Back to Dashboard</Link>
         </div>
       </main>
     );
@@ -121,102 +115,104 @@ export function PublishPage() {
   return (
     <AppShell>
       <div className="dash-page">
-      <section className="panel">
-        <p className="eyebrow">Contributor Workflow</p>
-        <h1>Submit A Publication</h1>
-        <p className="muted">
-          Upload your manuscript or publication package. Submissions enter moderation review and appear in your
-          dashboard timeline immediately.
-        </p>
+        <header className="dash-page-header">
+          <p className="eyebrow">Contributor Workflow</p>
+          <h1>Submit a Publication</h1>
+          <p className="muted">
+            Upload your manuscript or publication package. Submissions enter moderation review
+            and appear in your dashboard timeline immediately.
+          </p>
+        </header>
 
-        {error ? <p className="error-text">{error}</p> : null}
-        {success ? <p className="success-text">{success}</p> : null}
+        {error && <p className="error-text">{error}</p>}
+        {success && <p className="success-text">{success}</p>}
 
         <form
-          className="form-grid"
-          onSubmit={(event) => {
-            event.preventDefault();
-            submitMutation.mutate();
-          }}
+          className="publish-form"
+          onSubmit={(e) => { e.preventDefault(); submitMutation.mutate(); }}
         >
-          <label className="field-group">
-            <span>Title</span>
-            <input
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              placeholder="Human-Centered Propulsion Design"
-              required
-            />
-          </label>
+          <FloatInput
+            label="Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder=" "
+            hint='e.g. "Human-Centered Propulsion Design"'
+          />
 
-          <label className="field-group">
-            <span>Abstract</span>
-            <textarea
-              rows={5}
-              value={abstract}
-              onChange={(event) => setAbstract(event.target.value)}
-              placeholder="Summarize your submission for editors and moderators."
-            />
-          </label>
+          <FloatTextarea
+            label="Abstract"
+            rows={5}
+            value={abstract}
+            onChange={(e) => setAbstract(e.target.value)}
+            placeholder=" "
+            hint="Summarize your submission for editors and moderators."
+          />
 
-          <div className="form-two-col">
-            <label className="field-group">
-              <span>Type</span>
-              <select value={type} onChange={(event) => setType(event.target.value as Publication["type"])}>
+          <div className="publish-two-col">
+            <div className={`float-field float-select float-filled`}>
+              <label className="float-label">Type</label>
+              <select
+                className="float-input float-select-input"
+                value={type}
+                onChange={(e) => setType(e.target.value as Publication["type"])}
+              >
                 {publicationTypes.map(({ value, label }) => (
                   <option key={value} value={value}>{label}</option>
                 ))}
               </select>
-            </label>
+              <span className="float-accent" aria-hidden="true" />
+            </div>
 
-            <label className="field-group">
-              <span>License</span>
-              <select value={license} onChange={(event) => setLicense(event.target.value as Publication["license"])}>
+            <div className={`float-field float-select float-filled`}>
+              <label className="float-label">License</label>
+              <select
+                className="float-input float-select-input"
+                value={license}
+                onChange={(e) => setLicense(e.target.value as Publication["license"])}
+              >
                 {publicationLicenses.map(({ value, label }) => (
                   <option key={value} value={value}>{label}</option>
                 ))}
               </select>
-            </label>
+              <span className="float-accent" aria-hidden="true" />
+            </div>
           </div>
 
-          <label className="field-group">
-            <span>Tags</span>
-            <input
-              value={tagsInput}
-              onChange={(event) => setTagsInput(event.target.value)}
-              placeholder="orbital mechanics, classroom, engines"
-            />
-            <small>Comma-separated. Up to 12 tags.</small>
-          </label>
+          <FloatInput
+            label="Tags"
+            value={tagsInput}
+            onChange={(e) => setTagsInput(e.target.value)}
+            placeholder=" "
+            hint="Comma-separated. Up to 12 tags. e.g. orbital mechanics, classroom, engines"
+          />
 
-          <label className="field-group">
+          <label className="field-group publish-file-field">
             <span>Publication file</span>
             <input
               key={file ? file.name : "file-empty"}
               type="file"
-              onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
               required
             />
-            <small>{file ? `Selected: ${file.name}` : "Accepted formats depend on your moderation policy."}</small>
+            <small>{file ? `Selected: ${file.name}` : "PDF, EPUB, or ZIP accepted."}</small>
           </label>
 
-          <label className="field-group">
-            <span>Cover image (optional)</span>
+          <label className="field-group publish-file-field">
+            <span>Cover image <span className="muted">(optional)</span></span>
             <input
               key={coverFile ? coverFile.name : "cover-empty"}
               type="file"
               accept="image/*"
-              onChange={(event) => setCoverFile(event.target.files?.[0] ?? null)}
+              onChange={(e) => setCoverFile(e.target.files?.[0] ?? null)}
             />
           </label>
 
-          <div className="button-row">
+          <div className="publish-actions">
             <button type="submit" className="solid-button" disabled={isSubmitDisabled}>
-              {submitMutation.isPending ? "Submitting..." : "Submit For Review"}
+              {submitMutation.isPending ? "Submitting…" : "Submit for Review"}
             </button>
           </div>
         </form>
-      </section>
       </div>
     </AppShell>
   );

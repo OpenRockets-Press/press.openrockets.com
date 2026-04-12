@@ -1,8 +1,17 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { UserListItem } from "@shared/types";
 import { Modal } from "@/components/ui/Modal";
 import { AppShell } from "@/components/AppShell";
-import { getModerationDashboard, openCase, resolveCase, reviewPublication, toUserFacingError } from "@/lib/api";
+import {
+  getModerationDashboard,
+  listUsers,
+  manageUser,
+  openCase,
+  resolveCase,
+  reviewPublication,
+  toUserFacingError,
+} from "@/lib/api";
 import { queryKeys } from "@/lib/queryKeys";
 
 function TableSkeletonRows({ cols, rows = 3 }: { cols: number; rows?: number }) {
@@ -21,24 +30,49 @@ function TableSkeletonRows({ cols, rows = 3 }: { cols: number; rows?: number }) 
   );
 }
 
+const STATUS_LABELS: Record<string, string> = {
+  active: "Active",
+  suspended: "Suspended",
+  pending_parental: "Pending consent",
+  deletion_requested: "Deletion req.",
+};
+
 export function ModerationPage() {
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
 
+  // Reject publication modal
   const [rejectModalPublicationId, setRejectModalPublicationId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
 
+  // Open case (tied to a publication)
   const [openCasePublicationId, setOpenCasePublicationId] = useState<string | null>(null);
   const [openCaseSubject, setOpenCaseSubject] = useState("");
   const [openCaseMessage, setOpenCaseMessage] = useState("");
 
+  // Standalone case creation
+  const [standaloneCase, setStandaloneCase] = useState(false);
+  const [standaloneCaseUserId, setStandaloneCaseUserId] = useState("");
+  const [standaloneCaseSubject, setStandaloneCaseSubject] = useState("");
+  const [standaloneCaseMessage, setStandaloneCaseMessage] = useState("");
+
+  // Resolve case modal
   const [resolveCaseId, setResolveCaseId] = useState<string | null>(null);
   const [resolutionNote, setResolutionNote] = useState("");
+
+  // Ban/activate modal
+  const [manageUserTarget, setManageUserTarget] = useState<UserListItem | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: queryKeys.moderation.dashboard(),
     queryFn: getModerationDashboard,
     staleTime: 30_000,
+  });
+
+  const { data: users = [], isLoading: usersLoading } = useQuery({
+    queryKey: queryKeys.moderation.users(),
+    queryFn: listUsers,
+    staleTime: 60_000,
   });
 
   const selectedPublication = useMemo(() => {
@@ -52,7 +86,7 @@ export function ModerationPage() {
       setError(null);
       queryClient.invalidateQueries({ queryKey: queryKeys.moderation.dashboard() });
     },
-    onError: (mutationError) => setError(toUserFacingError(mutationError)),
+    onError: (e) => setError(toUserFacingError(e)),
   });
 
   const rejectMutation = useMutation({
@@ -64,7 +98,7 @@ export function ModerationPage() {
       setRejectionReason("");
       queryClient.invalidateQueries({ queryKey: queryKeys.moderation.dashboard() });
     },
-    onError: (mutationError) => setError(toUserFacingError(mutationError)),
+    onError: (e) => setError(toUserFacingError(e)),
   });
 
   const openCaseMutation = useMutation({
@@ -72,50 +106,87 @@ export function ModerationPage() {
       contributorUserId: string;
       subject: string;
       openingMessage: string;
-      relatedPubId: string;
+      relatedPubId?: string;
     }) =>
       openCase({
         contributorUserId: payload.contributorUserId,
         subject: payload.subject,
         openingMessage: payload.openingMessage,
         relatedPubId: payload.relatedPubId,
-        labels: ["rejection"],
+        labels: ["moderation"],
       }),
     onSuccess: () => {
       setError(null);
       setOpenCasePublicationId(null);
       setOpenCaseSubject("");
       setOpenCaseMessage("");
+      setStandaloneCase(false);
+      setStandaloneCaseUserId("");
+      setStandaloneCaseSubject("");
+      setStandaloneCaseMessage("");
       queryClient.invalidateQueries({ queryKey: queryKeys.moderation.dashboard() });
     },
-    onError: (mutationError) => setError(toUserFacingError(mutationError)),
+    onError: (e) => setError(toUserFacingError(e)),
   });
 
   const resolveMutation = useMutation({
-    mutationFn: (payload: { caseId: string; note: string }) => resolveCase(payload.caseId, payload.note),
+    mutationFn: (payload: { caseId: string; note: string }) =>
+      resolveCase(payload.caseId, payload.note),
     onSuccess: () => {
       setError(null);
       setResolveCaseId(null);
       setResolutionNote("");
       queryClient.invalidateQueries({ queryKey: queryKeys.moderation.dashboard() });
     },
-    onError: (mutationError) => setError(toUserFacingError(mutationError)),
+    onError: (e) => setError(toUserFacingError(e)),
+  });
+
+  const manageUserMutation = useMutation({
+    mutationFn: (payload: { userId: string; action: "suspend" | "activate" }) =>
+      manageUser(payload.userId, payload.action),
+    onSuccess: () => {
+      setError(null);
+      setManageUserTarget(null);
+      queryClient.invalidateQueries({ queryKey: queryKeys.moderation.users() });
+    },
+    onError: (e) => setError(toUserFacingError(e)),
   });
 
   const submitting =
-    approveMutation.isPending || rejectMutation.isPending || openCaseMutation.isPending || resolveMutation.isPending;
+    approveMutation.isPending ||
+    rejectMutation.isPending ||
+    openCaseMutation.isPending ||
+    resolveMutation.isPending ||
+    manageUserMutation.isPending;
+
+  const standaloneTargetUser = users.find((u) => u.userId === standaloneCaseUserId) ?? null;
 
   return (
     <AppShell>
       <div className="dash-page">
         <header className="dash-page-header">
-          <p className="eyebrow">Moderation</p>
-          <h1>Review Queue And Cases</h1>
-          <p className="muted">Approve or reject pending submissions, then open and resolve contributor cases.</p>
+          <div className="dash-page-header-row">
+            <div>
+              <p className="eyebrow">Moderation</p>
+              <h1>Review Queue &amp; Cases</h1>
+              <p className="muted">
+                Approve or reject pending submissions, manage contributor accounts, and handle cases.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="solid-button"
+              onClick={() => setStandaloneCase(true)}
+            >
+              + New Case
+            </button>
+          </div>
         </header>
 
-        {error ? <p className="error-text">{error}</p> : null}
+        {error && <p className="error-text">{error}</p>}
 
+        {/* ── Pending submissions ─────────────────────────────────── */}
+        <div className="dash-section-label">Pending Submissions</div>
         <div className="table-wrap">
           <table className="table" aria-label="Pending publications">
             <thead>
@@ -133,20 +204,20 @@ export function ModerationPage() {
               ) : (data?.pendingPublications.length ?? 0) === 0 ? (
                 <tr>
                   <td colSpan={5}>
-                    <div className="empty-state">No submissions are waiting for moderation review.</div>
+                    <div className="empty-state">No submissions are waiting for review.</div>
                   </td>
                 </tr>
               ) : (
-                (data?.pendingPublications ?? []).map((publication) => (
-                  <tr key={publication.id}>
+                (data?.pendingPublications ?? []).map((pub) => (
+                  <tr key={pub.id}>
                     <td>
-                      <strong>{publication.title}</strong>
-                      <div className="muted">Submitted: {new Date(publication.submittedAt).toLocaleDateString()}</div>
+                      <strong>{pub.title}</strong>
+                      <div className="muted">{new Date(pub.submittedAt).toLocaleDateString()}</div>
                     </td>
-                    <td>{publication.authorDisplayName}</td>
-                    <td>{publication.type}</td>
+                    <td>{pub.authorDisplayName}</td>
+                    <td>{pub.type}</td>
                     <td>
-                      <span className={`chip status-${publication.status}`}>{publication.status}</span>
+                      <span className={`chip status-${pub.status}`}>{pub.status}</span>
                     </td>
                     <td>
                       <div className="actions-row">
@@ -154,7 +225,7 @@ export function ModerationPage() {
                           type="button"
                           className="small-button primary"
                           disabled={submitting}
-                          onClick={() => approveMutation.mutate(publication.id)}
+                          onClick={() => approveMutation.mutate(pub.id)}
                         >
                           Approve
                         </button>
@@ -162,7 +233,7 @@ export function ModerationPage() {
                           type="button"
                           className="small-button"
                           disabled={submitting}
-                          onClick={() => setRejectModalPublicationId(publication.id)}
+                          onClick={() => setRejectModalPublicationId(pub.id)}
                         >
                           Reject
                         </button>
@@ -171,9 +242,11 @@ export function ModerationPage() {
                           className="small-button"
                           disabled={submitting}
                           onClick={() => {
-                            setOpenCasePublicationId(publication.id);
-                            setOpenCaseSubject(`Follow-up for ${publication.title}`);
-                            setOpenCaseMessage("Please review moderator guidance and submit an updated revision.");
+                            setOpenCasePublicationId(pub.id);
+                            setOpenCaseSubject(`Follow-up for: ${pub.title}`);
+                            setOpenCaseMessage(
+                              "Please review the moderator guidance and submit an updated revision.",
+                            );
                           }}
                         >
                           Open Case
@@ -187,6 +260,8 @@ export function ModerationPage() {
           </table>
         </div>
 
+        {/* ── Open cases ──────────────────────────────────────────── */}
+        <div className="dash-section-label">Open Cases</div>
         <div className="table-wrap">
           <table className="table" aria-label="Open cases">
             <thead>
@@ -204,29 +279,31 @@ export function ModerationPage() {
               ) : (data?.openCases.length ?? 0) === 0 ? (
                 <tr>
                   <td colSpan={5}>
-                    <div className="empty-state">No active moderation cases right now.</div>
+                    <div className="empty-state">No active moderation cases.</div>
                   </td>
                 </tr>
               ) : (
-                (data?.openCases ?? []).map((caseItem) => (
-                  <tr key={caseItem.id}>
+                (data?.openCases ?? []).map((c) => (
+                  <tr key={c.id}>
                     <td>
-                      <strong>{caseItem.caseNumber}</strong>
-                      <div className="muted">{caseItem.subject}</div>
+                      <strong>{c.caseNumber}</strong>
+                      <div className="muted">{c.subject}</div>
                     </td>
-                    <td>{caseItem.priority}</td>
+                    <td>{c.priority}</td>
                     <td>
-                      <span className={`chip status-${caseItem.status}`}>{caseItem.status}</span>
+                      <span className={`chip status-${c.status}`}>{c.status}</span>
                     </td>
-                    <td>{new Date(caseItem.lastActivityAt).toLocaleString()}</td>
+                    <td>{new Date(c.lastActivityAt).toLocaleString()}</td>
                     <td>
                       <button
                         type="button"
                         className="small-button"
                         disabled={submitting}
                         onClick={() => {
-                          setResolveCaseId(caseItem.id);
-                          setResolutionNote("Resolved after moderator follow-up and contributor acknowledgement.");
+                          setResolveCaseId(c.id);
+                          setResolutionNote(
+                            "Resolved after moderator follow-up and contributor acknowledgement.",
+                          );
                         }}
                       >
                         Resolve
@@ -238,15 +315,78 @@ export function ModerationPage() {
             </tbody>
           </table>
         </div>
+
+        {/* ── User management ─────────────────────────────────────── */}
+        <div className="dash-section-label">Contributors</div>
+        <div className="table-wrap">
+          <table className="table" aria-label="Contributors">
+            <thead>
+              <tr>
+                <th>Display Name</th>
+                <th>Role</th>
+                <th>Consent Tier</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {usersLoading ? (
+                <TableSkeletonRows cols={5} rows={5} />
+              ) : users.length === 0 ? (
+                <tr>
+                  <td colSpan={5}>
+                    <div className="empty-state">No users found.</div>
+                  </td>
+                </tr>
+              ) : (
+                users.map((u) => (
+                  <tr key={u.userId}>
+                    <td><strong>{u.displayName}</strong></td>
+                    <td>{u.role}</td>
+                    <td>{u.consentTier}</td>
+                    <td>
+                      <span className={`chip status-${u.accountStatus}`}>
+                        {STATUS_LABELS[u.accountStatus] ?? u.accountStatus}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="actions-row">
+                        <button
+                          type="button"
+                          className={`small-button${u.accountStatus === "suspended" ? " primary" : " danger"}`}
+                          disabled={submitting || u.role === "admin"}
+                          onClick={() => setManageUserTarget(u)}
+                        >
+                          {u.accountStatus === "suspended" ? "Activate" : "Suspend"}
+                        </button>
+                        <button
+                          type="button"
+                          className="small-button"
+                          disabled={submitting}
+                          onClick={() => {
+                            setStandaloneCase(true);
+                            setStandaloneCaseUserId(u.userId);
+                            setStandaloneCaseSubject(`Account notice for ${u.displayName}`);
+                            setStandaloneCaseMessage("");
+                          }}
+                        >
+                          Open Case
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
+      {/* ── Reject publication modal ────────────────────────────── */}
       <Modal
         open={rejectModalPublicationId !== null}
         title="Reject Publication"
-        onClose={() => {
-          setRejectModalPublicationId(null);
-          setRejectionReason("");
-        }}
+        onClose={() => { setRejectModalPublicationId(null); setRejectionReason(""); }}
       >
         <div className="form-grid">
           <label className="field-group">
@@ -254,19 +394,21 @@ export function ModerationPage() {
             <textarea
               rows={4}
               value={rejectionReason}
-              onChange={(event) => setRejectionReason(event.target.value)}
+              onChange={(e) => setRejectionReason(e.target.value)}
               placeholder="Explain what the contributor needs to update."
             />
           </label>
-
           <div className="button-row">
             <button
               type="button"
               className="solid-button"
-              disabled={!rejectModalPublicationId || !rejectionReason.trim() || rejectMutation.isPending}
+              disabled={!rejectionReason.trim() || rejectMutation.isPending}
               onClick={() => {
                 if (!rejectModalPublicationId) return;
-                rejectMutation.mutate({ publicationId: rejectModalPublicationId, reason: rejectionReason.trim() });
+                rejectMutation.mutate({
+                  publicationId: rejectModalPublicationId,
+                  reason: rejectionReason.trim(),
+                });
               }}
             >
               Confirm Rejection
@@ -274,10 +416,7 @@ export function ModerationPage() {
             <button
               type="button"
               className="ghost-button"
-              onClick={() => {
-                setRejectModalPublicationId(null);
-                setRejectionReason("");
-              }}
+              onClick={() => { setRejectModalPublicationId(null); setRejectionReason(""); }}
             >
               Cancel
             </button>
@@ -285,6 +424,7 @@ export function ModerationPage() {
         </div>
       </Modal>
 
+      {/* ── Open case (from publication) modal ─────────────────── */}
       <Modal
         open={openCasePublicationId !== null}
         title="Open Moderation Case"
@@ -297,17 +437,29 @@ export function ModerationPage() {
         <div className="form-grid">
           <label className="field-group">
             <span>Subject</span>
-            <input value={openCaseSubject} onChange={(event) => setOpenCaseSubject(event.target.value)} />
+            <input
+              value={openCaseSubject}
+              onChange={(e) => setOpenCaseSubject(e.target.value)}
+            />
           </label>
           <label className="field-group">
             <span>Opening message</span>
-            <textarea rows={5} value={openCaseMessage} onChange={(event) => setOpenCaseMessage(event.target.value)} />
+            <textarea
+              rows={5}
+              value={openCaseMessage}
+              onChange={(e) => setOpenCaseMessage(e.target.value)}
+            />
           </label>
           <div className="button-row">
             <button
               type="button"
               className="solid-button"
-              disabled={!selectedPublication || !openCaseSubject.trim() || !openCaseMessage.trim() || openCaseMutation.isPending}
+              disabled={
+                !selectedPublication ||
+                !openCaseSubject.trim() ||
+                !openCaseMessage.trim() ||
+                openCaseMutation.isPending
+              }
               onClick={() => {
                 if (!selectedPublication) return;
                 openCaseMutation.mutate({
@@ -335,24 +487,104 @@ export function ModerationPage() {
         </div>
       </Modal>
 
+      {/* ── Standalone case creation modal ──────────────────────── */}
       <Modal
-        open={resolveCaseId !== null}
-        title="Resolve Case"
+        open={standaloneCase}
+        title="New Moderation Case"
         onClose={() => {
-          setResolveCaseId(null);
-          setResolutionNote("");
+          setStandaloneCase(false);
+          setStandaloneCaseUserId("");
+          setStandaloneCaseSubject("");
+          setStandaloneCaseMessage("");
         }}
       >
         <div className="form-grid">
           <label className="field-group">
-            <span>Resolution note</span>
-            <textarea rows={4} value={resolutionNote} onChange={(event) => setResolutionNote(event.target.value)} />
+            <span>Contributor</span>
+            <select
+              value={standaloneCaseUserId}
+              onChange={(e) => setStandaloneCaseUserId(e.target.value)}
+            >
+              <option value="" disabled>Select a contributor…</option>
+              {users.map((u) => (
+                <option key={u.userId} value={u.userId}>
+                  {u.displayName} ({u.accountStatus})
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="field-group">
+            <span>Subject</span>
+            <input
+              value={standaloneCaseSubject}
+              onChange={(e) => setStandaloneCaseSubject(e.target.value)}
+            />
+          </label>
+          <label className="field-group">
+            <span>Opening message</span>
+            <textarea
+              rows={5}
+              value={standaloneCaseMessage}
+              onChange={(e) => setStandaloneCaseMessage(e.target.value)}
+            />
           </label>
           <div className="button-row">
             <button
               type="button"
               className="solid-button"
-              disabled={!resolveCaseId || !resolutionNote.trim() || resolveMutation.isPending}
+              disabled={
+                !standaloneTargetUser ||
+                !standaloneCaseSubject.trim() ||
+                !standaloneCaseMessage.trim() ||
+                openCaseMutation.isPending
+              }
+              onClick={() => {
+                if (!standaloneTargetUser) return;
+                openCaseMutation.mutate({
+                  contributorUserId: standaloneTargetUser.userId,
+                  subject: standaloneCaseSubject.trim(),
+                  openingMessage: standaloneCaseMessage.trim(),
+                });
+              }}
+            >
+              Open Case
+            </button>
+            <button
+              type="button"
+              className="ghost-button"
+              onClick={() => {
+                setStandaloneCase(false);
+                setStandaloneCaseUserId("");
+                setStandaloneCaseSubject("");
+                setStandaloneCaseMessage("");
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* ── Resolve case modal ──────────────────────────────────── */}
+      <Modal
+        open={resolveCaseId !== null}
+        title="Resolve Case"
+        onClose={() => { setResolveCaseId(null); setResolutionNote(""); }}
+      >
+        <div className="form-grid">
+          <label className="field-group">
+            <span>Resolution note</span>
+            <textarea
+              rows={4}
+              value={resolutionNote}
+              onChange={(e) => setResolutionNote(e.target.value)}
+            />
+          </label>
+          <div className="button-row">
+            <button
+              type="button"
+              className="solid-button"
+              disabled={!resolutionNote.trim() || resolveMutation.isPending}
               onClick={() => {
                 if (!resolveCaseId) return;
                 resolveMutation.mutate({ caseId: resolveCaseId, note: resolutionNote.trim() });
@@ -363,10 +595,47 @@ export function ModerationPage() {
             <button
               type="button"
               className="ghost-button"
+              onClick={() => { setResolveCaseId(null); setResolutionNote(""); }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* ── Suspend / activate user modal ───────────────────────── */}
+      <Modal
+        open={manageUserTarget !== null}
+        title={manageUserTarget?.accountStatus === "suspended" ? "Activate Account" : "Suspend Account"}
+        onClose={() => setManageUserTarget(null)}
+      >
+        <div className="form-grid">
+          <p>
+            {manageUserTarget?.accountStatus === "suspended" ? (
+              <>Restore access for <strong>{manageUserTarget?.displayName}</strong>? Their account will be set to active.</>
+            ) : (
+              <>Suspend <strong>{manageUserTarget?.displayName}</strong>? They will not be able to log in or submit publications until reactivated.</>
+            )}
+          </p>
+          <div className="button-row">
+            <button
+              type="button"
+              className={manageUserTarget?.accountStatus === "suspended" ? "solid-button" : "solid-button danger-button"}
+              disabled={manageUserMutation.isPending}
               onClick={() => {
-                setResolveCaseId(null);
-                setResolutionNote("");
+                if (!manageUserTarget) return;
+                manageUserMutation.mutate({
+                  userId: manageUserTarget.userId,
+                  action: manageUserTarget.accountStatus === "suspended" ? "activate" : "suspend",
+                });
               }}
+            >
+              {manageUserTarget?.accountStatus === "suspended" ? "Activate" : "Suspend"}
+            </button>
+            <button
+              type="button"
+              className="ghost-button"
+              onClick={() => setManageUserTarget(null)}
             >
               Cancel
             </button>

@@ -12,6 +12,7 @@ import type {
   Role,
   RegisterPayload,
   RegisterResult,
+  UserListItem,
 } from "@shared/types";
 import { REQUIRES_GUARDIAN } from "@/lib/consent";
 import { clearSessionUser, getSessionUser, setSessionUser } from "@/lib/authStore";
@@ -581,6 +582,18 @@ export async function resolveCase(caseId: string, resolutionNote: string) {
     case_id: caseId,
     status: "resolved",
     resolution_note: resolutionNote,
+  });
+}
+
+export async function listUsers(): Promise<UserListItem[]> {
+  const res = await callApi<{ users: UserListItem[] }>("list-users", undefined, { method: "GET" });
+  return res.users;
+}
+
+export async function manageUser(userId: string, action: "suspend" | "activate") {
+  return callApi<{ status: string; user_id: string }>("manage-user", {
+    user_id: userId,
+    action,
   });
 }
 
