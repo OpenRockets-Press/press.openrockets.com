@@ -3,6 +3,7 @@ import { createAdminClient, getSessionUser } from "../_shared/appwrite";
 import type { Env } from "../_shared/env";
 import { OrpError, toErrorResponse } from "../_shared/errors";
 import { errorResponse, json, parseBody } from "../_shared/http";
+import { writeAuditLog } from "../_shared/writeAuditLog";
 
 const schema = z.object({
   case_id: z.string().min(1),
@@ -55,6 +56,16 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       link: `/cases/${payload.case_id}`,
       read: false,
       created_at: new Date().toISOString(),
+    });
+
+    await writeAuditLog({
+      client,
+      action: "audit_case_resolved",
+      actorUserId: String(user.$id),
+      actorDisplayName: String((user as Record<string, unknown>).name ?? ""),
+      targetId: payload.case_id,
+      targetLabel: String(caseDoc.case_number ?? payload.case_id),
+      details: payload.resolution_note,
     });
 
     return json({ case_id: payload.case_id, status: updated.status });

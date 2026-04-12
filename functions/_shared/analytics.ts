@@ -9,7 +9,17 @@ type EventType =
   | "case_opened"
   | "consent_started"
   | "consent_completed"
-  | "consent_expired";
+  | "consent_expired"
+  // Audit trail — actor info stored in meta JSON
+  | "audit_pub_approved"
+  | "audit_pub_rejected"
+  | "audit_pub_retracted"
+  | "audit_user_suspended"
+  | "audit_user_activated"
+  | "audit_user_promoted"
+  | "audit_user_demoted"
+  | "audit_case_opened"
+  | "audit_case_resolved";
 
 interface TrackParams {
   client: AdminClient;

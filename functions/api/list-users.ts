@@ -20,22 +20,21 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     const q = client.query;
 
     const res = await client.db.listDocuments(dbId, "users", [
-      q.orderDesc("created_at"),
+      q.orderDesc("$createdAt"),
       q.limit(200),
     ]);
 
-    const users = (res.documents as Record<string, unknown>[]).map((u) => ({
-      userId: String(u.user_id ?? u.$id),
-      displayName: String(u.display_name ?? "Contributor"),
-      accountStatus: String(u.account_status ?? "active"),
-      consentTier: String(u.consent_tier ?? "general"),
-      role: Array.isArray(u.labels) && (u.labels as string[]).includes("admin")
-        ? "admin"
-        : Array.isArray(u.labels) && (u.labels as string[]).includes("moderator")
-          ? "moderator"
-          : "contributor",
-      createdAt: String(u.created_at ?? new Date().toISOString()),
-    }));
+    const users = (res.documents as Record<string, unknown>[]).map((u) => {
+      const role = String(u.role ?? "contributor");
+      return {
+        userId: String(u.user_id ?? u.$id),
+        displayName: String(u.display_name ?? "Contributor"),
+        accountStatus: String(u.account_status ?? "active"),
+        consentTier: String(u.consent_tier ?? "general"),
+        role: (role === "admin" || role === "moderator") ? role : "contributor",
+        createdAt: String(u.created_at ?? u.$createdAt ?? new Date().toISOString()),
+      };
+    });
 
     return json({ users });
   } catch (err) {

@@ -2,6 +2,7 @@ import { createAdminClient, getSessionUser } from "../_shared/appwrite";
 import type { Env } from "../_shared/env";
 import { OrpError, toErrorResponse } from "../_shared/errors";
 import { errorResponse, json } from "../_shared/http";
+import { writeAuditLog } from "../_shared/writeAuditLog";
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   try {
@@ -42,6 +43,15 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     await client.db.updateDocument(dbId, "users", docId, {
       account_status: newStatus,
+    });
+
+    await writeAuditLog({
+      client,
+      action: action === "suspend" ? "audit_user_suspended" : "audit_user_activated",
+      actorUserId: String(user.$id),
+      actorDisplayName: String((user as Record<string, unknown>).name ?? ""),
+      targetId: targetUserId,
+      targetLabel: String(doc.display_name ?? ""),
     });
 
     return json({ status: newStatus, user_id: targetUserId });

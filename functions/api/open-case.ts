@@ -4,6 +4,7 @@ import type { Env } from "../_shared/env";
 import { OrpError, toErrorResponse } from "../_shared/errors";
 import { errorResponse, json, parseBody } from "../_shared/http";
 import { trackAnalyticsEvent } from "../_shared/analytics";
+import { writeAuditLog } from "../_shared/writeAuditLog";
 import { buildCaseNumber, nextCounter } from "../_shared/counters";
 
 const schema = z.object({
@@ -13,6 +14,7 @@ const schema = z.object({
   labels: z
     .array(
       z.enum([
+        "moderation",
         "rejection",
         "copyright",
         "content_policy",
@@ -87,6 +89,16 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     });
 
     await trackAnalyticsEvent({ client, eventType: "case_opened" });
+
+    await writeAuditLog({
+      client,
+      action: "audit_case_opened",
+      actorUserId: openedBy,
+      actorDisplayName: String((user as Record<string, unknown>).name ?? ""),
+      targetId: payload.contributor_user_id,
+      targetLabel: caseNumber,
+      details: payload.subject,
+    });
 
     return json({ case_id: caseDoc.$id, case_number: caseNumber, status: "open" });
   } catch (err) {

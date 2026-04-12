@@ -4,6 +4,7 @@ import type { Env } from "../_shared/env";
 import { OrpError, toErrorResponse } from "../_shared/errors";
 import { errorResponse, getIP, json, parseBody } from "../_shared/http";
 import { trackAnalyticsEvent, trackPlausibleEvent } from "../_shared/analytics";
+import { writeAuditLog } from "../_shared/writeAuditLog";
 import { buildPubId, nextCounter } from "../_shared/counters";
 
 const schema = z.object({
@@ -78,6 +79,15 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         userAgent: ua,
       });
 
+      await writeAuditLog({
+        client,
+        action: "audit_pub_approved",
+        actorUserId: reviewerId,
+        actorDisplayName: String((user as Record<string, unknown>).name ?? ""),
+        targetId: payload.publication_id,
+        targetLabel: String(publication.title ?? ""),
+      });
+
       return json({ status: updated.status, pub_id: updated.pub_id });
     }
 
@@ -113,6 +123,16 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       props: { type: String(publication.type) },
       ip,
       userAgent: ua,
+    });
+
+    await writeAuditLog({
+      client,
+      action: "audit_pub_rejected",
+      actorUserId: reviewerId,
+      actorDisplayName: String((user as Record<string, unknown>).name ?? ""),
+      targetId: payload.publication_id,
+      targetLabel: String(publication.title ?? ""),
+      details: payload.rejection_reason,
     });
 
     return json({ status: updated.status });
