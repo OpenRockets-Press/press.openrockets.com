@@ -33,7 +33,7 @@ export function HomePage() {
   };
 
   return (
-    <>
+    <div className="home-page">
       <HomeHeader search={search} onSearchChange={setSearch} onOpenInfo={setInfoModal} />
 
       <main className="home-shell main-content">
@@ -66,6 +66,6 @@ export function HomePage() {
       >
         {infoModal ? <HomeInfoModalContent kind={infoModal} /> : null}
       </Modal>
-    </>
+    </div>
   );
 }

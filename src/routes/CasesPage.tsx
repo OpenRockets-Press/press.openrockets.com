@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Modal } from "@/components/ui/Modal";
+import { AppShell } from "@/components/AppShell";
 import {
   getCaseMessages,
   getContributorCases,
@@ -112,22 +113,15 @@ export function CasesPage() {
   }
 
   return (
-    <main className="page-wrap">
-      <section className="panel">
-        <p className="eyebrow">Contributor Support</p>
-        <h1>Cases Inbox</h1>
-        <p className="muted">Track moderator conversations and send updates for each case thread.</p>
+    <AppShell>
+      <div className="dash-page">
+        <header className="dash-page-header">
+          <p className="eyebrow">Contributor Support</p>
+          <h1>Cases Inbox</h1>
+          <p className="muted">Track moderator conversations and send updates for each case thread.</p>
+        </header>
 
         {error ? <p className="error-text">{error}</p> : null}
-
-        <div className="button-row">
-          <Link className="solid-button" to="/publish">
-            Submit New Publication
-          </Link>
-          <Link className="ghost-button" to="/dashboard">
-            Back to Dashboard
-          </Link>
-        </div>
 
         <div className="table-wrap">
           <table className="table" aria-label="Contributor cases">
@@ -179,7 +173,7 @@ export function CasesPage() {
             </tbody>
           </table>
         </div>
-      </section>
+      </div>
 
       <Modal
         open={activeCase !== null}
@@ -244,6 +238,6 @@ export function CasesPage() {
           </div>
         ) : null}
       </Modal>
-    </main>
+    </AppShell>
   );
 }

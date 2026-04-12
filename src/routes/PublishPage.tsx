@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Publication } from "@shared/types";
 import { getCurrentUser, submitPublication, toUserFacingError } from "@/lib/api";
 import { queryKeys } from "@/lib/queryKeys";
+import { AppShell } from "@/components/AppShell";
 
 const publicationTypes: { value: Publication["type"]; label: string }[] = [
   { value: "book", label: "Book" },
@@ -118,7 +119,8 @@ export function PublishPage() {
   const isSubmitDisabled = !title.trim() || !file || submitMutation.isPending;
 
   return (
-    <main className="page-wrap">
+    <AppShell>
+      <div className="dash-page">
       <section className="panel">
         <p className="eyebrow">Contributor Workflow</p>
         <h1>Submit A Publication</h1>
@@ -212,12 +214,10 @@ export function PublishPage() {
             <button type="submit" className="solid-button" disabled={isSubmitDisabled}>
               {submitMutation.isPending ? "Submitting..." : "Submit For Review"}
             </button>
-            <Link className="ghost-button" to="/dashboard">
-              Back to Dashboard
-            </Link>
           </div>
         </form>
       </section>
-    </main>
+      </div>
+    </AppShell>
   );
 }

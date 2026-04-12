@@ -32,6 +32,9 @@ const PrivacyPolicyPage = lazy(() =>
 const ParentalConsentFormPage = lazy(() =>
   import("@/routes/ParentalConsentFormPage").then((module) => ({ default: module.ParentalConsentFormPage })),
 );
+const TermsOfServicePage = lazy(() =>
+  import("@/routes/TermsOfServicePage").then((module) => ({ default: module.TermsOfServicePage })),
+);
 const DashboardPage = lazy(() => import("@/routes/DashboardPage").then((module) => ({ default: module.DashboardPage })));
 const CasesPage = lazy(() => import("@/routes/CasesPage").then((module) => ({ default: module.CasesPage })));
 const ModerationPage = lazy(() => import("@/routes/ModerationPage").then((module) => ({ default: module.ModerationPage })));
@@ -58,58 +61,81 @@ function PageSkeleton() {
 
 function DashboardSkeleton() {
   return (
-    <main className="page-wrap dashboard-wrap" aria-hidden="true">
-      <section className="panel">
-        <div className="skeleton-bar" style={{ height: "10px", width: "120px", marginBottom: "0.5rem" }} />
-        <div className="skeleton-bar skeleton-bar-title" />
-        <div className="skeleton-bar skeleton-bar-sm" style={{ marginTop: "0.4rem" }} />
-        <div className="stats-grid" style={{ marginTop: "1.5rem" }}>
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="stat-card skeleton-stat-card">
-              <div className="skeleton-bar" style={{ height: "10px", width: "60%" }} />
-              <div className="skeleton-bar" style={{ height: "28px", width: "40%", marginTop: "0.5rem" }} />
-            </div>
+    <div className="app-shell" aria-hidden="true">
+      <aside className="app-sidebar">
+        <div className="sidebar-brand">
+          <div className="skeleton-bar" style={{ height: "14px", width: "40px" }} />
+        </div>
+        <div className="sidebar-user" style={{ gap: "0.75rem", alignItems: "center" }}>
+          <div className="skeleton-bar" style={{ width: "36px", height: "36px", borderRadius: "50%", flexShrink: 0 }} />
+          <div style={{ flex: 1 }}>
+            <div className="skeleton-bar" style={{ height: "10px", width: "80%" }} />
+            <div className="skeleton-bar" style={{ height: "8px", width: "50%", marginTop: "0.35rem" }} />
+          </div>
+        </div>
+        <div className="sidebar-nav">
+          {[70, 55, 65, 45].map((w, i) => (
+            <div key={i} className="skeleton-bar" style={{ height: "32px", width: `${w}%`, borderRadius: "7px" }} />
           ))}
         </div>
-        <div className="skeleton-table-block" style={{ marginTop: "1.75rem" }}>
-          <div className="skeleton-bar" style={{ height: "10px", width: "30%", marginBottom: "0.75rem" }} />
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="skeleton-row-line" />
-          ))}
+      </aside>
+      <div className="app-content">
+        <div className="dash-page">
+          <div className="skeleton-bar" style={{ height: "10px", width: "140px", marginBottom: "0.5rem" }} />
+          <div className="skeleton-bar skeleton-bar-title" />
+          <div className="skeleton-bar skeleton-bar-sm" style={{ marginTop: "0.4rem" }} />
+          <div className="stats-grid" style={{ marginTop: "1.5rem" }}>
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="stat-card skeleton-stat-card">
+                <div className="skeleton-bar" style={{ height: "10px", width: "60%" }} />
+                <div className="skeleton-bar" style={{ height: "28px", width: "40%", marginTop: "0.5rem" }} />
+              </div>
+            ))}
+          </div>
+          <div className="skeleton-table-block" style={{ marginTop: "1.75rem" }}>
+            <div className="skeleton-bar" style={{ height: "10px", width: "30%", marginBottom: "0.75rem" }} />
+            {[1, 2, 3].map((i) => <div key={i} className="skeleton-row-line" />)}
+          </div>
+          <div className="skeleton-table-block" style={{ marginTop: "1.5rem" }}>
+            <div className="skeleton-bar" style={{ height: "10px", width: "20%", marginBottom: "0.75rem" }} />
+            {[1, 2].map((i) => <div key={i} className="skeleton-row-line" />)}
+          </div>
         </div>
-        <div className="skeleton-table-block" style={{ marginTop: "1.5rem" }}>
-          <div className="skeleton-bar" style={{ height: "10px", width: "20%", marginBottom: "0.75rem" }} />
-          {[1, 2].map((i) => (
-            <div key={i} className="skeleton-row-line" />
-          ))}
-        </div>
-      </section>
-    </main>
+      </div>
+    </div>
   );
 }
 
 function PanelPageSkeleton() {
   return (
-    <main className="page-wrap" aria-hidden="true">
-      <section className="panel">
-        <div className="skeleton-bar" style={{ height: "10px", width: "100px", marginBottom: "0.5rem" }} />
-        <div className="skeleton-bar skeleton-bar-title" />
-        <div className="skeleton-bar skeleton-bar-sm" style={{ marginTop: "0.4rem" }} />
-        <div className="kpi-grid" style={{ marginTop: "1.5rem" }}>
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="kpi-card" style={{ minHeight: "72px" }}>
-              <div className="skeleton-bar" style={{ height: "10px", width: "60%" }} />
-              <div className="skeleton-bar" style={{ height: "28px", width: "35%", marginTop: "0.5rem" }} />
-            </div>
+    <div className="app-shell" aria-hidden="true">
+      <aside className="app-sidebar">
+        <div className="sidebar-brand">
+          <div className="skeleton-bar" style={{ height: "14px", width: "40px" }} />
+        </div>
+        <div className="sidebar-user" style={{ gap: "0.75rem", alignItems: "center" }}>
+          <div className="skeleton-bar" style={{ width: "36px", height: "36px", borderRadius: "50%", flexShrink: 0 }} />
+          <div style={{ flex: 1 }}>
+            <div className="skeleton-bar" style={{ height: "10px", width: "80%" }} />
+          </div>
+        </div>
+        <div className="sidebar-nav">
+          {[70, 55, 65].map((w, i) => (
+            <div key={i} className="skeleton-bar" style={{ height: "32px", width: `${w}%`, borderRadius: "7px" }} />
           ))}
         </div>
-        <div className="skeleton-table-block" style={{ marginTop: "1.75rem" }}>
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="skeleton-row-line" />
-          ))}
+      </aside>
+      <div className="app-content">
+        <div className="dash-page">
+          <div className="skeleton-bar" style={{ height: "10px", width: "100px", marginBottom: "0.5rem" }} />
+          <div className="skeleton-bar skeleton-bar-title" />
+          <div className="skeleton-bar skeleton-bar-sm" style={{ marginTop: "0.4rem" }} />
+          <div className="skeleton-table-block" style={{ marginTop: "1.75rem" }}>
+            {[1, 2, 3, 4].map((i) => <div key={i} className="skeleton-row-line" />)}
+          </div>
         </div>
-      </section>
-    </main>
+      </div>
+    </div>
   );
 }
 
@@ -178,6 +204,12 @@ const parentalConsentRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/legal/parental-consent-form",
   component: () => withRouteSuspense(<ParentalConsentFormPage />),
+});
+
+const termsOfServiceRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/legal/terms",
+  component: () => withRouteSuspense(<TermsOfServicePage />),
 });
 
 const dashboardRoute = createRoute({
@@ -300,6 +332,7 @@ const routeTree = rootRoute.addChildren([
   adminRoute,
   privacyPolicyRoute,
   parentalConsentRoute,
+  termsOfServiceRoute,
   publicationDetailRoute,
   suspendedRoute,
 ]);

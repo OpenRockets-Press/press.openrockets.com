@@ -595,10 +595,6 @@ export async function createDsarRequest(userId: string, action: "export" | "dele
   });
 }
 
-export async function adminBootstrap(secret: string): Promise<{ ok: boolean; role: string }> {
-  return callApi<{ ok: boolean; role: string }>("admin-bootstrap", { secret });
-}
-
 export async function refreshCurrentUser(): Promise<SessionUser | null> {
   invalidateJWT();
   return hydrateCurrentUserFromRemote(true);

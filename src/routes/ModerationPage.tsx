@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Modal } from "@/components/ui/Modal";
+import { AppShell } from "@/components/AppShell";
 import { getModerationDashboard, openCase, resolveCase, reviewPublication, toUserFacingError } from "@/lib/api";
 import { queryKeys } from "@/lib/queryKeys";
 
@@ -105,11 +106,13 @@ export function ModerationPage() {
     approveMutation.isPending || rejectMutation.isPending || openCaseMutation.isPending || resolveMutation.isPending;
 
   return (
-    <main className="page-wrap">
-      <section className="panel">
-        <p className="eyebrow">Moderation</p>
-        <h1>Review Queue And Cases</h1>
-        <p className="muted">Approve or reject pending submissions, then open and resolve contributor cases.</p>
+    <AppShell>
+      <div className="dash-page">
+        <header className="dash-page-header">
+          <p className="eyebrow">Moderation</p>
+          <h1>Review Queue And Cases</h1>
+          <p className="muted">Approve or reject pending submissions, then open and resolve contributor cases.</p>
+        </header>
 
         {error ? <p className="error-text">{error}</p> : null}
 
@@ -235,7 +238,7 @@ export function ModerationPage() {
             </tbody>
           </table>
         </div>
-      </section>
+      </div>
 
       <Modal
         open={rejectModalPublicationId !== null}
@@ -370,6 +373,6 @@ export function ModerationPage() {
           </div>
         </div>
       </Modal>
-    </main>
+    </AppShell>
   );
 }

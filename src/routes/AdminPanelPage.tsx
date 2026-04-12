@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Modal } from "@/components/ui/Modal";
+import { AppShell } from "@/components/AppShell";
 import { createDsarRequest, getAdminDashboard, toUserFacingError } from "@/lib/api";
 import { queryKeys } from "@/lib/queryKeys";
 
@@ -62,16 +63,18 @@ export function AdminPanelPage() {
   const pendingTarget = data?.pendingParentalAccounts.find((item) => item.userId === dsarTargetUserId) ?? null;
 
   return (
-    <main className="page-wrap">
-      <section className="panel">
-        <p className="eyebrow">Admin Panel</p>
-        <h1>Operations, Consent, And Compliance</h1>
-        <p className="muted">
-          Monitor user state, consent funnel health, moderation load, and trigger DSAR workflows.
-        </p>
+    <AppShell>
+      <div className="dash-page">
+        <header className="dash-page-header">
+          <p className="eyebrow">Admin Panel</p>
+          <h1>Operations, Consent, And Compliance</h1>
+          <p className="muted">
+            Monitor user state, consent funnel health, moderation load, and trigger DSAR workflows.
+          </p>
+        </header>
 
         {error ? <p className="error-text">{error}</p> : null}
-        {success ? <p className="muted">{success}</p> : null}
+        {success ? <p className="success-text">{success}</p> : null}
 
         {isLoading ? <KpiSkeleton /> : <div className="kpi-grid">
           <article className="kpi-card">
@@ -189,7 +192,7 @@ export function AdminPanelPage() {
             </tbody>
           </table>
         </div>
-      </section>
+      </div>
 
       <Modal
         open={pendingTarget !== null}
@@ -223,6 +226,6 @@ export function AdminPanelPage() {
           </div>
         ) : null}
       </Modal>
-    </main>
+    </AppShell>
   );
 }
