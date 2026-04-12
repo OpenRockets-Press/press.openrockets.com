@@ -1,10 +1,18 @@
 export function PrivacyPolicyPage() {
   return (
     <main className="page-wrap legal-wrap">
-      <h1>Privacy Policy</h1>
-      <p className="legal-meta">
-        <strong>Open Rockets Press</strong> · Effective: 1 January 2025 · Last updated: April 2026
-      </p>
+      <article className="legal-document" aria-label="Privacy policy legal notice">
+        <header className="legal-doc-head">
+          <div className="legal-doc-brand" aria-hidden="true">
+            <img className="legal-doc-logo" src="/brand/271742354.png" alt="" />
+            <img className="legal-doc-mark" src="/brand/9283527.png" alt="" />
+          </div>
+          <p className="legal-doc-org">Open Rockets Foundation</p>
+          <h1>Privacy Policy</h1>
+          <p className="legal-meta">
+            <strong>Open Rockets Press</strong> · Effective 1 January 2025 · Last updated April 2026
+          </p>
+        </header>
 
       <section className="legal-section">
         <h2>1. Overview</h2>
@@ -232,6 +240,7 @@ export function PrivacyPolicyPage() {
           <strong>privacy@openrockets.com</strong>
         </p>
       </section>
+      </article>
     </main>
   );
 }
