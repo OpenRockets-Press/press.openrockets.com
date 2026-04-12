@@ -866,6 +866,32 @@ button { font: inherit; cursor: pointer; }
   border-color: rgba(124, 85, 0, 0.25);
 }
 
+/* ── Role chips ── */
+.chip.role-admin {
+  color: #5c1f91;
+  background: rgba(92, 31, 145, 0.07);
+  border-color: rgba(92, 31, 145, 0.3);
+}
+.chip.role-moderator {
+  color: var(--navy);
+  background: rgba(29, 52, 97, 0.07);
+  border-color: rgba(29, 52, 97, 0.3);
+}
+.chip.role-contributor {
+  color: var(--text-2);
+  background: transparent;
+  border-color: var(--line);
+}
+
+/* ── Audit action chip ── */
+.chip.audit-action {
+  color: var(--text-2);
+  background: var(--panel-2);
+  border-color: var(--line);
+  font-size: 0.7rem;
+  letter-spacing: 0.01em;
+}
+
 /* ── App shell (authenticated pages layout with sidebar) ── */
 .app-shell {
   display: grid;

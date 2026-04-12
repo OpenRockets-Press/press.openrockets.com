@@ -162,6 +162,17 @@ export interface UserListItem {
   createdAt: string;
 }
 
+export interface AuditLogEntry {
+  id: string;
+  action: string;
+  actorUserId: string;
+  actorDisplayName: string;
+  targetId: string;
+  targetLabel: string;
+  details: string;
+  occurredAt: string;
+}
+
 export interface AdminDashboardData {
   totalUsers: number;
   activeUsers: number;

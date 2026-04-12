@@ -4,6 +4,7 @@ import type { UserListItem } from "@shared/types";
 import { Modal } from "@/components/ui/Modal";
 import { AppShell } from "@/components/AppShell";
 import {
+  getAuditLog,
   getModerationDashboard,
   listUsers,
   manageUser,
@@ -35,6 +36,18 @@ const STATUS_LABELS: Record<string, string> = {
   suspended: "Suspended",
   pending_parental: "Pending consent",
   deletion_requested: "Deletion req.",
+};
+
+const AUDIT_ACTION_LABELS: Record<string, string> = {
+  audit_pub_approved: "Approved publication",
+  audit_pub_rejected: "Rejected publication",
+  audit_pub_retracted: "Retracted publication",
+  audit_user_suspended: "Suspended user",
+  audit_user_activated: "Activated user",
+  audit_user_promoted: "Promoted to moderator",
+  audit_user_demoted: "Demoted to contributor",
+  audit_case_opened: "Opened case",
+  audit_case_resolved: "Resolved case",
 };
 
 export function ModerationPage() {
@@ -69,9 +82,15 @@ export function ModerationPage() {
     staleTime: 30_000,
   });
 
-  const { data: users = [], isLoading: usersLoading } = useQuery({
+  const { data: users = [], isLoading: usersLoading, error: usersError } = useQuery({
     queryKey: queryKeys.moderation.users(),
     queryFn: listUsers,
+    staleTime: 60_000,
+  });
+
+  const { data: auditEntries = [], isLoading: auditLoading } = useQuery({
+    queryKey: queryKeys.moderation.auditLog(),
+    queryFn: getAuditLog,
     staleTime: 60_000,
   });
 
@@ -85,6 +104,7 @@ export function ModerationPage() {
     onSuccess: () => {
       setError(null);
       queryClient.invalidateQueries({ queryKey: queryKeys.moderation.dashboard() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.moderation.auditLog() });
     },
     onError: (e) => setError(toUserFacingError(e)),
   });
@@ -97,6 +117,7 @@ export function ModerationPage() {
       setRejectModalPublicationId(null);
       setRejectionReason("");
       queryClient.invalidateQueries({ queryKey: queryKeys.moderation.dashboard() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.moderation.auditLog() });
     },
     onError: (e) => setError(toUserFacingError(e)),
   });
@@ -125,6 +146,7 @@ export function ModerationPage() {
       setStandaloneCaseSubject("");
       setStandaloneCaseMessage("");
       queryClient.invalidateQueries({ queryKey: queryKeys.moderation.dashboard() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.moderation.auditLog() });
     },
     onError: (e) => setError(toUserFacingError(e)),
   });
@@ -137,6 +159,7 @@ export function ModerationPage() {
       setResolveCaseId(null);
       setResolutionNote("");
       queryClient.invalidateQueries({ queryKey: queryKeys.moderation.dashboard() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.moderation.auditLog() });
     },
     onError: (e) => setError(toUserFacingError(e)),
   });
@@ -148,6 +171,7 @@ export function ModerationPage() {
       setError(null);
       setManageUserTarget(null);
       queryClient.invalidateQueries({ queryKey: queryKeys.moderation.users() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.moderation.auditLog() });
     },
     onError: (e) => setError(toUserFacingError(e)),
   });
@@ -318,6 +342,11 @@ export function ModerationPage() {
 
         {/* ── User management ─────────────────────────────────────── */}
         <div className="dash-section-label">Contributors</div>
+        {usersError && (
+          <p className="error-text">
+            Could not load contributors: {toUserFacingError(usersError)}
+          </p>
+        )}
         <div className="table-wrap">
           <table className="table" aria-label="Contributors">
             <thead>
@@ -326,15 +355,16 @@ export function ModerationPage() {
                 <th>Role</th>
                 <th>Consent Tier</th>
                 <th>Status</th>
+                <th>Joined</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {usersLoading ? (
-                <TableSkeletonRows cols={5} rows={5} />
+                <TableSkeletonRows cols={6} rows={5} />
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={5}>
+                  <td colSpan={6}>
                     <div className="empty-state">No users found.</div>
                   </td>
                 </tr>
@@ -342,12 +372,17 @@ export function ModerationPage() {
                 users.map((u) => (
                   <tr key={u.userId}>
                     <td><strong>{u.displayName}</strong></td>
-                    <td>{u.role}</td>
+                    <td>
+                      <span className={`chip role-${u.role}`}>{u.role}</span>
+                    </td>
                     <td>{u.consentTier}</td>
                     <td>
                       <span className={`chip status-${u.accountStatus}`}>
                         {STATUS_LABELS[u.accountStatus] ?? u.accountStatus}
                       </span>
+                    </td>
+                    <td className="muted">
+                      {new Date(u.createdAt).toLocaleDateString()}
                     </td>
                     <td>
                       <div className="actions-row">
@@ -373,6 +408,49 @@ export function ModerationPage() {
                           Open Case
                         </button>
                       </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* ── Audit log ───────────────────────────────────────────── */}
+        <div className="dash-section-label">Recent Activity</div>
+        <div className="table-wrap">
+          <table className="table" aria-label="Audit log">
+            <thead>
+              <tr>
+                <th>Action</th>
+                <th>Moderator</th>
+                <th>Target</th>
+                <th>Details</th>
+                <th>When</th>
+              </tr>
+            </thead>
+            <tbody>
+              {auditLoading ? (
+                <TableSkeletonRows cols={5} rows={5} />
+              ) : auditEntries.length === 0 ? (
+                <tr>
+                  <td colSpan={5}>
+                    <div className="empty-state">No audit entries yet.</div>
+                  </td>
+                </tr>
+              ) : (
+                auditEntries.slice(0, 30).map((entry) => (
+                  <tr key={entry.id}>
+                    <td>
+                      <span className={`chip audit-action`}>
+                        {AUDIT_ACTION_LABELS[entry.action] ?? entry.action}
+                      </span>
+                    </td>
+                    <td>{entry.actorDisplayName || entry.actorUserId.slice(0, 8) + "…"}</td>
+                    <td className="muted">{entry.targetLabel || entry.targetId.slice(0, 12) + "…"}</td>
+                    <td className="muted">{entry.details || "—"}</td>
+                    <td className="muted">
+                      {entry.occurredAt ? new Date(entry.occurredAt).toLocaleString() : "—"}
                     </td>
                   </tr>
                 ))

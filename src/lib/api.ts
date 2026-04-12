@@ -1,5 +1,6 @@
 import type {
   AdminDashboardData,
+  AuditLogEntry,
   CaseMessage,
   CasePriority,
   CaseStatus,
@@ -595,6 +596,25 @@ export async function manageUser(userId: string, action: "suspend" | "activate")
     user_id: userId,
     action,
   });
+}
+
+export async function promoteUser(userId: string, action: "promote" | "demote") {
+  return callApi<{ user_id: string; role: string }>("promote-user", {
+    user_id: userId,
+    action,
+  });
+}
+
+export async function retractPublication(publicationId: string, reason = "") {
+  return callApi<{ status: string; publication_id: string }>("retract-publication", {
+    publication_id: publicationId,
+    reason,
+  });
+}
+
+export async function getAuditLog(): Promise<AuditLogEntry[]> {
+  const res = await callApi<{ entries: AuditLogEntry[] }>("get-audit-log", undefined, { method: "GET" });
+  return res.entries;
 }
 
 export async function getAdminDashboard(): Promise<AdminDashboardData> {
