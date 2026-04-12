@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, useRouterState } from "@tanstack/react-router";
 import { HomeFooter } from "@/components/home/HomeFooter";
 import { HomeHeader } from "@/components/home/HomeHeader";
@@ -11,6 +11,25 @@ export function RootLayout() {
   });
   const [search, setSearch] = useState("");
   const [infoModal, setInfoModal] = useState<HomeInfoModalKind | null>(null);
+
+  useEffect(() => {
+    const routeTitleMap: Record<string, string> = {
+      "/": "OpenRockets Press",
+      "/login": "Sign In · OpenRockets Press",
+      "/register": "Register · OpenRockets Press",
+      "/publish": "Publish · OpenRockets Press",
+      "/dashboard": "Dashboard · OpenRockets Press",
+      "/cases": "Cases · OpenRockets Press",
+      "/moderation": "Moderation · OpenRockets Press",
+      "/admin": "Admin Panel · OpenRockets Press",
+      "/about": "About · OpenRockets Press",
+      "/legal/terms": "Terms of Service · OpenRockets Press",
+      "/legal/privacy-policy": "Privacy Policy · OpenRockets Press",
+      "/legal/parental-consent-form": "Parental Consent · OpenRockets Press",
+    };
+
+    document.title = routeTitleMap[pathname] ?? "OpenRockets Press";
+  }, [pathname]);
 
   const appShellRoots = ["/dashboard", "/cases", "/moderation", "/admin"];
   const showGlobalChrome = pathname !== "/"

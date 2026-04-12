@@ -939,12 +939,21 @@ button { font: inherit; cursor: pointer; }
 }
 
 .sidebar-brand-link {
-  font-family: 'Oswald', sans-serif;
-  font-size: 1rem;
-  font-weight: 300;
-  letter-spacing: 0.28em;
-  color: var(--rust);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--accent);
   text-decoration: none;
+}
+
+.sidebar-brand-main { width: 2.6rem; height: auto; }
+.sidebar-brand-mark { width: 1rem; height: auto; }
+.sidebar-brand-press {
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 300;
+  letter-spacing: 0.16em;
+  color: var(--accent);
 }
 
 .sidebar-user {
@@ -2078,11 +2087,10 @@ button { font: inherit; cursor: pointer; }
   }
 
   .sidebar-mobile-brand {
-    font-family: 'Oswald', sans-serif;
-    font-size: 0.95rem;
-    font-weight: 300;
-    letter-spacing: 0.28em;
-    color: var(--rust);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--accent);
     text-decoration: none;
   }
 
