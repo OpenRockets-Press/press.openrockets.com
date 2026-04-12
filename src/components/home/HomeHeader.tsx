@@ -11,6 +11,7 @@ interface HomeHeaderProps {
 
 export function HomeHeader({ search, onSearchChange, onOpenInfo }: HomeHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isCompactSearch, setIsCompactSearch] = useState(false);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [isPlaceholderFading, setIsPlaceholderFading] = useState(false);
   const [dynamicPlaceholders, setDynamicPlaceholders] = useState<string[]>([
@@ -52,6 +53,28 @@ export function HomeHeader({ search, onSearchChange, onOpenInfo }: HomeHeaderPro
   }, []);
 
   useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+
+    const applyMode = (matches: boolean) => {
+      setIsCompactSearch(matches);
+      setIsPlaceholderFading(false);
+    };
+
+    applyMode(mediaQuery.matches);
+
+    const handleMediaChange = (event: MediaQueryListEvent) => {
+      applyMode(event.matches);
+    };
+
+    mediaQuery.addEventListener("change", handleMediaChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleMediaChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isCompactSearch) return;
     if (dynamicPlaceholders.length < 2) return;
 
     const cycleTimer = window.setInterval(() => {
@@ -66,12 +89,15 @@ export function HomeHeader({ search, onSearchChange, onOpenInfo }: HomeHeaderPro
     return () => {
       window.clearInterval(cycleTimer);
     };
-  }, [dynamicPlaceholders]);
+  }, [dynamicPlaceholders, isCompactSearch]);
 
-  const activePlaceholder = useMemo(
-    () => dynamicPlaceholders[placeholderIndex] ?? "Search student research and journals...",
-    [dynamicPlaceholders, placeholderIndex],
-  );
+  const activePlaceholder = useMemo(() => {
+    if (isCompactSearch) {
+      return "Search journals, research papers, and more...";
+    }
+
+    return dynamicPlaceholders[placeholderIndex] ?? "Search student research and journals...";
+  }, [dynamicPlaceholders, placeholderIndex, isCompactSearch]);
 
   return (
     <header className="home-header" data-testid="home-header">
@@ -92,7 +118,7 @@ export function HomeHeader({ search, onSearchChange, onOpenInfo }: HomeHeaderPro
               data-testid="home-search-input"
               value={search}
               onChange={(event) => onSearchChange(event.target.value)}
-              className={`search-input${isPlaceholderFading ? " placeholder-fade" : ""}`}
+              className={`search-input${isPlaceholderFading && !isCompactSearch ? " placeholder-fade" : ""}`}
               type="text"
               placeholder={activePlaceholder}
               aria-label="Search publications"
