@@ -51,11 +51,6 @@ export function CountryCombobox({ value, onChange, id }: CountryComboboxProps) {
     item?.scrollIntoView({ block: "nearest" });
   }, [highlighted]);
 
-  // Reset highlight when filter changes
-  useEffect(() => {
-    setHighlighted(0);
-  }, [search]);
-
   function handleTriggerKeyDown(e: KeyboardEvent<HTMLButtonElement>) {
     if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
       setOpen(true);
@@ -126,7 +121,10 @@ export function CountryCombobox({ value, onChange, id }: CountryComboboxProps) {
               className="combobox-search"
               placeholder="Search country…"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setHighlighted(0);
+              }}
               onKeyDown={handleSearchKeyDown}
               aria-label="Search countries"
               autoComplete="off"

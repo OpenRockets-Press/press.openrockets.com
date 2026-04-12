@@ -13,6 +13,18 @@ interface AppShellProps {
   children: ReactNode;
 }
 
+interface SidebarLinkItem {
+  to: string;
+  label: string;
+  subtitle: string;
+}
+
+interface SidebarSection {
+  title: string;
+  tone: "workspace" | "moderator" | "admin";
+  links: SidebarLinkItem[];
+}
+
 export function AppShell({ children }: AppShellProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -38,6 +50,38 @@ export function AppShell({ children }: AppShellProps) {
 
   const isMod = user?.role === "moderator" || user?.role === "admin";
   const isAdmin = user?.role === "admin";
+
+  const sidebarSections: SidebarSection[] = [
+    {
+      title: "WORKSPACE",
+      tone: "workspace",
+      links: [
+        { to: "/dashboard", label: "Overview", subtitle: "Contributor metrics" },
+        { to: "/cases", label: "Cases Inbox", subtitle: "Open your active threads" },
+        { to: "/publish", label: "New Submission", subtitle: "Upload and submit" },
+      ],
+    },
+  ];
+
+  if (isMod) {
+    sidebarSections.push({
+      title: "MODERATOR",
+      tone: "moderator",
+      links: [
+        { to: "/moderation", label: "Queue and Cases", subtitle: "Review publications" },
+      ],
+    });
+  }
+
+  if (isAdmin) {
+    sidebarSections.push({
+      title: "ADMIN",
+      tone: "admin",
+      links: [
+        { to: "/admin", label: "Control Center", subtitle: "Governance and DSAR" },
+      ],
+    });
+  }
 
   const initials = user?.displayName
     ? user.displayName
@@ -71,25 +115,24 @@ export function AppShell({ children }: AppShellProps) {
       )}
 
       <nav className="sidebar-nav">
-        <SidebarNavLink to="/dashboard" current={currentPath} onNavigate={() => setSidebarOpen(false)}>
-          Overview
-        </SidebarNavLink>
-        <SidebarNavLink to="/cases" current={currentPath} onNavigate={() => setSidebarOpen(false)}>
-          Cases Inbox
-        </SidebarNavLink>
-        <SidebarNavLink to="/publish" current={currentPath} onNavigate={() => setSidebarOpen(false)}>
-          New Submission
-        </SidebarNavLink>
-        {isMod && (
-          <SidebarNavLink to="/moderation" current={currentPath} onNavigate={() => setSidebarOpen(false)}>
-            Moderation
-          </SidebarNavLink>
-        )}
-        {isAdmin && (
-          <SidebarNavLink to="/admin" current={currentPath} onNavigate={() => setSidebarOpen(false)}>
-            Admin Panel
-          </SidebarNavLink>
-        )}
+        {sidebarSections.map((section) => (
+          <section key={section.title} className={`sidebar-section sidebar-section-${section.tone}`}>
+            <p className="sidebar-section-title">{section.title}</p>
+            <div className="sidebar-section-links">
+              {section.links.map((link) => (
+                <SidebarNavLink
+                  key={link.to}
+                  to={link.to}
+                  current={currentPath}
+                  subtitle={link.subtitle}
+                  onNavigate={() => setSidebarOpen(false)}
+                >
+                  {link.label}
+                </SidebarNavLink>
+              ))}
+            </div>
+          </section>
+        ))}
       </nav>
 
       <div className="sidebar-footer">
@@ -170,22 +213,25 @@ export function AppShell({ children }: AppShellProps) {
 function SidebarNavLink({
   to,
   current,
+  subtitle,
   onNavigate,
   children,
 }: {
   to: string;
   current: string;
+  subtitle?: string;
   onNavigate: () => void;
   children: ReactNode;
 }) {
-  const active = current === to;
+  const active = current === to || current.startsWith(`${to}/`);
   return (
     <Link
       to={to}
       className={`sidebar-nav-link${active ? " active" : ""}`}
       onClick={onNavigate}
     >
-      {children}
+      <span className="sidebar-nav-link-label">{children}</span>
+      {subtitle ? <span className="sidebar-nav-link-subtitle">{subtitle}</span> : null}
     </Link>
   );
 }

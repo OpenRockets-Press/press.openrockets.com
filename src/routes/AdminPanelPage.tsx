@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { UserListItem } from "@shared/types";
 import { Modal } from "@/components/ui/Modal";
@@ -61,6 +62,18 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   audit_case_opened: "Opened case",
   audit_case_resolved: "Resolved case",
 };
+
+function formatDate(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString();
+}
+
+function formatDateTime(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleString();
+}
 
 export function AdminPanelPage() {
   const queryClient = useQueryClient();
@@ -140,267 +153,345 @@ export function AdminPanelPage() {
     promoteUserMutation.isPending ||
     dsarMutation.isPending;
 
+  const kpiCards = [
+    {
+      label: "Total users",
+      value: data?.totalUsers ?? 0,
+      detail: "registered accounts",
+      tone: "slate",
+    },
+    {
+      label: "Active users",
+      value: data?.activeUsers ?? 0,
+      detail: "can currently log in",
+      tone: "forest",
+    },
+    {
+      label: "Pending parental",
+      value: data?.pendingParentalUsers ?? 0,
+      detail: "awaiting guardian consent",
+      tone: "amber",
+    },
+    {
+      label: "Suspended users",
+      value: data?.suspendedUsers ?? 0,
+      detail: "restricted access",
+      tone: "rust",
+    },
+    {
+      label: "Open cases",
+      value: data?.openCases ?? 0,
+      detail: "active moderation threads",
+      tone: "navy",
+    },
+    {
+      label: "Pending review",
+      value: data?.pendingReviewPublications ?? 0,
+      detail: "publications in queue",
+      tone: "ink",
+    },
+    {
+      label: "Consent started",
+      value: data?.consentStarted ?? 0,
+      detail: "events tracked",
+      tone: "sky",
+    },
+    {
+      label: "Consent completed",
+      value: data?.consentCompleted ?? 0,
+      detail: "successful completions",
+      tone: "forest",
+    },
+    {
+      label: "Consent expired",
+      value: data?.consentExpired ?? 0,
+      detail: "expired consent tokens",
+      tone: "rust",
+    },
+  ];
+
   return (
     <AppShell>
-      <div className="dash-page">
-        <header className="dash-page-header">
-          <p className="eyebrow">Admin Panel</p>
-          <h1>Operations, Consent &amp; Compliance</h1>
-          <p className="muted">
-            Monitor platform health, manage user roles, handle consent workflows, and review audit activity.
-          </p>
+      <div className="dash-page admin-page">
+        <header className="admin-hero">
+          <div className="admin-hero-copy">
+            <p className="eyebrow">Admin Control Center</p>
+            <h1>Governance, Moderation and Compliance</h1>
+            <p className="muted">
+              A command view for role management, consent flows and policy enforcement with one-click moderator handoff.
+            </p>
+          </div>
+
+          <aside className="admin-hero-side" aria-label="Quick actions">
+            <div className="admin-live-pill">
+              <span className="admin-live-dot" aria-hidden="true" />
+              Live operations board
+            </div>
+            <p className="muted">
+              Move between moderation queue and case inbox without leaving governance context.
+            </p>
+            <div className="admin-hero-actions">
+              <Link className="admin-quick-link" to="/moderation">
+                Open Moderator Queue
+              </Link>
+              <Link className="admin-quick-link" to="/cases">
+                Open Cases Inbox
+              </Link>
+            </div>
+          </aside>
         </header>
 
-        {error ? <p className="error-text">{error}</p> : null}
-        {success ? <p className="success-text">{success}</p> : null}
+        {error ? <p className="error-text admin-feedback">{error}</p> : null}
+        {success ? <p className="success-text admin-feedback">{success}</p> : null}
 
-        {/* ── KPI grid ────────────────────────────────────────────── */}
-        {isLoading ? <KpiSkeleton /> : (
-          <div className="kpi-grid">
-            <article className="kpi-card">
-              <span>Total users</span>
-              <strong>{data?.totalUsers ?? 0}</strong>
-            </article>
-            <article className="kpi-card">
-              <span>Active users</span>
-              <strong>{data?.activeUsers ?? 0}</strong>
-            </article>
-            <article className="kpi-card">
-              <span>Pending parental</span>
-              <strong>{data?.pendingParentalUsers ?? 0}</strong>
-            </article>
-            <article className="kpi-card">
-              <span>Suspended users</span>
-              <strong>{data?.suspendedUsers ?? 0}</strong>
-            </article>
-            <article className="kpi-card">
-              <span>Open cases</span>
-              <strong>{data?.openCases ?? 0}</strong>
-            </article>
-            <article className="kpi-card">
-              <span>Pending review</span>
-              <strong>{data?.pendingReviewPublications ?? 0}</strong>
-            </article>
-            <article className="kpi-card">
-              <span>Consent started</span>
-              <strong>{data?.consentStarted ?? 0}</strong>
-            </article>
-            <article className="kpi-card">
-              <span>Consent completed</span>
-              <strong>{data?.consentCompleted ?? 0}</strong>
-            </article>
-            <article className="kpi-card">
-              <span>Consent expired</span>
-              <strong>{data?.consentExpired ?? 0}</strong>
-            </article>
+        <section className="admin-block">
+          <div className="admin-block-head">
+            <p className="admin-block-tag">Operational Pulse</p>
+            <h2>Platform health snapshot</h2>
           </div>
-        )}
+          {isLoading ? <KpiSkeleton /> : (
+            <div className="kpi-grid admin-kpi-grid">
+              {kpiCards.map((card) => (
+                <article key={card.label} className={`kpi-card admin-kpi-card tone-${card.tone}`}>
+                  <span>{card.label}</span>
+                  <strong>{card.value}</strong>
+                  <p>{card.detail}</p>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
 
-        {/* ── User management ─────────────────────────────────────── */}
-        <div className="dash-section-label">User Management</div>
-        {usersError && (
-          <p className="error-text">
-            Could not load users: {toUserFacingError(usersError)}
-          </p>
-        )}
-        <div className="table-wrap">
-          <table className="table" aria-label="All users">
-            <thead>
-              <tr>
-                <th>Display Name</th>
-                <th>Role</th>
-                <th>Consent Tier</th>
-                <th>Status</th>
-                <th>Joined</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {usersLoading ? (
-                <TableSkeletonRows cols={6} rows={6} />
-              ) : users.length === 0 ? (
-                <tr>
-                  <td colSpan={6}>
-                    <div className="empty-state">No users found.</div>
-                  </td>
-                </tr>
-              ) : (
-                users.map((u) => (
-                  <tr key={u.userId}>
-                    <td><strong>{u.displayName}</strong></td>
-                    <td>
-                      <span className={`chip role-${u.role}`}>{u.role}</span>
-                    </td>
-                    <td>{u.consentTier}</td>
-                    <td>
-                      <span className={`chip status-${u.accountStatus}`}>
-                        {STATUS_LABELS[u.accountStatus] ?? u.accountStatus}
-                      </span>
-                    </td>
-                    <td className="muted">
-                      {new Date(u.createdAt).toLocaleDateString()}
-                    </td>
-                    <td>
-                      <div className="actions-row">
-                        {u.role !== "admin" && (
+        <div className="admin-layout-grid admin-layout-grid-major">
+          <section className="admin-panel-card admin-panel-card-wide">
+            <div className="admin-panel-head">
+              <p className="admin-block-tag">Identity and Access</p>
+              <h2>User management</h2>
+              <p className="muted">Promote, demote, suspend and trigger DSAR workflows from one table.</p>
+            </div>
+
+            {usersError && (
+              <p className="error-text">
+                Could not load users: {toUserFacingError(usersError)}
+              </p>
+            )}
+
+            <div className="table-wrap">
+              <table className="table" aria-label="All users">
+                <thead>
+                  <tr>
+                    <th>Display Name</th>
+                    <th>Role</th>
+                    <th>Consent Tier</th>
+                    <th>Status</th>
+                    <th>Joined</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {usersLoading ? (
+                    <TableSkeletonRows cols={6} rows={6} />
+                  ) : users.length === 0 ? (
+                    <tr>
+                      <td colSpan={6}>
+                        <div className="empty-state">No users found.</div>
+                      </td>
+                    </tr>
+                  ) : (
+                    users.map((u) => (
+                      <tr key={u.userId}>
+                        <td><strong>{u.displayName}</strong></td>
+                        <td>
+                          <span className={`chip role-${u.role}`}>{u.role}</span>
+                        </td>
+                        <td>{u.consentTier}</td>
+                        <td>
+                          <span className={`chip status-${u.accountStatus}`}>
+                            {STATUS_LABELS[u.accountStatus] ?? u.accountStatus}
+                          </span>
+                        </td>
+                        <td className="muted">{formatDate(u.createdAt)}</td>
+                        <td>
+                          <div className="actions-row">
+                            {u.role !== "admin" && (
+                              <button
+                                type="button"
+                                className="small-button"
+                                disabled={anyPending}
+                                onClick={() => setPromoteTarget(u)}
+                              >
+                                {u.role === "moderator" ? "Demote" : "Promote"}
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              className={`small-button${u.accountStatus === "suspended" ? " primary" : " danger"}`}
+                              disabled={anyPending || u.role === "admin"}
+                              onClick={() => setManageUserTarget(u)}
+                            >
+                              {u.accountStatus === "suspended" ? "Activate" : "Suspend"}
+                            </button>
+                            <button
+                              type="button"
+                              className="small-button"
+                              disabled={anyPending}
+                              onClick={() =>
+                                setDsarTarget({ userId: u.userId, displayName: u.displayName })
+                              }
+                            >
+                              DSAR
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section className="admin-panel-card">
+            <div className="admin-panel-head">
+              <p className="admin-block-tag">Consent Workflows</p>
+              <h2>Pending parental consent</h2>
+              <p className="muted">Accounts currently waiting for guardian confirmation.</p>
+            </div>
+
+            <div className="table-wrap">
+              <table className="table" aria-label="Pending parental accounts">
+                <thead>
+                  <tr>
+                    <th>Account</th>
+                    <th>Tier</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {isLoading ? (
+                    <TableSkeletonRows cols={4} rows={4} />
+                  ) : (data?.pendingParentalAccounts.length ?? 0) === 0 ? (
+                    <tr>
+                      <td colSpan={4}>
+                        <div className="empty-state">No accounts are currently waiting for guardian confirmation.</div>
+                      </td>
+                    </tr>
+                  ) : (
+                    (data?.pendingParentalAccounts ?? []).map((item) => (
+                      <tr key={item.userId}>
+                        <td>{item.displayName}</td>
+                        <td>
+                          <span className={`chip status-${item.consentTier}`}>{item.consentTier}</span>
+                        </td>
+                        <td>{formatDate(item.createdAt)}</td>
+                        <td>
                           <button
                             type="button"
                             className="small-button"
                             disabled={anyPending}
-                            onClick={() => setPromoteTarget(u)}
+                            onClick={() =>
+                              setDsarTarget({ userId: item.userId, displayName: item.displayName })
+                            }
                           >
-                            {u.role === "moderator" ? "Demote" : "Promote"}
+                            DSAR Actions
                           </button>
-                        )}
-                        <button
-                          type="button"
-                          className={`small-button${u.accountStatus === "suspended" ? " primary" : " danger"}`}
-                          disabled={anyPending || u.role === "admin"}
-                          onClick={() => setManageUserTarget(u)}
-                        >
-                          {u.accountStatus === "suspended" ? "Activate" : "Suspend"}
-                        </button>
-                        <button
-                          type="button"
-                          className="small-button"
-                          disabled={anyPending}
-                          onClick={() =>
-                            setDsarTarget({ userId: u.userId, displayName: u.displayName })
-                          }
-                        >
-                          DSAR
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
         </div>
 
-        {/* ── Top downloads ────────────────────────────────────────── */}
-        <div className="dash-section-label">Top Downloads</div>
-        <div className="table-wrap">
-          <table className="table" aria-label="Top downloads">
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Type</th>
-                <th>License</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <TableSkeletonRows cols={3} rows={3} />
-              ) : (data?.topDownloads.length ?? 0) === 0 ? (
-                <tr>
-                  <td colSpan={3}>
-                    <div className="empty-state">No approved publications with downloads yet.</div>
-                  </td>
-                </tr>
-              ) : (
-                (data?.topDownloads ?? []).map((item) => (
-                  <tr key={item.id}>
-                    <td>{item.title}</td>
-                    <td>{item.type}</td>
-                    <td>{item.license ?? "—"}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        <div className="admin-layout-grid">
+          <section className="admin-panel-card">
+            <div className="admin-panel-head">
+              <p className="admin-block-tag">Reach</p>
+              <h2>Top downloads</h2>
+              <p className="muted">Most requested approved publications.</p>
+            </div>
 
-        {/* ── Pending parental accounts ────────────────────────────── */}
-        <div className="dash-section-label">Pending Parental Consent</div>
-        <div className="table-wrap">
-          <table className="table" aria-label="Pending parental accounts">
-            <thead>
-              <tr>
-                <th>Account</th>
-                <th>Tier</th>
-                <th>Created</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <TableSkeletonRows cols={4} rows={4} />
-              ) : (data?.pendingParentalAccounts.length ?? 0) === 0 ? (
-                <tr>
-                  <td colSpan={4}>
-                    <div className="empty-state">No accounts are currently waiting for guardian confirmation.</div>
-                  </td>
-                </tr>
-              ) : (
-                (data?.pendingParentalAccounts ?? []).map((item) => (
-                  <tr key={item.userId}>
-                    <td>{item.displayName}</td>
-                    <td>
-                      <span className={`chip status-${item.consentTier}`}>{item.consentTier}</span>
-                    </td>
-                    <td>{new Date(item.createdAt).toLocaleDateString()}</td>
-                    <td>
-                      <button
-                        type="button"
-                        className="small-button"
-                        disabled={anyPending}
-                        onClick={() =>
-                          setDsarTarget({ userId: item.userId, displayName: item.displayName })
-                        }
-                      >
-                        DSAR Actions
-                      </button>
-                    </td>
+            <div className="table-wrap">
+              <table className="table" aria-label="Top downloads">
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Type</th>
+                    <th>License</th>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                </thead>
+                <tbody>
+                  {isLoading ? (
+                    <TableSkeletonRows cols={3} rows={3} />
+                  ) : (data?.topDownloads.length ?? 0) === 0 ? (
+                    <tr>
+                      <td colSpan={3}>
+                        <div className="empty-state">No approved publications with downloads yet.</div>
+                      </td>
+                    </tr>
+                  ) : (
+                    (data?.topDownloads ?? []).map((item) => (
+                      <tr key={item.id}>
+                        <td>{item.title}</td>
+                        <td>{item.type}</td>
+                        <td>{item.license ?? "—"}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
 
-        {/* ── Audit log ────────────────────────────────────────────── */}
-        <div className="dash-section-label">Audit Log</div>
-        <div className="table-wrap">
-          <table className="table" aria-label="Audit log">
-            <thead>
-              <tr>
-                <th>Action</th>
-                <th>Actor</th>
-                <th>Target</th>
-                <th>Details</th>
-                <th>When</th>
-              </tr>
-            </thead>
-            <tbody>
-              {auditLoading ? (
-                <TableSkeletonRows cols={5} rows={5} />
-              ) : auditEntries.length === 0 ? (
-                <tr>
-                  <td colSpan={5}>
-                    <div className="empty-state">No audit entries yet.</div>
-                  </td>
-                </tr>
-              ) : (
-                auditEntries.map((entry) => (
-                  <tr key={entry.id}>
-                    <td>
-                      <span className="chip audit-action">
-                        {AUDIT_ACTION_LABELS[entry.action] ?? entry.action}
-                      </span>
-                    </td>
-                    <td>{entry.actorDisplayName || entry.actorUserId.slice(0, 8) + "…"}</td>
-                    <td className="muted">{entry.targetLabel || entry.targetId.slice(0, 12) + "…"}</td>
-                    <td className="muted">{entry.details || "—"}</td>
-                    <td className="muted">
-                      {entry.occurredAt ? new Date(entry.occurredAt).toLocaleString() : "—"}
-                    </td>
+          <section className="admin-panel-card admin-panel-card-tall">
+            <div className="admin-panel-head">
+              <p className="admin-block-tag">Accountability</p>
+              <h2>Audit log</h2>
+              <p className="muted">Recent moderation and role actions with actor context.</p>
+            </div>
+
+            <div className="table-wrap">
+              <table className="table" aria-label="Audit log">
+                <thead>
+                  <tr>
+                    <th>Action</th>
+                    <th>Actor</th>
+                    <th>Target</th>
+                    <th>Details</th>
+                    <th>When</th>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                </thead>
+                <tbody>
+                  {auditLoading ? (
+                    <TableSkeletonRows cols={5} rows={5} />
+                  ) : auditEntries.length === 0 ? (
+                    <tr>
+                      <td colSpan={5}>
+                        <div className="empty-state">No audit entries yet.</div>
+                      </td>
+                    </tr>
+                  ) : (
+                    auditEntries.map((entry) => (
+                      <tr key={entry.id}>
+                        <td>
+                          <span className="chip audit-action">
+                            {AUDIT_ACTION_LABELS[entry.action] ?? entry.action}
+                          </span>
+                        </td>
+                        <td>{entry.actorDisplayName || entry.actorUserId.slice(0, 8) + "..."}</td>
+                        <td className="muted">{entry.targetLabel || entry.targetId.slice(0, 12) + "..."}</td>
+                        <td className="muted">{entry.details || "—"}</td>
+                        <td className="muted">{formatDateTime(entry.occurredAt)}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
         </div>
       </div>
 

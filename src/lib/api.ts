@@ -186,25 +186,6 @@ function mapCaseSummary(doc: AppwriteDocument): CaseSummary {
   };
 }
 
-function mapCaseMessage(doc: AppwriteDocument): CaseMessage {
-  const senderRole = String(doc.sender_role || "system");
-  return {
-    id: doc.$id,
-    caseId: (doc.case_id as string) || "",
-    senderUserId: (doc.sender_user_id as string) || "",
-    senderRole:
-      senderRole === "contributor" ||
-      senderRole === "moderator" ||
-      senderRole === "admin" ||
-      senderRole === "system"
-        ? senderRole
-        : "system",
-    body: (doc.body as string) || "",
-    sentAt: (doc.sent_at as string) || new Date().toISOString(),
-    readBy: Array.isArray(doc.read_by) ? (doc.read_by as string[]) : [],
-  };
-}
-
 function toCaseStatus(value: unknown): CaseStatus {
   if (
     value === "open" ||
@@ -452,45 +433,30 @@ export async function getContributorPublications(limit = 20): Promise<Publicatio
 }
 
 export async function getContributorCases(limit = 30): Promise<CaseSummary[]> {
-  const user = await requireCurrentUser();
-  const { db, databaseId } = requireDatabaseServices();
+  await requireCurrentUser();
 
-  const cases = await db.listDocuments(databaseId, "cases", [
-    Query.equal("contributor_user_id", user.userId),
-    Query.orderDesc("last_activity_at"),
-    Query.limit(limit),
-  ]);
+  const limitQuery = Number.isFinite(limit) ? Math.max(1, Math.min(100, Math.trunc(limit))) : 30;
+  const params = new URLSearchParams({ limit: String(limitQuery) });
 
-  return cases.documents.map((doc) => mapCaseSummary(doc as unknown as AppwriteDocument));
+  const res = await callApi<{ cases: CaseSummary[] }>(`list-cases?${params.toString()}`, undefined, {
+    method: "GET",
+  });
+
+  return res.cases;
 }
 
 export async function getCaseMessages(caseId: string): Promise<CaseMessage[]> {
-  const user = await requireCurrentUser();
-  const { db, databaseId } = requireDatabaseServices();
+  await requireCurrentUser();
 
-  const cases = await db.listDocuments(databaseId, "cases", [
-    Query.equal("$id", caseId),
-    Query.limit(1),
-  ]);
+  const normalizedCaseId = caseId.trim();
+  if (!normalizedCaseId) throw new Error("Case id is required.");
 
-  if (cases.total === 0) throw new Error("Case not found.");
+  const params = new URLSearchParams({ case_id: normalizedCaseId });
+  const res = await callApi<{ messages: CaseMessage[] }>(`get-case-messages?${params.toString()}`, undefined, {
+    method: "GET",
+  });
 
-  const targetCase = mapCaseSummary(cases.documents[0] as unknown as AppwriteDocument);
-  if (
-    targetCase.contributorUserId !== user.userId &&
-    user.role !== "moderator" &&
-    user.role !== "admin"
-  ) {
-    throw new Error("You do not have access to this case.");
-  }
-
-  const messages = await db.listDocuments(databaseId, "case_messages", [
-    Query.equal("case_id", caseId),
-    Query.orderAsc("sent_at"),
-    Query.limit(200),
-  ]);
-
-  return messages.documents.map((doc) => mapCaseMessage(doc as unknown as AppwriteDocument));
+  return res.messages;
 }
 
 export async function replyToCase(caseId: string, body: string) {
