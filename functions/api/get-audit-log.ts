@@ -29,7 +29,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
     const res = await client.db.listDocuments(dbId, "analytics_events", [
       q.equal("event_type", AUDIT_TYPES),
-      q.orderDesc("$createdAt"),
+      q.orderDesc("occurred_at"),
       q.limit(100),
     ]);
 
