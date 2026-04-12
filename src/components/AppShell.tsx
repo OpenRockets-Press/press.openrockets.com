@@ -4,6 +4,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCurrentUser, logout } from "@/lib/api";
 import { getSessionUser } from "@/lib/authStore";
 import { queryKeys } from "@/lib/queryKeys";
+import { HomeHeader } from "@/components/home/HomeHeader";
+import { HomeFooter } from "@/components/home/HomeFooter";
+import { HomeInfoModalContent, type HomeInfoModalKind } from "@/components/home/HomeInfoModal";
+import { Modal } from "@/components/ui/Modal";
 
 interface AppShellProps {
   children: ReactNode;
@@ -15,6 +19,8 @@ export function AppShell({ children }: AppShellProps) {
   const { location } = useRouterState();
   const currentPath = location.pathname;
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [infoModal, setInfoModal] = useState<HomeInfoModalKind | null>(null);
 
   const { data: user } = useQuery({
     queryKey: queryKeys.auth.currentUser(),
@@ -46,7 +52,9 @@ export function AppShell({ children }: AppShellProps) {
     <aside className={`app-sidebar${sidebarOpen ? " sidebar-open" : ""}`} aria-label="Dashboard navigation">
       <div className="sidebar-brand">
         <Link to="/" className="sidebar-brand-link" onClick={() => setSidebarOpen(false)}>
-          ORP
+          <img className="sidebar-brand-main" src="/brand/271742354.png" alt="Open Rockets" />
+          <img className="sidebar-brand-mark" src="/brand/9283527.png" alt="Open Rockets mark" />
+          <span className="sidebar-brand-press">PRESS</span>
         </Link>
       </div>
 
@@ -100,12 +108,24 @@ export function AppShell({ children }: AppShellProps) {
     </aside>
   );
 
+  const modalTitleMap: Record<HomeInfoModalKind, string> = {
+    about: "About Open Rockets Press",
+    publish: "Publishing At Open Rockets Press",
+    privacy: "Privacy Summary",
+    parental: "Parental Consent Summary",
+  };
+
   return (
-    <div className="app-shell">
+    <>
+      <HomeHeader search={search} onSearchChange={setSearch} onOpenInfo={setInfoModal} />
+
+      <div className="app-shell">
       {/* Mobile top bar */}
       <div className="sidebar-mobile-bar">
         <Link to="/" className="sidebar-mobile-brand">
-          ORP
+          <img className="sidebar-brand-main" src="/brand/271742354.png" alt="Open Rockets" />
+          <img className="sidebar-brand-mark" src="/brand/9283527.png" alt="Open Rockets mark" />
+          <span className="sidebar-brand-press">PRESS</span>
         </Link>
         <button
           type="button"
@@ -131,7 +151,19 @@ export function AppShell({ children }: AppShellProps) {
       <div className="app-content">
         {children}
       </div>
-    </div>
+      </div>
+
+      <HomeFooter onOpenInfo={setInfoModal} />
+
+      <Modal
+        open={infoModal !== null}
+        title={infoModal ? modalTitleMap[infoModal] : "Information"}
+        onClose={() => setInfoModal(null)}
+        width="md"
+      >
+        {infoModal ? <HomeInfoModalContent kind={infoModal} /> : null}
+      </Modal>
+    </>
   );
 }
 
