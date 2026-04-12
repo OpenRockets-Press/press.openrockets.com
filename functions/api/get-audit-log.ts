@@ -29,7 +29,6 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
     const res = await client.db.listDocuments(dbId, "analytics_events", [
       q.equal("event_type", AUDIT_TYPES),
-      q.orderDesc("occurred_at"),
       q.limit(100),
     ]);
 
@@ -50,6 +49,8 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         occurredAt: String(doc.occurred_at ?? ""),
       };
     });
+
+    entries.sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime());
 
     return json({ entries });
   } catch (err) {

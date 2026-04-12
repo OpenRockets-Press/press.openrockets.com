@@ -37,19 +37,27 @@ export async function up(client) {
   });
 
   // ── publications ──────────────────────────────────────────────────────────
-  // Re-ensure $createdAt index for any future queries that might use it.
+  // home-feed queries: equal("status") + equal("is_featured", true) — is_featured
+  // was not indexed in migration 003.
   await client.ensureIndex("publications", {
-    key: "publications_sys_created_at_idx",
+    key: "publications_is_featured_idx",
     type: "key",
-    attributes: ["$createdAt"],
+    attributes: ["is_featured"],
+  });
+
+  // download_count — used by admin-dashboard top-downloads sort (missing from 003).
+  await client.ensureIndex("publications", {
+    key: "publications_download_count_idx",
+    type: "key",
+    attributes: ["download_count"],
     orders: ["DESC"],
   });
 
   // ── cases ─────────────────────────────────────────────────────────────────
+  // Re-ensure status index in case migration 004 was not applied.
   await client.ensureIndex("cases", {
-    key: "cases_sys_created_at_idx",
+    key: "cases_status_idx",
     type: "key",
-    attributes: ["$createdAt"],
-    orders: ["DESC"],
+    attributes: ["status"],
   });
 }

@@ -16,12 +16,12 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
     const publications = await client.db.listDocuments(dbId, "publications", [
       client.query.equal("pub_id", pubId),
-      client.query.equal("status", "approved"),
       client.query.limit(1),
     ]);
 
     const pub = (publications as { documents: Record<string, unknown>[] }).documents[0];
-    if (!pub) throw new OrpError("Publication not found or not approved", 404);
+    if (!pub) throw new OrpError("Publication not found", 404);
+    if (String(pub.status) !== "approved") throw new OrpError("Publication not approved", 404);
 
     const fileStorageId = String(pub.file_storage_id ?? "");
     if (!fileStorageId) throw new OrpError("Publication file not available", 404);

@@ -27,8 +27,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         ]),
         client.db.listDocuments(dbId, "publications", [
           q.equal("status", "approved"),
-          q.orderDesc("download_count"),
-          q.limit(5),
+          q.limit(50),
         ]),
         client.db.listDocuments(dbId, "analytics_events", [
           q.equal("event_type", ["consent_started", "consent_completed", "consent_expired"]),
@@ -53,17 +52,17 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     const consentCompleted = analytics.filter((e) => e.event_type === "consent_completed").length;
     const consentExpired = analytics.filter((e) => e.event_type === "consent_expired").length;
 
-    const topDownloads = topDownloadsRes.documents.map((doc) => {
-      const d = doc as Record<string, unknown>;
-      return {
-        id: String(d.$id),
-        pubId: d.pub_id ? String(d.pub_id) : undefined,
-        title: String(d.title ?? "Untitled"),
-        authorDisplayName: String(d.author_display_name ?? "Contributor"),
-        type: String(d.type ?? "other"),
-        license: d.license ? String(d.license) : undefined,
-      };
-    });
+    const topDownloads = (topDownloadsRes.documents as Record<string, unknown>[])
+      .sort((a, b) => Number(b.download_count ?? 0) - Number(a.download_count ?? 0))
+      .slice(0, 5)
+      .map((doc) => ({
+        id: String(doc.$id),
+        pubId: doc.pub_id ? String(doc.pub_id) : undefined,
+        title: String(doc.title ?? "Untitled"),
+        authorDisplayName: String(doc.author_display_name ?? "Contributor"),
+        type: String(doc.type ?? "other"),
+        license: doc.license ? String(doc.license) : undefined,
+      }));
 
     return json({
       totalUsers: allUsers.length,

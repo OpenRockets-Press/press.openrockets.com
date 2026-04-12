@@ -16,7 +16,6 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     const q = client.query;
 
     const res = await client.db.listDocuments(dbId, "users", [
-      q.orderDesc("$createdAt"),
       q.limit(200),
     ]);
 
@@ -31,6 +30,8 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         createdAt: String(u.created_at ?? u.$createdAt ?? new Date().toISOString()),
       };
     });
+
+    users.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     return json({ users });
   } catch (err) {

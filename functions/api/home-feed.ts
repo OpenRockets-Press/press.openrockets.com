@@ -28,18 +28,17 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       base.push(client.query.equal("type", type));
     }
 
+    // Fetch approved publications then sort/filter in JS to avoid compound-index
+    // requirements on is_featured and featured_rank that may not exist yet.
     const [newReleaseDocs, featuredDocs] = await Promise.all([
       client.db.listDocuments(dbId, "publications", [
         ...base,
-        client.query.orderDesc("published_at"),
-        client.query.limit(12),
+        client.query.limit(50),
       ]),
       client.db.listDocuments(dbId, "publications", [
         ...base,
         client.query.equal("is_featured", true),
-        client.query.orderAsc("featured_rank"),
-        client.query.orderDesc("published_at"),
-        client.query.limit(12),
+        client.query.limit(50),
       ]),
     ]);
 
@@ -66,13 +65,23 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       );
     };
 
+    const newReleases = (newReleaseDocs as { documents: Record<string, unknown>[] }).documents
+      .sort((a, b) => new Date(String(b.published_at ?? 0)).getTime() - new Date(String(a.published_at ?? 0)).getTime())
+      .slice(0, 12)
+      .map(toCard);
+
+    const featuredContributions = (featuredDocs as { documents: Record<string, unknown>[] }).documents
+      .sort((a, b) => {
+        const rankDiff = Number(a.featured_rank ?? 9999) - Number(b.featured_rank ?? 9999);
+        if (rankDiff !== 0) return rankDiff;
+        return new Date(String(b.published_at ?? 0)).getTime() - new Date(String(a.published_at ?? 0)).getTime();
+      })
+      .slice(0, 12)
+      .map(toCard);
+
     return json({
-      newReleases: filterBySearch(
-        (newReleaseDocs as { documents: Record<string, unknown>[] }).documents.map(toCard),
-      ),
-      featuredContributions: filterBySearch(
-        (featuredDocs as { documents: Record<string, unknown>[] }).documents.map(toCard),
-      ),
+      newReleases: filterBySearch(newReleases),
+      featuredContributions: filterBySearch(featuredContributions),
       availableTypes: validTypes,
     });
   } catch (err) {
