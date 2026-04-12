@@ -36,28 +36,4 @@ export async function up(client) {
     attributes: ["event_type"],
   });
 
-  // ── publications ──────────────────────────────────────────────────────────
-  // home-feed queries: equal("status") + equal("is_featured", true) — is_featured
-  // was not indexed in migration 003.
-  await client.ensureIndex("publications", {
-    key: "publications_is_featured_idx",
-    type: "key",
-    attributes: ["is_featured"],
-  });
-
-  // download_count — used by admin-dashboard top-downloads sort (missing from 003).
-  await client.ensureIndex("publications", {
-    key: "publications_download_count_idx",
-    type: "key",
-    attributes: ["download_count"],
-    orders: ["DESC"],
-  });
-
-  // ── cases ─────────────────────────────────────────────────────────────────
-  // Re-ensure status index in case migration 004 was not applied.
-  await client.ensureIndex("cases", {
-    key: "cases_status_idx",
-    type: "key",
-    attributes: ["status"],
-  });
 }
