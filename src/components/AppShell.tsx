@@ -4,8 +4,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCurrentUser, logout } from "@/lib/api";
 import { getSessionUser } from "@/lib/authStore";
 import { queryKeys } from "@/lib/queryKeys";
-import { HomeHeader } from "@/components/home/HomeHeader";
-import { HomeFooter } from "@/components/home/HomeFooter";
 import { HomeInfoModalContent, type HomeInfoModalKind } from "@/components/home/HomeInfoModal";
 import { Modal } from "@/components/ui/Modal";
 
@@ -23,6 +21,48 @@ interface SidebarSection {
   title: string;
   tone: "workspace" | "moderator" | "admin";
   links: SidebarLinkItem[];
+}
+
+interface ShellMeta {
+  kicker: string;
+  title: string;
+  searchPlaceholder: string;
+}
+
+function getShellMeta(pathname: string): ShellMeta {
+  if (pathname.startsWith("/admin")) {
+    return {
+      kicker: "Administration",
+      title: "Control Center",
+      searchPlaceholder: "Filter users, actions, or audit terms",
+    };
+  }
+  if (pathname.startsWith("/moderation")) {
+    return {
+      kicker: "Moderator Workspace",
+      title: "Review Queue",
+      searchPlaceholder: "Search publications, cases, or contributor IDs",
+    };
+  }
+  if (pathname.startsWith("/cases")) {
+    return {
+      kicker: "Support Cases",
+      title: "Cases Inbox",
+      searchPlaceholder: "Search case number, subject, or status",
+    };
+  }
+  if (pathname.startsWith("/publish")) {
+    return {
+      kicker: "Submissions",
+      title: "New Publication",
+      searchPlaceholder: "Search templates, tags, or previous drafts",
+    };
+  }
+  return {
+    kicker: "Workspace",
+    title: "Dashboard",
+    searchPlaceholder: "Search your workspace",
+  };
 }
 
 export function AppShell({ children }: AppShellProps) {
@@ -50,6 +90,7 @@ export function AppShell({ children }: AppShellProps) {
 
   const isMod = user?.role === "moderator" || user?.role === "admin";
   const isAdmin = user?.role === "admin";
+  const shellMeta = getShellMeta(currentPath);
 
   const sidebarSections: SidebarSection[] = [
     {
@@ -135,19 +176,6 @@ export function AppShell({ children }: AppShellProps) {
         ))}
       </nav>
 
-      <div className="sidebar-footer">
-        <Link to="/" className="sidebar-footer-link">
-          ← Open Rockets Press
-        </Link>
-        <button
-          type="button"
-          className="sidebar-signout"
-          onClick={() => logoutMutation.mutate()}
-          disabled={logoutMutation.isPending}
-        >
-          {logoutMutation.isPending ? "Signing out…" : "Sign out"}
-        </button>
-      </div>
     </aside>
   );
 
@@ -160,43 +188,78 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <>
-      <HomeHeader search={search} onSearchChange={setSearch} onOpenInfo={setInfoModal} />
-
       <div className="app-shell">
-      {/* Mobile top bar */}
-      <div className="sidebar-mobile-bar">
-        <Link to="/" className="sidebar-mobile-brand">
-          <img className="sidebar-brand-main" src="/brand/271742354.png" alt="Open Rockets" />
-          <img className="sidebar-brand-mark" src="/brand/9283527.png" alt="Open Rockets mark" />
-          <span className="sidebar-brand-press">PRESS</span>
-        </Link>
-        <button
-          type="button"
-          className="sidebar-mobile-toggle"
-          aria-label={sidebarOpen ? "Close menu" : "Open menu"}
-          onClick={() => setSidebarOpen((v) => !v)}
-        >
-          {sidebarOpen ? "✕" : "☰"}
-        </button>
+        {/* Mobile top bar */}
+        <div className="sidebar-mobile-bar">
+          <Link to="/" className="sidebar-mobile-brand">
+            <img className="sidebar-brand-main" src="/brand/271742354.png" alt="Open Rockets" />
+            <img className="sidebar-brand-mark" src="/brand/9283527.png" alt="Open Rockets mark" />
+            <span className="sidebar-brand-press">PRESS</span>
+          </Link>
+          <button
+            type="button"
+            className="sidebar-mobile-toggle"
+            aria-label={sidebarOpen ? "Close menu" : "Open menu"}
+            onClick={() => setSidebarOpen((v) => !v)}
+          >
+            {sidebarOpen ? "✕" : "☰"}
+          </button>
+        </div>
+
+        {/* Sidebar overlay (mobile) */}
+        {sidebarOpen && (
+          <div
+            className="sidebar-overlay"
+            aria-hidden="true"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        {sidebar}
+
+        <div className="app-main">
+          <header className="app-topbar">
+            <div className="app-topbar-meta">
+              <p className="app-topbar-kicker">{shellMeta.kicker}</p>
+              <div className="app-topbar-title-row">
+                <h1 className="app-topbar-title">{shellMeta.title}</h1>
+                {user ? <span className={`app-topbar-role role-${user.role}`}>{user.role}</span> : null}
+              </div>
+            </div>
+
+            <label className="app-topbar-search" aria-label="Workspace search">
+              <input
+                type="search"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder={shellMeta.searchPlaceholder}
+              />
+            </label>
+
+            <div className="app-topbar-actions">
+              <button
+                type="button"
+                className="app-topbar-action"
+                onClick={() => setInfoModal("about")}
+              >
+                Info
+              </button>
+              <button
+                type="button"
+                className="app-topbar-action app-topbar-action-primary"
+                onClick={() => logoutMutation.mutate()}
+                disabled={logoutMutation.isPending}
+              >
+                {logoutMutation.isPending ? "Signing out..." : "Sign out"}
+              </button>
+            </div>
+          </header>
+
+          <div className="app-content">
+            {children}
+          </div>
+        </div>
       </div>
-
-      {/* Sidebar overlay (mobile) */}
-      {sidebarOpen && (
-        <div
-          className="sidebar-overlay"
-          aria-hidden="true"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {sidebar}
-
-      <div className="app-content">
-        {children}
-      </div>
-      </div>
-
-      <HomeFooter onOpenInfo={setInfoModal} />
 
       <Modal
         open={infoModal !== null}
