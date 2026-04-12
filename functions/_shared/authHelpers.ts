@@ -13,21 +13,20 @@ export async function getActorRole(
   user: Record<string, unknown>,
   client: AdminClient,
 ): Promise<"admin" | "moderator" | "contributor"> {
-  // 1. DB document role is source of truth (matches me.ts priority)
+  // 1. DB document role is source of truth (matches me.ts priority).
+  //    Document ID == Appwrite user.$id (set in register.ts), so this is a
+  //    direct key lookup — no index required.
   try {
     const userId = String(user.$id);
-    const res = await client.db.listDocuments(
+    const doc = await client.db.getDocument(
       client.env.APPWRITE_DATABASE_ID,
       "users",
-      [client.query.equal("user_id", userId), client.query.limit(1)],
-    );
-    const doc = (res.documents as Record<string, unknown>[])[0];
-    if (doc) {
-      const docRole = String(doc.role ?? "contributor");
-      if (docRole === "admin") return "admin";
-      if (docRole === "moderator") return "moderator";
-    }
-  } catch { /* fallback to labels if DB lookup fails */ }
+      userId,
+    ) as Record<string, unknown>;
+    const docRole = String(doc.role ?? "contributor");
+    if (docRole === "admin") return "admin";
+    if (docRole === "moderator") return "moderator";
+  } catch { /* doc may not exist for bootstrap-only admins; fall through to labels */ }
 
   // 2. Appwrite account labels as secondary fallback
   const labels = Array.isArray((user as { labels?: unknown }).labels)

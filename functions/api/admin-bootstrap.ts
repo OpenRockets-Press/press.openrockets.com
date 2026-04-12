@@ -38,11 +38,25 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       : [...currentLabels, "admin"];
     await client.users.updateLabels(userId, newLabels);
 
-    // Update the users database document if it exists
+    // Upsert the users DB document so the role field is always in sync.
+    // getDocument throws 404 if it doesn't exist; in that case create it.
     try {
       await client.db.updateDocument(dbId, "users", userId, { role: "admin" });
     } catch {
-      // Document may not exist yet — that is fine, labels are the source of truth
+      try {
+        await client.db.createDocument(dbId, "users", userId, {
+          user_id: userId,
+          display_name: String((authUser as Record<string, unknown>).name ?? "Admin"),
+          role: "admin",
+          consent_tier: "general",
+          account_status: "active",
+          guardian_email_enc: "",
+          country_code: "",
+          created_at: new Date().toISOString(),
+        });
+      } catch {
+        // Best-effort — labels remain the fallback
+      }
     }
 
     return json({ ok: true, role: "admin" });
