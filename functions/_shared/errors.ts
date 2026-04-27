@@ -94,6 +94,42 @@ export function toErrorResponse(error: unknown): { statusCode: number; message: 
       return { statusCode: 422, message: "Invalid request payload." };
     }
 
+    if (error.status === 401) {
+      logHandledError({
+        type: "AppwriteError",
+        statusCode: 401,
+        message: "Unauthorized.",
+        appwriteType: error.type,
+        method: error.method,
+        path: error.path,
+      });
+      return { statusCode: 401, message: "Unauthorized." };
+    }
+
+    if (error.status === 403) {
+      logHandledError({
+        type: "AppwriteError",
+        statusCode: 403,
+        message: "Permission denied.",
+        appwriteType: error.type,
+        method: error.method,
+        path: error.path,
+      });
+      return { statusCode: 403, message: "Permission denied." };
+    }
+
+    if (error.status === 404) {
+      logHandledError({
+        type: "AppwriteError",
+        statusCode: 404,
+        message: "Not found.",
+        appwriteType: error.type,
+        method: error.method,
+        path: error.path,
+      });
+      return { statusCode: 404, message: "Not found." };
+    }
+
     if (error.status === 429) {
       logHandledError({
         type: "AppwriteError",

@@ -153,6 +153,7 @@ export function PublishPage() {
               <label className="float-label">Type</label>
               <select
                 className="float-input float-select-input"
+                aria-label="Publication type"
                 value={type}
                 onChange={(e) => setType(e.target.value as Publication["type"])}
               >
@@ -167,6 +168,7 @@ export function PublishPage() {
               <label className="float-label">License</label>
               <select
                 className="float-input float-select-input"
+                aria-label="Publication license"
                 value={license}
                 onChange={(e) => setLicense(e.target.value as Publication["license"])}
               >
@@ -191,6 +193,7 @@ export function PublishPage() {
             <input
               key={file ? file.name : "file-empty"}
               type="file"
+              accept=".pdf,.epub,.zip,application/pdf,application/epub+zip,application/zip"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
               required
             />

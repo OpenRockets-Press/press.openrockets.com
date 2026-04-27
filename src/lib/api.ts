@@ -651,6 +651,14 @@ export function toUserFacingError(error: unknown): string {
   if (lower.includes("invalid request payload")) {
     return "Please review the form fields and try again.";
   }
+  if (
+    lower.includes("permission denied") ||
+    lower.includes("not authorized") ||
+    lower.includes("missing scope") ||
+    lower.includes("forbidden")
+  ) {
+    return "You don’t have permission to submit this file. If the problem continues, check the Appwrite bucket permissions for publication uploads.";
+  }
   if (lower.includes("invalid credentials") || lower.includes("user_invalid_credentials")) {
     return "The email or password is incorrect.";
   }

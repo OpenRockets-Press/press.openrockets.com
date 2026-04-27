@@ -335,36 +335,75 @@ async function ensureStorageBuckets(client, config) {
   console.log("\n[buckets] Ensuring storage buckets...");
 
   const ROLE_ANY = "any";
+  const ROLE_USERS = "users";
 
-  await client.ensureBucket({
-    id: config.bucketPubFiles,
-    name: "Publication Files",
-    permissions: [],            // private — no public read
-    fileSecurity: false,
-    maxSize: 50 * 1024 * 1024, // 50 MB
-    allowedExtensions: ["pdf"],
-    encryption: true,
-  });
+  function bucketPayload(bucket) {
+    return {
+      bucketId: bucket.id,
+      name: bucket.name,
+      permissions: bucket.permissions ?? [],
+      fileSecurity: bucket.fileSecurity ?? false,
+      enabled: true,
+      maximumFileSize: bucket.maxSize,
+      allowedFileExtensions: bucket.allowedExtensions ?? [],
+      encryption: bucket.encryption ?? true,
+      antivirus: false,
+      transformations: false,
+    };
+  }
 
-  await client.ensureBucket({
-    id: config.bucketPubCovers,
-    name: "Publication Covers",
-    permissions: [`read("${ROLE_ANY}")`],  // public read for cover images
-    fileSecurity: false,
-    maxSize: 5 * 1024 * 1024,  // 5 MB
-    allowedExtensions: ["jpg", "jpeg", "png", "webp", "gif"],
-    encryption: false,
-  });
+  const buckets = [
+    {
+      id: config.bucketPubFiles,
+      name: "Publication Files",
+      permissions: [`write("${ROLE_USERS}")`],
+      fileSecurity: false,
+      maxSize: 50 * 1024 * 1024,
+      allowedExtensions: ["pdf", "epub", "zip"],
+      encryption: true,
+    },
+    {
+      id: config.bucketPubCovers,
+      name: "Publication Covers",
+      permissions: [`read("${ROLE_ANY}")`, `write("${ROLE_USERS}")`],
+      fileSecurity: false,
+      maxSize: 5 * 1024 * 1024,
+      allowedExtensions: ["jpg", "jpeg", "png", "webp", "gif"],
+      encryption: false,
+    },
+    {
+      id: config.bucketCaseAttachments,
+      name: "Case Attachments",
+      permissions: [`write("${ROLE_USERS}")`],
+      fileSecurity: false,
+      maxSize: 20 * 1024 * 1024,
+      allowedExtensions: ["pdf", "jpg", "jpeg", "png", "webp", "gif", "txt", "doc", "docx"],
+      encryption: true,
+    },
+  ];
 
-  await client.ensureBucket({
-    id: config.bucketCaseAttachments,
-    name: "Case Attachments",
-    permissions: [],            // private — only via function tokens
-    fileSecurity: false,
-    maxSize: 20 * 1024 * 1024, // 20 MB
-    allowedExtensions: ["pdf", "jpg", "jpeg", "png", "webp", "gif", "txt", "doc", "docx"],
-    encryption: true,
-  });
+  for (const bucket of buckets) {
+    const createResult = await client.request("POST", "/storage/buckets", bucketPayload(bucket), {
+      allowStatuses: [409],
+    });
+
+    if (createResult.status === 409) {
+      await client.request("PUT", `/storage/buckets/${bucket.id}`, {
+        name: bucket.name,
+        permissions: bucket.permissions ?? [],
+        fileSecurity: bucket.fileSecurity ?? false,
+        enabled: true,
+        maximumFileSize: bucket.maxSize,
+        allowedFileExtensions: bucket.allowedExtensions ?? [],
+        encryption: bucket.encryption ?? true,
+        antivirus: false,
+        transformations: false,
+      });
+      console.log(`[buckets] Updated bucket ${bucket.id}`);
+    } else {
+      console.log(`[buckets] Created bucket ${bucket.id}`);
+    }
+  }
 
   console.log("[buckets] Storage buckets ready");
 }
