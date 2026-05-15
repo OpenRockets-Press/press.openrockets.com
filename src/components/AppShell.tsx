@@ -126,11 +126,11 @@ export function AppShell({ children }: AppShellProps) {
 
   const initials = user?.displayName
     ? user.displayName
-        .split(" ")
-        .map((n) => n[0])
-        .slice(0, 2)
-        .join("")
-        .toUpperCase()
+      .split(" ")
+      .map((n) => n[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase()
     : "?";
 
   const sidebar = (
@@ -139,7 +139,8 @@ export function AppShell({ children }: AppShellProps) {
         <Link to="/" className="sidebar-brand-link" onClick={() => setSidebarOpen(false)}>
           <img className="sidebar-brand-main" src="/brand/271742354.png" alt="Open Rockets" />
           <img className="sidebar-brand-mark" src="/brand/9283527.png" alt="Open Rockets mark" />
-          <span className="sidebar-brand-press">PRESS</span>
+          <img className="brand-mark" src="/brand/987935879357.png" alt="Open Rockets mark" />
+
         </Link>
       </div>
 
@@ -194,7 +195,8 @@ export function AppShell({ children }: AppShellProps) {
           <Link to="/" className="sidebar-mobile-brand">
             <img className="sidebar-brand-main" src="/brand/271742354.png" alt="Open Rockets" />
             <img className="sidebar-brand-mark" src="/brand/9283527.png" alt="Open Rockets mark" />
-            <span className="sidebar-brand-press">PRESS</span>
+            <img className="brand-mark" src="/brand/987935879357.png" alt="Open Rockets mark" />
+
           </Link>
           <button
             type="button"

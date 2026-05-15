@@ -106,7 +106,7 @@ export function HomeHeader({ search, onSearchChange, onOpenInfo }: HomeHeaderPro
           <Link to="/" className="brand-lockup" aria-label="Open Rockets Press home">
             <img className="brand-main" src="/brand/271742354.png" alt="Open Rockets" />
             <img className="brand-mark" src="/brand/9283527.png" alt="Open Rockets mark" />
-            <span className="brand-text">PRESS</span>
+            <img className="brand-mark" src="/brand/987935879357.png" alt="Open Rockets mark" />
           </Link>
 
           <div className="search-wrap">
