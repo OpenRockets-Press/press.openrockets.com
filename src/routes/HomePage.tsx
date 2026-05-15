@@ -37,6 +37,8 @@ export function HomePage() {
       <HomeHeader search={search} onSearchChange={setSearch} onOpenInfo={setInfoModal} />
 
       <main className="home-shell main-content">
+        <HomeBanner />
+
         <HomeCategoriesRail active={activeType} onSelect={setActiveType} />
 
         <HomeShelf
@@ -46,8 +48,6 @@ export function HomePage() {
         />
 
         <hr className="section-divider" />
-
-        <HomeBanner />
 
         <HomeShelf
           testId="home-shelf-featured"
