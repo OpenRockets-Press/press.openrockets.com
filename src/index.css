@@ -3158,7 +3158,7 @@ button {
   }
 }
 
-@media (max-width: 767px) {
+@media (max-width: 1024px) {
   .top-row {
     flex-wrap: wrap;
     gap: 0.75rem;
@@ -3167,6 +3167,7 @@ button {
 
   .search-wrap {
     order: 3;
+    flex-basis: 100%;
     width: 100%;
     max-width: unset;
     margin-inline: 0;
