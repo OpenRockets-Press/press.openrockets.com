@@ -65,12 +65,16 @@ export function HomeBanner() {
                 key={slide.src}
                 className={`home-banner-slide${slideIndex === activeSlide ? " is-active" : ""}`}
               >
-                <img className="home-banner-image" src={slide.src} alt={slide.alt} />
+                <img
+                  className="home-banner-image"
+                  src={slide.src}
+                  alt={slide.alt}
+                  loading={slideIndex === activeSlide ? "eager" : "lazy"}
+                  decoding="async"
+                />
               </article>
             ))}
           </div>
-
-          <div className="home-banner-shade" aria-hidden="true" />
 
           <button
             type="button"
