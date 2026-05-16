@@ -8,6 +8,10 @@ const SLIDES = [
     alt: "Open Rockets Press feature banner 1",
   },
   {
+    src: "/brand/static/wp-content/New Project (10).png",
+    alt: "Open Rockets Press feature banner 2",
+  },
+  {
     src: "/brand/static/wp-content/New Project (5).png",
     alt: "Open Rockets Press feature banner 2",
   },
