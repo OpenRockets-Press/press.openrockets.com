@@ -5,7 +5,6 @@ export function MaintenanceBanner() {
         <div className="maintenance-banner-card">
           <div className="maintenance-banner-brand" aria-hidden="true">
             <img className="maintenance-banner-brand-main" src="/brand/271742354.png" alt="" />
-            <img className="maintenance-banner-brand-mark" src="/brand/9283527.png" alt="" />
           </div>
 
           <div className="maintenance-banner-copy">

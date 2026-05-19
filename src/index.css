@@ -160,14 +160,12 @@ button {
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 1rem;
   align-items: center;
-  border: 1px solid rgba(29, 52, 97, 0.22);
+  
   border-radius: 18px;
   padding: 1rem 1.1rem;
   background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.94) 0%, rgba(244, 238, 226, 0.93) 52%, rgba(224, 232, 245, 0.96) 100%);
-  box-shadow: 0 22px 48px -32px rgba(15, 23, 42, 0.55);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
+    linear-gradient(135deg, rgba(255, 255, 255, 0.94) 0%, rgba(255, 255, 255, 0.93) 52%, rgba(224, 232, 245, 0.96) 100%);
+
 }
 
 .maintenance-banner-card::before {
@@ -175,8 +173,8 @@ button {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at top right, rgba(29, 52, 97, 0.12), transparent 28%),
-    radial-gradient(circle at bottom left, rgba(184, 75, 26, 0.11), transparent 26%);
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.12), transparent 28%),
+    radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.11), transparent 26%);
   pointer-events: none;
 }
 
