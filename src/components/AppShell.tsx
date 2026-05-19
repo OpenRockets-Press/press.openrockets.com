@@ -5,6 +5,7 @@ import { getCurrentUser, logout } from "@/lib/api";
 import { getSessionUser } from "@/lib/authStore";
 import { queryKeys } from "@/lib/queryKeys";
 import { HomeInfoModalContent, type HomeInfoModalKind } from "@/components/home/HomeInfoModal";
+import { MaintenanceBanner } from "@/components/maintenance/MaintenanceBanner";
 import { Modal } from "@/components/ui/Modal";
 
 interface AppShellProps {
@@ -256,6 +257,8 @@ export function AppShell({ children }: AppShellProps) {
               </button>
             </div>
           </header>
+
+          <MaintenanceBanner />
 
           <div className="app-content">
             {children}

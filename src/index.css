@@ -141,6 +141,132 @@ button {
   padding-inline: 16px;
 }
 
+.maintenance-banner {
+  position: relative;
+  z-index: 22;
+  margin-block: 0.9rem;
+}
+
+.maintenance-banner-shell {
+  width: min(100%, 1280px);
+  margin-inline: auto;
+  padding-inline: 16px;
+}
+
+.maintenance-banner-card {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+  border: 1px solid rgba(29, 52, 97, 0.22);
+  border-radius: 18px;
+  padding: 1rem 1.1rem;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.94) 0%, rgba(244, 238, 226, 0.93) 52%, rgba(224, 232, 245, 0.96) 100%);
+  box-shadow: 0 22px 48px -32px rgba(15, 23, 42, 0.55);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+.maintenance-banner-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at top right, rgba(29, 52, 97, 0.12), transparent 28%),
+    radial-gradient(circle at bottom left, rgba(184, 75, 26, 0.11), transparent 26%);
+  pointer-events: none;
+}
+
+.maintenance-banner-brand {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  width: 4.75rem;
+}
+
+.maintenance-banner-brand-main {
+  width: 4.25rem;
+  height: auto;
+}
+
+.maintenance-banner-brand-mark {
+  width: 1.6rem;
+  height: auto;
+}
+
+.maintenance-banner-copy {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.maintenance-banner-kicker {
+  font-size: 0.67rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--rust);
+}
+
+.maintenance-banner-title {
+  font-family: "Ubuntu Condensed", "Ubuntu", sans-serif;
+  font-size: clamp(1.1rem, 1rem + 0.9vw, 1.55rem);
+  line-height: 1.08;
+  color: var(--ink);
+}
+
+.maintenance-banner-body {
+  max-width: 72ch;
+  color: var(--text-2);
+  font-size: 0.93rem;
+}
+
+.maintenance-banner-contact {
+  color: var(--text);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.maintenance-banner-contact a {
+  color: var(--navy);
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.maintenance-banner-status {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: end;
+  gap: 0.35rem;
+  text-align: right;
+}
+
+.maintenance-banner-status-pill {
+  border-radius: 999px;
+  padding: 0.45rem 0.8rem;
+  background: rgba(17, 16, 8, 0.93);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: 0 10px 24px -18px rgba(15, 23, 42, 0.9);
+}
+
+.maintenance-banner-status-note {
+  color: var(--text-3);
+  font-size: 0.73rem;
+  letter-spacing: 0.02em;
+}
+
 .home-header {
   position: sticky;
   top: 0;
@@ -1593,6 +1719,10 @@ button {
   animation: page-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+.app-content > :first-child {
+  margin-top: 0;
+}
+
 /* Dashboard content within app-content */
 .dash-page {
   max-width: 960px;
@@ -2950,6 +3080,29 @@ button {
 
 /* ── App shell mobile ── */
 @media (max-width: 767px) {
+  .maintenance-banner {
+    margin-block: 0.75rem;
+  }
+
+  .maintenance-banner-card {
+    grid-template-columns: 1fr;
+    justify-items: start;
+    padding: 0.95rem;
+  }
+
+  .maintenance-banner-brand {
+    width: auto;
+    grid-auto-flow: column;
+    align-items: center;
+    gap: 0.75rem;
+    justify-items: start;
+  }
+
+  .maintenance-banner-status {
+    justify-items: start;
+    text-align: left;
+  }
+
   .app-shell {
     grid-template-columns: 1fr;
     max-height: none;

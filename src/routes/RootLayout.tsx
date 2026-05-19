@@ -3,6 +3,7 @@ import { Outlet, useRouterState } from "@tanstack/react-router";
 import { HomeFooter } from "@/components/home/HomeFooter";
 import { HomeHeader } from "@/components/home/HomeHeader";
 import { HomeInfoModalContent, type HomeInfoModalKind } from "@/components/home/HomeInfoModal";
+import { MaintenanceBanner } from "@/components/maintenance/MaintenanceBanner";
 import { Modal } from "@/components/ui/Modal";
 
 export function RootLayout() {
@@ -53,6 +54,7 @@ export function RootLayout() {
   return (
     <>
       <HomeHeader search={search} onSearchChange={setSearch} onOpenInfo={setInfoModal} />
+      <MaintenanceBanner />
       <Outlet />
       <HomeFooter onOpenInfo={setInfoModal} />
 
