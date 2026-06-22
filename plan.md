@@ -26,6 +26,7 @@
 
 ---
 
+
 ## 1. Architecture & Stack
 
 ### 1.1 Decision table
