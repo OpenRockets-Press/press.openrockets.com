@@ -32,10 +32,6 @@ export function RootLayout() {
     document.title = routeTitleMap[pathname] ?? "OpenRockets Press";
   }, [pathname]);
 
-  const appShellRoots = ["/dashboard", "/cases", "/moderation", "/admin"];
-  const showGlobalChrome = pathname !== "/"
-    && !appShellRoots.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
-
   const modalTitleMap: Record<HomeInfoModalKind, string> = {
     about: "About Open Rockets Press",
     publish: "Publishing At Open Rockets Press",
@@ -47,15 +43,10 @@ export function RootLayout() {
       ? modalTitleMap[infoModal as keyof typeof modalTitleMap]
       : "Information";
 
-  if (!showGlobalChrome) {
-    return <Outlet />;
-  }
-
   return (
     <>
       <HomeHeader search={search} onSearchChange={setSearch} onOpenInfo={setInfoModal} />
-      <MaintenanceBanner />
-      <Outlet />
+      <Outlet context={{ search }} />
       <HomeFooter onOpenInfo={setInfoModal} />
 
       <Modal

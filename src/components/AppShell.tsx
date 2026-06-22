@@ -136,15 +136,6 @@ export function AppShell({ children }: AppShellProps) {
 
   const sidebar = (
     <aside className={`app-sidebar${sidebarOpen ? " sidebar-open" : ""}`} aria-label="Dashboard navigation">
-      <div className="sidebar-brand">
-        <Link to="/" className="sidebar-brand-link" onClick={() => setSidebarOpen(false)}>
-          <img className="sidebar-brand-main" src="/brand/271742354.png" alt="Open Rockets" />
-          <img className="sidebar-brand-mark" src="/brand/9283527.png" alt="Open Rockets mark" />
-          <img className="brand-mark" src="/brand/987935879357.png" alt="Open Rockets mark" />
-
-        </Link>
-      </div>
-
       {user && (
         <div className="sidebar-user">
           <div className="sidebar-avatar" aria-hidden="true">
@@ -193,12 +184,6 @@ export function AppShell({ children }: AppShellProps) {
       <div className="app-shell">
         {/* Mobile top bar */}
         <div className="sidebar-mobile-bar">
-          <Link to="/" className="sidebar-mobile-brand">
-            <img className="sidebar-brand-main" src="/brand/271742354.png" alt="Open Rockets" />
-            <img className="sidebar-brand-mark" src="/brand/9283527.png" alt="Open Rockets mark" />
-            <img className="brand-mark" src="/brand/987935879357.png" alt="Open Rockets mark" />
-
-          </Link>
           <button
             type="button"
             className="sidebar-mobile-toggle"
@@ -257,8 +242,6 @@ export function AppShell({ children }: AppShellProps) {
               </button>
             </div>
           </header>
-
-          <MaintenanceBanner />
 
           <div className="app-content">
             {children}

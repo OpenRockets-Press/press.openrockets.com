@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import type { HomeInfoModalKind } from "@/components/home/HomeInfoModal";
 import { getSessionUser } from "@/lib/authStore";
 
@@ -20,6 +20,11 @@ export function HomeHeader({ search, onSearchChange, onOpenInfo }: HomeHeaderPro
   const session = getSessionUser();
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
+  
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  });
+  const isInternal = pathname !== "/";
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -116,8 +121,12 @@ export function HomeHeader({ search, onSearchChange, onOpenInfo }: HomeHeaderPro
       <div className="home-shell">
         <div className="top-row">
           <Link to="/" className="brand-lockup" aria-label="Open Rockets Press home">
-            <img className="brand-main" src="/brand/271742354.png" alt="Open Rockets" />
-            <img className="brand-mark" src="/brand/9283527.png" alt="Open Rockets mark" />
+            {!isInternal && (
+              <>
+                <img className="brand-main" src="/brand/271742354.png" alt="Open Rockets" />
+                <img className="brand-mark" src="/brand/9283527.png" alt="Open Rockets mark" />
+              </>
+            )}
             <img className="brand-mark" src="/brand/987935879357.png" alt="Open Rockets mark" />
           </Link>
 
@@ -162,7 +171,7 @@ export function HomeHeader({ search, onSearchChange, onOpenInfo }: HomeHeaderPro
                   onClick={() => setProfileOpen(!profileOpen)}
                 >
                   <img 
-                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(session.name || 'User')}&background=0D8A50&color=fff`} 
+                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(session.displayName || 'User')}&background=0D8A50&color=fff`} 
                     alt="Profile" 
                     className="profile-avatar-img" 
                   />
@@ -171,8 +180,7 @@ export function HomeHeader({ search, onSearchChange, onOpenInfo }: HomeHeaderPro
                 {profileOpen && (
                   <div className="profile-dropdown slide-down">
                     <div className="profile-dropdown-header">
-                      <strong>{session.name || 'User'}</strong>
-                      <span className="birthday-notice">🎉 Your birthday is coming!</span>
+                      <strong>{session.displayName || 'User'}</strong>
                     </div>
                     <div className="profile-dropdown-links">
                       <Link to="/dashboard" className="dropdown-item">Dashboard</Link>

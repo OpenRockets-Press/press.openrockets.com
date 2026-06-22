@@ -58,12 +58,7 @@ export function DashboardPage() {
       <div className="dash-page">
         {/* ── Header ─────────────────────────────────────────────── */}
         <header className="dash-page-header">
-          <p className="eyebrow">Contributor Dashboard</p>
           <h1>Hi, {user.displayName}</h1>
-          <p className="muted">
-            <span className={`dash-status-dot ${isActive ? "dot-active" : "dot-warn"}`} />
-            {user.accountStatus.replace(/_/g, " ")}
-          </p>
         </header>
 
         {/* ── Stats ──────────────────────────────────────────────── */}
