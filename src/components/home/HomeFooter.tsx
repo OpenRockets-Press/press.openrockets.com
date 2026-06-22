@@ -12,7 +12,7 @@ export function HomeFooter({ onOpenInfo }: HomeFooterProps) {
         <div className="footer-top-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '40px' }}>
           
           <div className="footer-col" style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-            <img src="/brand/271742354.png" alt="OpenRockets Logo" width="220" style={{ marginBottom: '15px', display: 'block' }} />
+            <img src="/brand/271742354.png" alt="OpenRockets Logo" width="220" style={{ marginBottom: '15px', display: 'block', filter: 'invert(1) brightness(100)' }} />
             <p style={{ color: '#ffffff', fontSize: '14px', lineHeight: '1.6', textAlign: 'left' }}>
               An infrastructure service provider for nonprofits run by exceptional minors and teenagers worldwide.
             </p>
