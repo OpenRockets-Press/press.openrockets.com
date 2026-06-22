@@ -3,7 +3,7 @@ import { Outlet, useRouterState } from "@tanstack/react-router";
 import { HomeFooter } from "@/components/home/HomeFooter";
 import { HomeHeader } from "@/components/home/HomeHeader";
 import { HomeInfoModalContent, type HomeInfoModalKind } from "@/components/home/HomeInfoModal";
-import { MaintenanceBanner } from "@/components/maintenance/MaintenanceBanner";
+
 import { Modal } from "@/components/ui/Modal";
 
 export const SearchContext = createContext({ search: "" });
@@ -11,6 +11,9 @@ export const SearchContext = createContext({ search: "" });
 export function RootLayout() {
   const pathname = useRouterState({
     select: (state: { location: { pathname: string } }) => state.location.pathname,
+  });
+  const isPending = useRouterState({
+    select: (state) => state.status === "pending",
   });
   const [search, setSearch] = useState("");
   const [infoModal, setInfoModal] = useState<HomeInfoModalKind | null>(null);
@@ -47,6 +50,7 @@ export function RootLayout() {
 
   return (
     <>
+      {isPending && <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '3px', backgroundColor: '#0D8A50', zIndex: 9999, animation: 'loading-ribbon 1s infinite alternate' }} />}
       <HomeHeader search={search} onSearchChange={setSearch} onOpenInfo={setInfoModal} />
       <SearchContext.Provider value={{ search }}>
         <Outlet />

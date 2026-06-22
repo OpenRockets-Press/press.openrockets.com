@@ -50,11 +50,15 @@ export function HomeFooter({ onOpenInfo }: HomeFooterProps) {
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h18v18H3V3zm15 15V6H6v12h12zm-2-9H8v2h8V9zm0 4H8v2h8v-2z"/></svg>
                 Blog
               </a>
+              <a href="https://www.crunchbase.com/organization/openrockets" style={{ color: '#ffffff', textDecoration: 'none', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', textAlign: 'left' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M21.6 0H2.4A2.4 2.4 0 000 2.4v19.2A2.4 2.4 0 002.4 24h19.2a2.4 2.4 0 002.4-2.4V2.4A2.4 2.4 0 0021.6 0zM17.65 16.53c-1.25 1.4-3.08 2.22-5.4 2.22-3.8 0-6.85-2.86-6.85-6.8 0-3.9 3.1-6.72 6.88-6.72 2.37 0 4.14.88 5.4 2.25l-2.12 2.2c-.85-.85-1.85-1.28-3.26-1.28-2.02 0-3.6 1.58-3.6 3.55s1.58 3.55 3.6 3.55c1.45 0 2.4-.48 3.24-1.32l2.1 2.35zm1.5-6.85v4.5h-1.5v-4.5h1.5z"/></svg>
+                Crunchbase
+              </a>
             </div>
           </div>
 
           <div className="footer-col" style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-            <h4 style={{ fontSize: '14px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '15px', color: '#ffffff' }}>Contact (24/7)</h4>
+            <h4 style={{ fontSize: '14px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '15px', color: '#ffffff' }}>Ping us anytime</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'flex-start', textAlign: 'left' }}>
               <div>
                 <strong style={{ fontSize: '12px', color: '#ffffff', display: 'block', marginBottom: '4px', textTransform: 'uppercase' }}>Email</strong>
@@ -74,7 +78,7 @@ export function HomeFooter({ onOpenInfo }: HomeFooterProps) {
         </div>
 
         <div className="footer-bottom-row" style={{ borderTop: '1px solid #ffffff', paddingTop: '20px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: '15px' }}>
-          <span style={{ color: '#ffffff', fontSize: '13px' }}>
+          <span style={{ color: '#ffffff', fontSize: '13px', textAlign: 'left' }}>
             OpenRockets is a 100% teen-run United States C-Corporation.<br />
             © & (TM) 2022-2026 OpenRockets Incorporated. All Rights Reserved.
           </span>

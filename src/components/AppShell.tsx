@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCurrentUser, logout } from "@/lib/api";
 import { getSessionUser } from "@/lib/authStore";
 import { queryKeys } from "@/lib/queryKeys";
-import { MaintenanceBanner } from "@/components/maintenance/MaintenanceBanner";
+
 
 interface AppShellProps {
   children: ReactNode;
@@ -206,14 +206,22 @@ export function AppShell({ children }: AppShellProps) {
               </div>
             </div>
 
-            <label className="app-topbar-search" aria-label="Workspace search">
-              <input
-                type="search"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder={shellMeta.searchPlaceholder}
-              />
-            </label>
+            <div className="app-topbar-search-container" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <label className="app-topbar-search" aria-label="Workspace search" style={{ margin: 0 }}>
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder={shellMeta.searchPlaceholder}
+                />
+              </label>
+              <button type="button" className="app-topbar-action" aria-label="Search">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+              </button>
+            </div>
 
             <div className="app-topbar-actions">
               <a

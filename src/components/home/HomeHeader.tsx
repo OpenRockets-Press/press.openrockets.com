@@ -152,10 +152,12 @@ export function HomeHeader({ search, onSearchChange, onOpenInfo }: HomeHeaderPro
           </button>
 
           <nav className="desktop-nav" aria-label="Primary">
-            <button type="button" className="nav-link" onClick={() => onOpenInfo("about")}>
-              About
-            </button>
-            <Link to="/publish" className="nav-link">
+            <a href="https://press.openrockets.com/docs/get-started" className="nav-link" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              Get started
+            </a>
+            <Link to="/publish" className="nav-link" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path><circle cx="11" cy="11" r="2"></circle></svg>
               Publish
             </Link>
             {session ? (
@@ -198,14 +200,17 @@ export function HomeHeader({ search, onSearchChange, onOpenInfo }: HomeHeaderPro
         </div>
 
         <nav id="mobile-nav" className={menuOpen ? "mobile-nav open" : "mobile-nav"} aria-label="Mobile">
-          <button
-            type="button"
+          <a
+            href="https://press.openrockets.com/docs/get-started"
             className="mobile-nav-link"
-            onClick={() => { onOpenInfo("about"); setMenuOpen(false); }}
+            onClick={() => setMenuOpen(false)}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
           >
-            About
-          </button>
-          <Link to="/publish" className="mobile-nav-link" onClick={() => setMenuOpen(false)}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            Get started
+          </a>
+          <Link to="/publish" className="mobile-nav-link" onClick={() => setMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path><circle cx="11" cy="11" r="2"></circle></svg>
             Publish
           </Link>
           {session ? (

@@ -3453,3 +3453,9 @@ button {
   color: var(--danger);
   background: #fdf2f2;
 }
+
+@keyframes loading-ribbon {
+  0% { width: 0%; opacity: 0.5; }
+  50% { width: 50%; opacity: 1; }
+  100% { width: 100%; opacity: 0.5; }
+}
