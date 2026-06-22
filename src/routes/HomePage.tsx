@@ -7,7 +7,6 @@ import { HomeFooter } from "@/components/home/HomeFooter";
 import { HomeHeader } from "@/components/home/HomeHeader";
 import { HomeInfoModalContent, type HomeInfoModalKind } from "@/components/home/HomeInfoModal";
 import { HomeShelf } from "@/components/home/HomeShelf";
-import { MaintenanceBanner } from "@/components/maintenance/MaintenanceBanner";
 import { Modal } from "@/components/ui/Modal";
 import { getHomeFeed } from "@/lib/api";
 import { queryKeys } from "@/lib/queryKeys";
@@ -39,8 +38,6 @@ export function HomePage() {
 
       <main className="home-shell main-content">
         <HomeBanner />
-
-        <MaintenanceBanner />
 
         <HomeCategoriesRail active={activeType} onSelect={setActiveType} />
 
