@@ -120,9 +120,9 @@ export function HomeHeader({ search, onSearchChange, onOpenInfo }: HomeHeaderPro
       <div className="home-shell">
         <div className="top-row">
           <Link to="/" className="brand-lockup" aria-label="Open Rockets Press home">
-            <img className="brand-main" src="/brand/271742354.png" alt="Open Rockets" />
+            <img className="brand-main" style={{ visibility: "hidden", display: "none" }} src="/brand/271742354.png" alt="Open Rockets" />
             <img className="brand-mark" src="/brand/9283527.png" alt="Open Rockets mark" />
-            <img className="brand-mark" src="/brand/987935879357.png" alt="Open Rockets mark" />
+            <img className="brand-mark" style={{ width: "6rem" }} src="/brand/987935879357.png" alt="Open Rockets mark" />
           </Link>
 
           <div className="search-wrap" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

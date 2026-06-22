@@ -9,6 +9,10 @@ export function HomeFooter({ onOpenInfo }: HomeFooterProps) {
   return (
     <footer className="home-footer" data-testid="home-footer" style={{ borderTop: '1px solid #ffffff', paddingTop: '40px', paddingBottom: '40px', backgroundColor: '#000000', color: '#ffffff' }}>
       <div className="home-shell footer-content" style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: '100%', marginBottom: '10px' }}>
+          <img src="/brand/DARKMODEFAVICON.png" alt="OpenRockets Mode Logo" style={{ width: '7rem', maxWidth: '100%' }} />
+          <hr style={{ width: '100%', border: 'none', borderTop: '1px solid rgba(255,255,255,0.2)', marginTop: '20px' }} />
+        </div>
         <div className="footer-top-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '40px' }}>
           
           <div className="footer-col" style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
