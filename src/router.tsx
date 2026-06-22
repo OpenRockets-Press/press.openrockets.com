@@ -158,7 +158,7 @@ const registerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/register",
   loader: () => {
-    window.location.href = "https://accounts.openrockets.com/register?returnTo=" + encodeURIComponent(window.location.origin + "/api/auth/sso-callback?returnTo=/dashboard");
+    window.location.href = "https://accounts.openrockets.com/register?redirect_uri=" + encodeURIComponent(window.location.origin + "/api/auth/sso-callback?returnTo=/dashboard");
   },
   component: () => null,
 });
@@ -167,7 +167,7 @@ const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/login",
   loader: () => {
-    window.location.href = "https://accounts.openrockets.com/login?returnTo=" + encodeURIComponent(window.location.origin + "/api/auth/sso-callback?returnTo=/dashboard");
+    window.location.href = "https://accounts.openrockets.com/login?redirect_uri=" + encodeURIComponent(window.location.origin + "/api/auth/sso-callback?returnTo=/dashboard");
   },
   component: () => null,
 });
