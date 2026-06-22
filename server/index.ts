@@ -146,6 +146,12 @@ app.post('/api/discord/interactions', async (c) => {
   return c.text('Unknown interaction', 400);
 });
 
+import { serveStatic } from '@hono/node-server/serve-static';
+
+// Serve React Frontend (Static Files from Vite Build)
+app.use('/*', serveStatic({ root: './dist' }));
+app.get('*', serveStatic({ path: './dist/index.html' })); // SPA Fallback
+
 const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 
 console.log(`🚀 Starting Open Rockets Press API on port ${port}...`);
