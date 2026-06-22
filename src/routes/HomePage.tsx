@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useOutletContext } from "@tanstack/react-router";
 import type { PublicationType } from "@shared/types";
 import { HomeBanner } from "@/components/home/HomeBanner";
 import { HomeCategoriesRail } from "@/components/home/HomeCategoriesRail";
@@ -8,9 +7,10 @@ import { HomeShelf } from "@/components/home/HomeShelf";
 import { getHomeFeed } from "@/lib/api";
 import { queryKeys } from "@/lib/queryKeys";
 import { useDebouncedValue } from "@/lib/useDebouncedValue";
+import { SearchContext } from "@/routes/RootLayout";
 
 export function HomePage() {
-  const { search } = useOutletContext<{ search: string }>();
+  const { search } = useContext(SearchContext);
   const [activeType, setActiveType] = useState<PublicationType | "all">("all");
   const debouncedSearch = useDebouncedValue(search, 300);
 
