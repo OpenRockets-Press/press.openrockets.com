@@ -82,7 +82,27 @@ app.get('/api/auth/sso-callback', async (c) => {
       secure: process.env.NODE_ENV === 'production'
     });
 
-    return c.redirect(returnTo);
+    const frontendSession = {
+      userId: String(userData.id),
+      displayName: userData.name || "Contributor",
+      email: userData.email,
+      role: "contributor",
+      accountStatus: "active",
+      consentTier: "general"
+    };
+
+    return c.html(`
+      <!DOCTYPE html>
+      <html>
+        <head><title>Authenticating...</title></head>
+        <body>
+          <script>
+            window.localStorage.setItem("orp.session.v1", JSON.stringify(${JSON.stringify(frontendSession)}));
+            window.location.href = "${returnTo}";
+          </script>
+        </body>
+      </html>
+    `);
   } catch (error) {
     console.error("SSO Exception:", error);
     return c.redirect(`${returnTo}?error=sso_exception`);
