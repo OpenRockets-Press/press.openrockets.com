@@ -7,46 +7,58 @@ interface HomeFooterProps {
 
 export function HomeFooter({ onOpenInfo }: HomeFooterProps) {
   return (
-    <footer className="home-footer" data-testid="home-footer" style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '40px', paddingBottom: '40px', backgroundColor: '#000', color: '#fff' }}>
+    <footer className="home-footer" data-testid="home-footer" style={{ borderTop: '1px solid #ffffff', paddingTop: '40px', paddingBottom: '40px', backgroundColor: '#000000', color: '#ffffff' }}>
       <div className="home-shell footer-content" style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
         <div className="footer-top-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '40px' }}>
           
           <div className="footer-col">
-            <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '15px' }}>OpenRockets Inc.</h3>
-            <p style={{ color: '#aaa', fontSize: '14px', lineHeight: '1.6' }}>
+            <img src="/brand/271742354.png" alt="OpenRockets Logo" width="150" style={{ marginBottom: '15px', display: 'block' }} />
+            <p style={{ color: '#ffffff', fontSize: '14px', lineHeight: '1.6' }}>
               An infrastructure service provider for nonprofits run by exceptional minors and teenagers worldwide.
             </p>
-            <p style={{ color: '#aaa', fontSize: '14px', lineHeight: '1.6', marginTop: '10px' }}>
+            <p style={{ color: '#ffffff', fontSize: '14px', lineHeight: '1.6', marginTop: '10px' }}>
               Revitalize youth volunteering. Make a difference. Join the network of elites.
             </p>
           </div>
 
           <div className="footer-col">
-            <h4 style={{ fontSize: '14px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '15px', color: '#888' }}>Legal & Press</h4>
+            <h4 style={{ fontSize: '14px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '15px', color: '#ffffff' }}>Legal & Press</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <Link to="/legal/terms" style={{ color: '#ddd', textDecoration: 'none', fontSize: '14px' }}>Terms of Service</Link>
-              <Link to="/legal/privacy-policy" style={{ color: '#ddd', textDecoration: 'none', fontSize: '14px' }}>Privacy Policy</Link>
-              <Link to="/legal/parental-consent-form" style={{ color: '#ddd', textDecoration: 'none', fontSize: '14px' }}>Parental Consent</Link>
-              <button type="button" style={{ color: '#ddd', textDecoration: 'none', fontSize: '14px', background: 'none', border: 'none', padding: 0, textAlign: 'left', cursor: 'pointer' }} onClick={() => onOpenInfo("about")}>About OpenRockets Press</button>
+              <Link to="/legal/terms" style={{ color: '#ffffff', textDecoration: 'none', fontSize: '14px' }}>Terms of Service</Link>
+              <Link to="/legal/privacy-policy" style={{ color: '#ffffff', textDecoration: 'none', fontSize: '14px' }}>Privacy Policy</Link>
+              <Link to="/legal/parental-consent-form" style={{ color: '#ffffff', textDecoration: 'none', fontSize: '14px' }}>Parental Consent</Link>
+              <button type="button" style={{ color: '#ffffff', textDecoration: 'none', fontSize: '14px', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', padding: 0 }} onClick={() => onOpenInfo("about")}>About OpenRockets Press</button>
             </div>
           </div>
 
           <div className="footer-col">
-            <h4 style={{ fontSize: '14px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '15px', color: '#888' }}>Social</h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <a href="https://discord.gg/djXh8udpbn" style={{ color: '#ddd', textDecoration: 'none', fontSize: '14px' }}>Discord</a>
-              <a href="https://linkedin.com/company/openrocketsinc" style={{ color: '#ddd', textDecoration: 'none', fontSize: '14px' }}>LinkedIn</a>
-              <a href="https://x.com/openrockets" style={{ color: '#ddd', textDecoration: 'none', fontSize: '14px' }}>Twitter / X</a>
-              <a href="https://blog.openrockets.com" style={{ color: '#ddd', textDecoration: 'none', fontSize: '14px' }}>Blog</a>
+            <h4 style={{ fontSize: '14px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '15px', color: '#ffffff' }}>Social</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <a href="https://discord.gg/djXh8udpbn" style={{ color: '#ffffff', textDecoration: 'none', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg>
+                Discord
+              </a>
+              <a href="https://linkedin.com/company/openrocketsinc" style={{ color: '#ffffff', textDecoration: 'none', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.924 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                LinkedIn
+              </a>
+              <a href="https://x.com/openrockets" style={{ color: '#ffffff', textDecoration: 'none', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                Twitter / X
+              </a>
+              <a href="https://blog.openrockets.com" style={{ color: '#ffffff', textDecoration: 'none', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h18v18H3V3zm15 15V6H6v12h12zm-2-9H8v2h8V9zm0 4H8v2h8v-2z"/></svg>
+                Blog
+              </a>
             </div>
           </div>
 
           <div className="footer-col">
-            <h4 style={{ fontSize: '14px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '15px', color: '#888' }}>Contact (24/7)</h4>
+            <h4 style={{ fontSize: '14px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '15px', color: '#ffffff' }}>Contact (24/7)</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <a href="mailto:support@openrockets.com" style={{ color: '#ddd', textDecoration: 'none', fontSize: '14px' }}>support@openrockets.com</a>
-              <span style={{ color: '#ddd', fontSize: '14px' }}>+1 (603) 777-2159</span>
-              <span style={{ color: '#aaa', fontSize: '13px', marginTop: '10px', lineHeight: '1.5' }}>
+              <a href="mailto:team@openrockets.com" style={{ color: '#ffffff', textDecoration: 'none', fontSize: '14px' }}>team@openrockets.com</a>
+              <span style={{ color: '#ffffff', fontSize: '14px' }}>+1 (603) 777-2159</span>
+              <span style={{ color: '#ffffff', fontSize: '13px', marginTop: '10px', lineHeight: '1.5' }}>
                 266 Elmwood Ave, Ste 420<br />
                 Buffalo, NY 14222, USA
               </span>
@@ -55,12 +67,12 @@ export function HomeFooter({ onOpenInfo }: HomeFooterProps) {
 
         </div>
 
-        <div className="footer-bottom-row" style={{ borderTop: '1px solid #333', paddingTop: '20px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: '15px' }}>
-          <span style={{ color: '#666', fontSize: '13px' }}>
+        <div className="footer-bottom-row" style={{ borderTop: '1px solid #ffffff', paddingTop: '20px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: '15px' }}>
+          <span style={{ color: '#ffffff', fontSize: '13px' }}>
             OpenRockets is a 100% teen-run United States C-Corporation.<br />
             © & (TM) 2022-2026 OpenRockets Incorporated. All Rights Reserved.
           </span>
-          <a href="https://openrockets.com" style={{ color: '#666', fontSize: '13px', textDecoration: 'none' }}>Update cookie preferences</a>
+          <a href="#" id="open_preferences_center" style={{ color: '#ffffff', fontSize: '13px', textDecoration: 'none' }}>Update cookies preferences</a>
         </div>
       </div>
     </footer>

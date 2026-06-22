@@ -814,6 +814,7 @@ button {
   margin-inline: auto;
 }
 
+
 .skeleton-bar {
   border-radius: 4px;
   background: linear-gradient(90deg, #e8e3d8 25%, #f0ece3 50%, #e8e3d8 75%);
@@ -1339,7 +1340,6 @@ button {
   display: grid;
   grid-template-columns: 248px minmax(0, 1fr);
   min-height: 100dvh;
-  max-height: 100dvh;
   background: var(--parch);
 }
 
@@ -1726,7 +1726,7 @@ button {
 .app-content {
   min-width: 0;
   overflow-y: auto;
-  padding: 1.25rem 1.5rem 2.25rem;
+  padding: 1.25rem 1.5rem 4rem;
   animation: page-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -3201,7 +3201,7 @@ button {
   }
 
   .app-content {
-    padding: 1rem 1rem 1.7rem;
+    padding: 1rem 1rem 3rem;
     overflow: visible;
   }
 
