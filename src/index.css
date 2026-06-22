@@ -659,6 +659,24 @@ button {
   }
 }
 
+@media (max-width: 768px) {
+  .home-banner {
+    margin-inline: -16px;
+    width: calc(100% + 32px);
+  }
+  .home-banner-frame {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+  .home-banner-toggle {
+    transform: scale(0.7);
+    transform-origin: bottom right;
+    bottom: 0.5rem;
+    right: 0.5rem;
+  }
+}
+
 .home-footer {
   background: #f9fafb;
   border-top: 1px solid var(--line);
