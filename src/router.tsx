@@ -18,12 +18,8 @@ import {
 // Critical path routes — imported eagerly so there's no chunk-fetch delay on first load
 import { RootLayout } from "@/routes/RootLayout";
 import { HomePage } from "@/routes/HomePage";
-import { LoginPage } from "@/routes/LoginPage";
-import { RegisterPage } from "@/routes/RegisterPage";
 
-const ConsentInSessionPage = lazy(() =>
-  import("@/routes/ConsentInSessionPage").then((module) => ({ default: module.ConsentInSessionPage })),
-);
+
 const PublishPage = lazy(() => import("@/routes/PublishPage").then((module) => ({ default: module.PublishPage })));
 const AboutPage = lazy(() => import("@/routes/AboutPage").then((module) => ({ default: module.AboutPage })));
 const PrivacyPolicyPage = lazy(() =>
@@ -161,19 +157,19 @@ const homeRoute = createRoute({
 const registerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/register",
-  component: () => withRouteSuspense(<RegisterPage />),
-});
-
-const consentRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/consent/in-session",
-  component: () => withRouteSuspense(<ConsentInSessionPage />),
+  loader: () => {
+    window.location.href = "https://accounts.openrockets.com/register?returnTo=" + encodeURIComponent(window.location.origin + "/api/auth/sso-callback?returnTo=/dashboard");
+  },
+  component: () => null,
 });
 
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/login",
-  component: () => withRouteSuspense(<LoginPage />),
+  loader: () => {
+    window.location.href = "https://accounts.openrockets.com/login?returnTo=" + encodeURIComponent(window.location.origin + "/api/auth/sso-callback?returnTo=/dashboard");
+  },
+  component: () => null,
 });
 
 const publishRoute = createRoute({
@@ -322,7 +318,6 @@ const suspendedRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   homeRoute,
   registerRoute,
-  consentRoute,
   loginRoute,
   publishRoute,
   aboutRoute,
