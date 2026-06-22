@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { Link } from "@tanstack/react-router";
 import type { HomeInfoModalKind } from "@/components/home/HomeInfoModal";
 import { getSessionUser } from "@/lib/authStore";
@@ -18,6 +18,18 @@ export function HomeHeader({ search, onSearchChange, onOpenInfo }: HomeHeaderPro
     "Search student research and journals...",
   ]);
   const session = getSessionUser();
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setProfileOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -143,9 +155,37 @@ export function HomeHeader({ search, onSearchChange, onOpenInfo }: HomeHeaderPro
               Publish
             </Link>
             {session ? (
-              <Link to="/dashboard" className="nav-link nav-link-cta">
-                Dashboard
-              </Link>
+              <div className="profile-menu-container" ref={profileRef}>
+                <button 
+                  type="button" 
+                  className="profile-avatar-btn" 
+                  onClick={() => setProfileOpen(!profileOpen)}
+                >
+                  <img 
+                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(session.name || 'User')}&background=0D8A50&color=fff`} 
+                    alt="Profile" 
+                    className="profile-avatar-img" 
+                  />
+                </button>
+                
+                {profileOpen && (
+                  <div className="profile-dropdown slide-down">
+                    <div className="profile-dropdown-header">
+                      <strong>{session.name || 'User'}</strong>
+                      <span className="birthday-notice">🎉 Your birthday is coming!</span>
+                    </div>
+                    <div className="profile-dropdown-links">
+                      <Link to="/dashboard" className="dropdown-item">Dashboard</Link>
+                      <Link to="/dashboard" className="dropdown-item">Your Profile</Link>
+                      <Link to="/dashboard" className="dropdown-item">Your Artifacts</Link>
+                      <button type="button" onClick={() => onOpenInfo("about")} className="dropdown-item text-left">About</button>
+                      <a href="mailto:support@openrockets.com" className="dropdown-item">Helpful Links</a>
+                      <hr className="dropdown-divider" />
+                      <a href="/api/auth/logout" className="dropdown-item sign-out">Sign Out</a>
+                    </div>
+                  </div>
+                )}
+              </div>
             ) : (
               <Link to="/login" className="nav-link nav-link-cta">
                 Sign In

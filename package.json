@@ -10,6 +10,7 @@
     "build": "bun install --frozen-lockfile && bun run typecheck:web && vite build",
     "preview": "vite preview",
     "lint": "eslint . --max-warnings=0",
+    "db:push": "bunx drizzle-kit push",
     "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
     "test": "vitest run --coverage",
     "test:watch": "vitest",
