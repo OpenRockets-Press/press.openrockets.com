@@ -89,10 +89,61 @@ app.get('/api/auth/sso-callback', async (c) => {
   }
 });
 
-// Phase 4 Placeholder: Discord Webhook trigger for Publication submission
+import { InteractionType, InteractionResponseType, verifyKey } from 'discord-interactions';
+import { eq } from 'drizzle-orm';
+
+// Phase 4: Discord Webhook trigger for Publication submission
 app.post('/api/discord/interactions', async (c) => {
-  // TODO: Implement discord webhook firing when a user submits an artifact
-  return c.json({ success: true, message: 'Discord integration coming soon' });
+  const signature = c.req.header('X-Signature-Ed25519');
+  const timestamp = c.req.header('X-Signature-Timestamp');
+  const bodyText = await c.req.text();
+  
+  if (!signature || !timestamp) {
+    return c.text('Missing signatures', 401);
+  }
+
+  const isValidRequest = verifyKey(
+    bodyText,
+    signature,
+    timestamp,
+    process.env.DISCORD_PUBLIC_KEY || ''
+  );
+
+  if (!isValidRequest) {
+    return c.text('Bad request signature', 401);
+  }
+
+  const interaction = JSON.parse(bodyText);
+
+  if (interaction.type === InteractionType.PING) {
+    return c.json({ type: InteractionResponseType.PONG });
+  }
+
+  if (interaction.type === InteractionType.MESSAGE_COMPONENT) {
+    const customId = interaction.data.custom_id;
+    
+    if (customId.startsWith('approve_')) {
+      const pubId = customId.replace('approve_', '');
+      await db.update(publications).set({ status: 'published' }).where(eq(publications.pubId, pubId));
+
+      return c.json({
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+        data: { content: `✅ Publication **${pubId}** has been approved and published to the platform!` },
+      });
+    }
+
+    if (customId.startsWith('reject_')) {
+      const pubId = customId.replace('reject_', '');
+      await db.update(publications).set({ status: 'rejected' }).where(eq(publications.pubId, pubId));
+
+      return c.json({
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+        data: { content: `❌ Publication **${pubId}** has been rejected.` },
+      });
+    }
+  }
+
+  return c.text('Unknown interaction', 400);
 });
 
 const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
