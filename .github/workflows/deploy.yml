@@ -17,7 +17,8 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
+            export PATH=$PATH:~/.bun/bin:/usr/local/bin
             cd ~/press.openrockets.com
             git pull origin main
-            bunx --bun vite build
+            ~/.bun/bin/bunx --bun vite build
             pm2 restart openrockets-press
