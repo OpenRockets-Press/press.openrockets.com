@@ -1,4 +1,4 @@
-import { mysqlTable, serial, varchar, text, timestamp, boolean, int, enum as mysqlEnum } from 'drizzle-orm/mysql-core';
+import { mysqlTable, serial, varchar, text, timestamp, boolean, int, mysqlEnum } from 'drizzle-orm/mysql-core';
 
 export const users = mysqlTable('users', {
   id: varchar('id', { length: 255 }).primaryKey(), // ID from global accounts system
