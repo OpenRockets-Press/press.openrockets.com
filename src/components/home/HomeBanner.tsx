@@ -4,7 +4,7 @@ const SLIDE_INTERVAL_MS = 20_000;
 
 const SLIDES = [
   {
-    src: "/brand/static/wp-content/slide 1.png?v=999",
+    src: "/brand/static/wp-content/slide1.png?v=1",
     alt: "Open Rockets Press feature banner 0",
   },
   {
