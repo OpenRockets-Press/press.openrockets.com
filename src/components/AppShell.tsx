@@ -4,9 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCurrentUser, logout } from "@/lib/api";
 import { getSessionUser } from "@/lib/authStore";
 import { queryKeys } from "@/lib/queryKeys";
-import { HomeInfoModalContent, type HomeInfoModalKind } from "@/components/home/HomeInfoModal";
 import { MaintenanceBanner } from "@/components/maintenance/MaintenanceBanner";
-import { Modal } from "@/components/ui/Modal";
 
 interface AppShellProps {
   children: ReactNode;
@@ -73,7 +71,6 @@ export function AppShell({ children }: AppShellProps) {
   const currentPath = location.pathname;
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [infoModal, setInfoModal] = useState<HomeInfoModalKind | null>(null);
 
   const { data: user } = useQuery({
     queryKey: queryKeys.auth.currentUser(),
@@ -172,12 +169,6 @@ export function AppShell({ children }: AppShellProps) {
     </aside>
   );
 
-  const modalTitleMap: Record<HomeInfoModalKind, string> = {
-    about: "About Open Rockets Press",
-    publish: "Publishing At Open Rockets Press",
-    privacy: "Privacy Summary",
-    parental: "Parental Consent Summary",
-  };
 
   return (
     <>
@@ -225,13 +216,13 @@ export function AppShell({ children }: AppShellProps) {
             </label>
 
             <div className="app-topbar-actions">
-              <button
-                type="button"
+              <a
+                href="https://press.openrockets.com/docs/get-started"
                 className="app-topbar-action"
-                onClick={() => setInfoModal("about")}
+                style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}
               >
-                Info
-              </button>
+                Get started
+              </a>
               <button
                 type="button"
                 className="app-topbar-action app-topbar-action-primary"
@@ -249,14 +240,6 @@ export function AppShell({ children }: AppShellProps) {
         </div>
       </div>
 
-      <Modal
-        open={infoModal !== null}
-        title={infoModal ? modalTitleMap[infoModal] : "Information"}
-        onClose={() => setInfoModal(null)}
-        width="md"
-      >
-        {infoModal ? <HomeInfoModalContent kind={infoModal} /> : null}
-      </Modal>
     </>
   );
 }
