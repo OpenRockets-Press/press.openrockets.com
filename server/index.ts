@@ -32,11 +32,16 @@ app.get('/api/health', (c) => {
 });
 
 // Phase 3 Placeholder: SSO Callback from accounts.openrockets.com
-app.post('/api/auth/sso-callback', async (c) => {
+app.get('/api/auth/sso-callback', async (c) => {
+  const token = c.req.query('token');
+  const returnTo = c.req.query('returnTo') || '/dashboard';
+  
   // TODO: Implement token validation against openrocketsauth.alwaysdata.net
   // TODO: Upsert user into `users` table
   // TODO: Set secure HTTP-only cookie session
-  return c.json({ success: true, message: 'SSO callback not yet fully implemented' });
+  
+  // For now, redirect to the frontend with the token so the frontend can mock login
+  return c.redirect(`${returnTo}?token=${token}`);
 });
 
 // Phase 4 Placeholder: Discord Webhook trigger for Publication submission
