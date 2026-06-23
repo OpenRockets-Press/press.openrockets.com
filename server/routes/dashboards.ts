@@ -23,19 +23,33 @@ dashboardsRouter.get('/contributor', authMiddleware, async (c) => {
     .from(publications)
     .where(eq(publications.authorId, user.id));
 
-  // Fetch recent publications
-  const recentSubmissions = await db.query.publications.findMany({
-    where: eq(publications.authorId, user.id),
-    orderBy: [desc(publications.submittedAt)],
-    limit: 5,
-  });
+  // Fetch recent publications (Optimized: Omit abstract and content)
+  const recentSubmissions = await db
+    .select({
+      id: publications.id,
+      title: publications.title,
+      status: publications.status,
+      type: publications.type,
+      submittedAt: publications.submittedAt,
+    })
+    .from(publications)
+    .where(eq(publications.authorId, user.id))
+    .orderBy(desc(publications.submittedAt))
+    .limit(5);
 
   // Fetch recent cases opened by this user
-  const recentCases = await db.query.cases.findMany({
-    where: eq(cases.contributorUserId, user.id),
-    orderBy: [desc(cases.updatedAt)],
-    limit: 5,
-  });
+  const recentCases = await db
+    .select({
+      id: cases.id,
+      subject: cases.subject,
+      status: cases.status,
+      priority: cases.priority,
+      updatedAt: cases.updatedAt,
+    })
+    .from(cases)
+    .where(eq(cases.contributorUserId, user.id))
+    .orderBy(desc(cases.updatedAt))
+    .limit(5);
 
   // Reputation Score (mock formula for now: 1 download = 5 points, 1 view = 1 point)
   const reputationScore = (stats?.totalDownloads || 0) * 5 + (stats?.totalViews || 0);

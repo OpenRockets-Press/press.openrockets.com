@@ -58,10 +58,24 @@ publicationsRouter.get('/', zValidator('query', getListQuerySchema), async (c) =
 
   const totalPages = Math.ceil(count / limit);
 
-  // Get data with explicit join
+  // Get data with explicit join and optimized select (Omit content to save bandwidth)
   const data = await db
     .select({
-      pub: publications,
+      id: publications.id,
+      title: publications.title,
+      division: publications.division,
+      category: publications.category,
+      license: publications.license,
+      status: publications.status,
+      viewCount: publications.viewCount,
+      downloadCount: publications.downloadCount,
+      abstract: publications.abstract,
+      coverImageUrl: publications.coverImageUrl,
+      tags: publications.tags,
+      createdAt: publications.createdAt,
+      submittedAt: publications.submittedAt,
+      publishedAt: publications.publishedAt,
+      authorId: publications.authorId,
       authorName: users.displayName,
     })
     .from(publications)
@@ -73,7 +87,7 @@ publicationsRouter.get('/', zValidator('query', getListQuerySchema), async (c) =
 
   // Map to a clean frontend-friendly structure
   const formattedData = data.map(row => ({
-    ...row.pub,
+    ...row,
     authorName: row.authorName || 'Unknown Author',
   }));
 
