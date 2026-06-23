@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { db } from '../db';
 import { users } from '../db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, sql } from 'drizzle-orm';
 import { authMiddleware } from '../middleware/auth';
 
 export const usersRouter = new Hono();
@@ -13,12 +13,31 @@ usersRouter.get('/', authMiddleware, async (c) => {
     return c.json({ success: false, error: { code: 'FORBIDDEN', message: 'Access denied' } }, 403);
   }
 
-  // Use pagination in real life, but simple findMany for now
+  const page = parseInt(c.req.query('page') || '1');
+  const limit = parseInt(c.req.query('limit') || '20');
+  const offset = (page - 1) * limit;
+
+  // Get total count
+  const [countResult] = await db
+    .select({ count: sql`COUNT(${users.id})`.mapWith(Number) })
+    .from(users);
+
   const allUsers = await db.query.users.findMany({
     orderBy: [desc(users.createdAt)],
+    limit,
+    offset,
   });
   
-  return c.json({ success: true, data: allUsers });
+  return c.json({ 
+    success: true, 
+    data: allUsers,
+    meta: {
+      page,
+      limit,
+      totalCount: countResult?.count || 0,
+      totalPages: Math.ceil((countResult?.count || 0) / limit),
+    }
+  });
 });
 
 usersRouter.get('/:userId', async (c) => {

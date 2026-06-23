@@ -1,23 +1,46 @@
 import { Hono } from 'hono';
 import { db } from '../db';
 import { cases, caseMessages, users } from '../db/schema';
-import { eq, desc, asc } from 'drizzle-orm';
+import { eq, desc, asc, sql } from 'drizzle-orm';
 import { authMiddleware } from '../middleware/auth';
 import { zValidator } from '@hono/zod-validator';
 import { createCaseSchema, createCaseMessageSchema } from '../validators/schemas';
 
 export const casesRouter = new Hono();
 
-casesRouter.get('/', async (c) => {
-  // getContributorCases
-  const userId = "mock_user";
+casesRouter.get('/', authMiddleware, async (c) => {
+  const user = c.get('user');
   
-  const userCases = await db.query.cases.findMany({
-    where: eq(cases.contributorUserId, userId),
-    orderBy: [desc(cases.updatedAt)],
-  });
+  const page = parseInt(c.req.query('page') || '1');
+  const limit = parseInt(c.req.query('limit') || '20');
+  const offset = (page - 1) * limit;
 
-  return c.json(userCases);
+  let baseQuery = db.select().from(cases);
+  let countQuery = db.select({ count: sql`COUNT(${cases.id})`.mapWith(Number) }).from(cases);
+
+  // If not admin/moderator, only see your own cases
+  if (user.role === 'contributor') {
+    baseQuery = baseQuery.where(eq(cases.contributorUserId, user.id));
+    countQuery = countQuery.where(eq(cases.contributorUserId, user.id));
+  }
+
+  const [countResult] = await countQuery;
+
+  const userCases = await baseQuery
+    .orderBy(desc(cases.updatedAt))
+    .limit(limit)
+    .offset(offset);
+
+  return c.json({
+    success: true,
+    data: userCases,
+    meta: {
+      page,
+      limit,
+      totalCount: countResult?.count || 0,
+      totalPages: Math.ceil((countResult?.count || 0) / limit),
+    }
+  });
 });
 
 casesRouter.post('/', authMiddleware, zValidator('json', createCaseSchema), async (c) => {
