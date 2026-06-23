@@ -262,7 +262,35 @@ const termsOfServiceRoute = createRoute({
 const dashboardRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/dashboard",
-  beforeLoad: () => {
+  validateSearch: (search: Record<string, unknown>) => ({
+    token: search.token as string | undefined,
+  }),
+  beforeLoad: ({ search }) => {
+    const searchParams = search as { token?: string };
+    if (searchParams.token) {
+      try {
+        const payloadStr = atob(searchParams.token.split('.')[1]);
+        const payload = JSON.parse(payloadStr);
+        window.localStorage.setItem("orp.session.token", searchParams.token);
+        
+        // Mock a user from the JWT payload
+        const user = {
+          userId: payload.sub || "mock-user-id",
+          email: payload.email || "user@example.com",
+          displayName: payload.name || "Contributor",
+          role: "contributor",
+          accountStatus: "active",
+          consentTier: "general"
+        };
+        window.localStorage.setItem("orp.session.v1", JSON.stringify(user));
+        
+        // Remove token from URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } catch (e) {
+        console.error("Failed to parse SSO token", e);
+      }
+    }
+
     const session = getSessionUser();
     if (!session) throw redirect({ to: "/login" });
     if (session.accountStatus === "suspended") throw redirect({ to: "/suspended" });
