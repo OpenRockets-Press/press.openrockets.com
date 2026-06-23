@@ -10,18 +10,7 @@ export const users = mysqlTable('users', {
 
 export const publications = mysqlTable('publications', {
   id: serial('id').primaryKey(),
-import { mysqlTable, serial, varchar, text, timestamp, boolean, int, mysqlEnum } from 'drizzle-orm/mysql-core';
 
-export const users = mysqlTable('users', {
-  id: varchar('id', { length: 255 }).primaryKey(), // ID from global accounts system
-  displayName: varchar('display_name', { length: 255 }).notNull(),
-  email: varchar('email', { length: 255 }).notNull(),
-  role: mysqlEnum('role', ['contributor', 'moderator', 'admin']).default('contributor'),
-  createdAt: timestamp('created_at').defaultNow(),
-});
-
-export const publications = mysqlTable('publications', {
-  id: serial('id').primaryKey(),
   pubId: varchar('pub_id', { length: 50 }).unique().notNull(), // e.g. ORP-1234
   authorId: varchar('author_id', { length: 255 }).references(() => users.id),
   title: varchar('title', { length: 255 }).notNull(),

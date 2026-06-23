@@ -1,26 +1,79 @@
 import { Hono } from 'hono';
 import { db } from '../db';
-import { publications } from '../db/schema';
-import { desc, eq } from 'drizzle-orm';
+import { publications, users } from '../db/schema';
+import { desc, eq, and, asc, sql } from 'drizzle-orm';
 import { BUCKET_NAME, uploadToStorage } from '../storage/s3';
+import { zValidator } from '@hono/zod-validator';
+import { z } from 'zod';
 
 export const publicationsRouter = new Hono();
 
-publicationsRouter.get('/', async (c) => {
-  // getHomeFeed equivalent
-  const pubs = await db.query.publications.findMany({
-    where: eq(publications.status, 'published'),
-    orderBy: [desc(publications.publishedAt)],
-    limit: 20,
-    with: {
-      authorId: true,
-    }
-  });
+const getListQuerySchema = z.object({
+  page: z.string().transform(Number).default('1'),
+  limit: z.string().transform(Number).default('20'),
+  division: z.enum(['artifacts', '3d', 'code']).optional(),
+  license: z.enum(['ORP_BEAVER', 'ORP_EAGLE', 'ORP_KANGAROO']).optional(),
+  sort: z.enum(['newest', 'popular', 'oldest']).default('newest'),
+});
+
+publicationsRouter.get('/', zValidator('query', getListQuerySchema), async (c) => {
+  const { page, limit, division, license, sort } = c.req.valid('query');
+  
+  const conditions = [eq(publications.status, 'published')];
+  
+  if (division) conditions.push(eq(publications.division, division));
+  if (license) conditions.push(eq(publications.license, license));
+  
+  const whereClause = and(...conditions);
+  
+  let orderByClause;
+  if (sort === 'popular') {
+    orderByClause = desc(publications.viewCount);
+  } else if (sort === 'oldest') {
+    orderByClause = asc(publications.publishedAt);
+  } else {
+    orderByClause = desc(publications.publishedAt); // default to newest
+  }
+
+  const offset = (page - 1) * limit;
+
+  // Get total count
+  const [{ count }] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(publications)
+    .where(whereClause);
+
+  const totalPages = Math.ceil(count / limit);
+
+  // Get data with explicit join
+  const data = await db
+    .select({
+      pub: publications,
+      authorName: users.displayName,
+    })
+    .from(publications)
+    .leftJoin(users, eq(publications.authorId, users.id))
+    .where(whereClause)
+    .orderBy(orderByClause)
+    .limit(limit)
+    .offset(offset);
+
+  // Map to a clean frontend-friendly structure
+  const formattedData = data.map(row => ({
+    ...row.pub,
+    authorName: row.authorName || 'Unknown Author',
+  }));
 
   return c.json({
-    featured: pubs.slice(0, 5),
-    trending: pubs.slice(5, 10),
-    newReleases: pubs.slice(10, 20),
+    data: formattedData,
+    meta: {
+      page,
+      limit,
+      totalRecords: count,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+    }
   });
 });
 
