@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { serve } from '@hono/node-server';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
+import { secureHeaders } from 'hono/secure-headers';
 import { db } from './db';
 import { users, publications } from './db/schema';
 import { eq } from 'drizzle-orm';
@@ -18,9 +19,25 @@ import { auditRouter } from './routes/audit';
 
 // Middleware
 app.use('*', logger());
+app.use('*', secureHeaders());
+
 app.use('/api/*', cors({
-  origin: process.env.APP_BASE_URL || 'http://localhost:5173',
+  origin: (origin) => {
+    const allowedOrigins = [
+      process.env.APP_BASE_URL || 'http://localhost:5173',
+      'https://press.openrockets.com',
+      'https://openrockets.com'
+    ];
+    if (!origin || allowedOrigins.includes(origin)) {
+      return origin || allowedOrigins[0];
+    }
+    return null;
+  },
   credentials: true,
+  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+  exposeHeaders: ['Content-Length', 'X-Kuma-Revision'],
+  maxAge: 86400, // 24 hours preflight cache
 }));
 
 app.route('/api/publications', publicationsRouter);
