@@ -1,14 +1,14 @@
 import { useState, useEffect, useMemo } from 'react';
 
 const SHIMMER_VARIANTS = [
-  // Light pink/rose
-  'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(253, 226, 235, 0.6) 50%, rgba(255,255,255,0) 100%)',
-  // Light purple
-  'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(235, 226, 253, 0.6) 50%, rgba(255,255,255,0) 100%)',
-  // Light lavender
-  'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(243, 232, 255, 0.6) 50%, rgba(255,255,255,0) 100%)',
-  // Soft peach/pink
-  'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255, 233, 236, 0.6) 50%, rgba(255,255,255,0) 100%)'
+  // Vibrant pink/rose
+  'linear-gradient(90deg, rgba(238,238,238,0) 0%, rgba(253, 196, 215, 0.9) 50%, rgba(238,238,238,0) 100%)',
+  // Vibrant purple
+  'linear-gradient(90deg, rgba(238,238,238,0) 0%, rgba(215, 196, 253, 0.9) 50%, rgba(238,238,238,0) 100%)',
+  // Vibrant lavender
+  'linear-gradient(90deg, rgba(238,238,238,0) 0%, rgba(225, 202, 255, 0.9) 50%, rgba(238,238,238,0) 100%)',
+  // Vibrant peach
+  'linear-gradient(90deg, rgba(238,238,238,0) 0%, rgba(255, 203, 206, 0.9) 50%, rgba(238,238,238,0) 100%)'
 ];
 
 interface ImageWithShimmerProps extends React.ImgHTMLAttributes<HTMLImageElement> {
@@ -31,7 +31,7 @@ export function ImageWithShimmer({ wrapperClassName = '', className = '', src, a
         overflow: 'hidden',
         width: '100%',
         height: '100%',
-        background: isLoaded ? 'transparent' : '#f8f9fa',
+        background: isLoaded ? 'transparent' : '#eeeeee',
         ...props.style
       }}
     >
