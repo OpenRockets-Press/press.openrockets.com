@@ -79,7 +79,21 @@ publicationsRouter.get('/:pubId', async (c) => {
 
 publicationsRouter.get('/:pubId/download', async (c) => {
   const pubId = c.req.param('pubId');
-  return c.json({ url: `https://example.com/download/${pubId}` });
+  const pub = await db.query.publications.findFirst({
+    where: eq(publications.pubId, pubId),
+  });
+
+  if (!pub) return c.json({ error: 'Publication not found' }, 404);
+
+  // Phase 8: Presigned Download URL
+  const { getPresignedDownloadUrl } = await import('../storage/s3');
+  try {
+    const downloadUrl = await getPresignedDownloadUrl(pub.fileStorageKey);
+    return c.redirect(downloadUrl);
+  } catch (e) {
+    console.error("Download Error", e);
+    return c.json({ error: 'Failed to generate download link' }, 500);
+  }
 });
 
 publicationsRouter.post('/:pubId/review', async (c) => {

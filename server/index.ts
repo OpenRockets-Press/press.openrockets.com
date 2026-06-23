@@ -13,6 +13,7 @@ import { publicationsRouter } from './routes/publications';
 import { usersRouter } from './routes/users';
 import { casesRouter } from './routes/cases';
 import { dashboardsRouter } from './routes/dashboards';
+import { storageRouter } from './routes/storage';
 
 // Middleware
 app.use('*', logger());
@@ -21,11 +22,11 @@ app.use('/api/*', cors({
   credentials: true,
 }));
 
-// Setup Routers
 app.route('/api/publications', publicationsRouter);
 app.route('/api/users', usersRouter);
 app.route('/api/cases', casesRouter);
 app.route('/api/dashboards', dashboardsRouter);
+app.route('/api/storage', storageRouter);
 
 // Basic Health Check
 app.get('/api/health', (c) => {
