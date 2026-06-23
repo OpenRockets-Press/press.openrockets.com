@@ -1,14 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 
-const SHIMMER_VARIANTS = [
-  // Vibrant pink/rose
-  'linear-gradient(90deg, rgba(238,238,238,0) 0%, rgba(253, 196, 215, 0.9) 50%, rgba(238,238,238,0) 100%)',
-  // Vibrant purple
-  'linear-gradient(90deg, rgba(238,238,238,0) 0%, rgba(215, 196, 253, 0.9) 50%, rgba(238,238,238,0) 100%)',
-  // Vibrant lavender
-  'linear-gradient(90deg, rgba(238,238,238,0) 0%, rgba(225, 202, 255, 0.9) 50%, rgba(238,238,238,0) 100%)',
-  // Vibrant peach
-  'linear-gradient(90deg, rgba(238,238,238,0) 0%, rgba(255, 203, 206, 0.9) 50%, rgba(238,238,238,0) 100%)'
+const BACKGROUND_VARIANTS = [
+  '#fde2eb', // Light pink/rose
+  '#ebe2fd', // Light purple
+  '#f3e8ff', // Light lavender
+  '#ffe9ec'  // Soft peach/pink
 ];
 
 interface ImageWithShimmerProps extends React.ImgHTMLAttributes<HTMLImageElement> {
@@ -18,9 +14,9 @@ interface ImageWithShimmerProps extends React.ImgHTMLAttributes<HTMLImageElement
 export function ImageWithShimmer({ wrapperClassName = '', className = '', src, alt, ...props }: ImageWithShimmerProps) {
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Pick a random shimmer gradient variant once on mount
-  const shimmerGradient = useMemo(() => {
-    return SHIMMER_VARIANTS[Math.floor(Math.random() * SHIMMER_VARIANTS.length)];
+  // Pick a random solid background color once on mount
+  const bgColor = useMemo(() => {
+    return BACKGROUND_VARIANTS[Math.floor(Math.random() * BACKGROUND_VARIANTS.length)];
   }, []);
 
   return (
@@ -31,11 +27,11 @@ export function ImageWithShimmer({ wrapperClassName = '', className = '', src, a
         overflow: 'hidden',
         width: '100%',
         height: '100%',
-        background: isLoaded ? 'transparent' : '#eeeeee',
+        background: isLoaded ? 'transparent' : bgColor,
         ...props.style
       }}
     >
-      {/* Shimmer Animation Layer */}
+      {/* Standard Gray/White Shimmer Animation Layer */}
       {!isLoaded && (
         <div
           className="shimmer-animation-layer"
@@ -45,9 +41,9 @@ export function ImageWithShimmer({ wrapperClassName = '', className = '', src, a
             left: 0,
             width: '100%',
             height: '100%',
-            background: shimmerGradient,
+            background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(200,200,200,0.5) 50%, rgba(255,255,255,0) 100%)',
             backgroundSize: '200% 100%',
-            animation: 'shimmerSlide 2s infinite linear',
+            animation: 'shimmerSlide 1.5s infinite linear',
             zIndex: 1
           }}
         />
