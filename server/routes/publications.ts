@@ -7,6 +7,7 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { authMiddleware } from '../middleware/auth';
 import { createPublicationSchema, updatePublicationSchema } from '../validators/schemas';
+import { notifyDiscordWebhook } from '../utils/discord';
 export const publicationsRouter = new Hono();
 
 const getListQuerySchema = z.object({
@@ -116,7 +117,11 @@ publicationsRouter.post('/', authMiddleware, zValidator('json', createPublicatio
       tags: body.tags || null,
     });
 
-    // Note: Discord Webhook integration will hook in here later (Phase 22)
+    // Trigger Discord Webhook Notification
+    // Run asynchronously so it doesn't block the client response
+    notifyDiscordWebhook(body, user.displayName || 'Contributor').catch(err => {
+      console.error("Discord Webhook Background Error:", err);
+    });
 
     return c.json({ success: true, data: { pubId } }, 201);
   } catch (error) {

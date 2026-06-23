@@ -64,11 +64,7 @@ app.get('/api/auth/sso-callback', async (c) => {
   return c.redirect(`${returnTo}?token=${token}`);
 });
 
-// Phase 4 Placeholder: Discord Webhook trigger for Publication submission
-app.post('/api/discord/interactions', async (c) => {
-  // TODO: Implement discord webhook firing when a user submits an artifact
-  return c.json({ success: true, message: 'Discord integration coming soon' });
-});
+// Discord webhook utility is decoupled and called natively within the publications POST router
 
 const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 
