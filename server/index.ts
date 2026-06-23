@@ -14,6 +14,7 @@ import { usersRouter } from './routes/users';
 import { casesRouter } from './routes/cases';
 import { dashboardsRouter } from './routes/dashboards';
 import { storageRouter } from './routes/storage';
+import { auditRouter } from './routes/audit';
 
 // Middleware
 app.use('*', logger());
@@ -27,6 +28,7 @@ app.route('/api/users', usersRouter);
 app.route('/api/cases', casesRouter);
 app.route('/api/dashboards', dashboardsRouter);
 app.route('/api/storage', storageRouter);
+app.route('/api/audit-logs', auditRouter);
 
 // Basic Health Check
 app.get('/api/health', (c) => {
