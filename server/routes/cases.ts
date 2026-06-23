@@ -2,6 +2,9 @@ import { Hono } from 'hono';
 import { db } from '../db';
 import { cases, caseMessages } from '../db/schema';
 import { eq, desc } from 'drizzle-orm';
+import { authMiddleware } from '../middleware/auth';
+import { zValidator } from '@hono/zod-validator';
+import { createCaseSchema } from '../validators/schemas';
 
 export const casesRouter = new Hono();
 
@@ -17,26 +20,38 @@ casesRouter.get('/', async (c) => {
   return c.json(userCases);
 });
 
-casesRouter.post('/', async (c) => {
-  const { subject, openingMessage, relatedPubId, labels } = await c.req.json();
-  const caseId = "CASE-" + Date.now().toString();
+casesRouter.post('/', authMiddleware, zValidator('json', createCaseSchema), async (c) => {
+  const user = c.get('user');
+  const body = c.req.valid('json');
 
-  await db.insert(cases).values({
-    id: caseId,
-    contributorUserId: "mock_user",
-    subject,
-    relatedPubId,
-  });
+  const caseId = `CASE-${Date.now()}`;
+  const messageId = `MSG-${Date.now()}`;
 
-  await db.insert(caseMessages).values({
-    id: "MSG-" + Date.now().toString(),
-    caseId,
-    senderId: "mock_user",
-    senderRole: "contributor",
-    body: openingMessage,
-  });
+  try {
+    // 1. Create the Support Case
+    await db.insert(cases).values({
+      id: caseId,
+      contributorUserId: user.id,
+      subject: body.subject,
+      priority: body.priority,
+      relatedPubId: body.relatedPubId || null,
+      status: 'open',
+    });
 
-  return c.json({ id: caseId });
+    // 2. Insert the initial message natively
+    await db.insert(caseMessages).values({
+      id: messageId,
+      caseId: caseId,
+      senderId: user.id,
+      senderRole: user.role,
+      body: body.initialMessage,
+    });
+
+    return c.json({ success: true, data: { caseId } }, 201);
+  } catch (error) {
+    console.error("Case creation failed:", error);
+    return c.json({ success: false, error: { code: 'DATABASE_ERROR', message: 'Failed to create case' } }, 500);
+  }
 });
 
 casesRouter.get('/:caseId/messages', async (c) => {
