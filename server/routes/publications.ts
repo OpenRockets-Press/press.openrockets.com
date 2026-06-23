@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { db } from '../db';
 import { publications, users, auditLogs } from '../db/schema';
-import { desc, eq, and, asc, sql } from 'drizzle-orm';
+import { desc, eq, and, or, like, asc, sql } from 'drizzle-orm';
 import { BUCKET_NAME, uploadToStorage } from '../storage/s3';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
@@ -13,16 +13,27 @@ export const publicationsRouter = new Hono();
 const getListQuerySchema = z.object({
   page: z.string().transform(Number).default('1'),
   limit: z.string().transform(Number).default('20'),
+  q: z.string().optional(),
   division: z.enum(['artifacts', '3d', 'code']).optional(),
   license: z.enum(['ORP_BEAVER', 'ORP_EAGLE', 'ORP_KANGAROO']).optional(),
   sort: z.enum(['newest', 'popular', 'oldest']).default('newest'),
 });
 
 publicationsRouter.get('/', zValidator('query', getListQuerySchema), async (c) => {
-  const { page, limit, division, license, sort } = c.req.valid('query');
+  const { page, limit, q, division, license, sort } = c.req.valid('query');
   
   const conditions = [eq(publications.status, 'published')];
   
+  if (q) {
+    conditions.push(
+      or(
+        like(publications.title, `%${q}%`),
+        like(publications.tags, `%${q}%`),
+        like(publications.abstract, `%${q}%`)
+      )
+    );
+  }
+
   if (division) conditions.push(eq(publications.division, division));
   if (license) conditions.push(eq(publications.license, license));
   
