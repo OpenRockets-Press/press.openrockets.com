@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
+import { ImageWithShimmer } from "@/components/ui/ImageWithShimmer";
 
 const SLIDE_INTERVAL_MS = 20_000;
 
 const SLIDES = [
   {
-    src: "/brand/static/wp-content/slide1.png?v=2",
+    src: "/brand/static/wp-content/slide1.png?v=1",
     alt: "Open Rockets Press feature banner 0",
   },
   {
@@ -77,7 +78,7 @@ export function HomeBanner() {
                 key={slide.src}
                 className={`home-banner-slide${slideIndex === activeSlide ? " is-active" : ""}`}
               >
-                <img
+                <ImageWithShimmer
                   className="home-banner-image"
                   src={slide.src}
                   alt={slide.alt}

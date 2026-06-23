@@ -643,6 +643,11 @@ button {
   background: #ffffff;
 }
 
+@keyframes shimmerSlide {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 .home-banner-toggle {
   position: absolute;
   right: 0.875rem;
