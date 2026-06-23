@@ -56,6 +56,48 @@ app.use('/api/*', async (c, next) => {
   await next();
 });
 
+// Simple In-Memory Rate Limiter (Phase 30)
+const rateLimitMap = new Map<string, { count: number, resetTime: number }>();
+
+// Cleanup stale rate limit records every minute to prevent memory leaks
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, record] of rateLimitMap.entries()) {
+    if (now > record.resetTime) {
+      rateLimitMap.delete(ip);
+    }
+  }
+}, 60 * 1000);
+
+app.use('/api/*', async (c, next) => {
+  const ip = c.req.header('x-forwarded-for') || c.req.header('cf-connecting-ip') || 'unknown';
+  const now = Date.now();
+  const windowMs = 60 * 1000; // 1 minute window
+  const maxRequests = 200; // 200 requests per minute
+
+  if (ip !== 'unknown') {
+    let record = rateLimitMap.get(ip);
+    if (!record || now > record.resetTime) {
+      record = { count: 1, resetTime: now + windowMs };
+    } else {
+      record.count++;
+    }
+    rateLimitMap.set(ip, record);
+
+    c.header('X-RateLimit-Limit', maxRequests.toString());
+    c.header('X-RateLimit-Remaining', Math.max(0, maxRequests - record.count).toString());
+
+    if (record.count > maxRequests) {
+      return c.json({ 
+        success: false, 
+        error: { code: 'TOO_MANY_REQUESTS', message: 'Rate limit exceeded. Please try again later.' } 
+      }, 429);
+    }
+  }
+  
+  await next();
+});
+
 app.route('/api/publications', publicationsRouter);
 app.route('/api/users', usersRouter);
 app.route('/api/cases', casesRouter);
