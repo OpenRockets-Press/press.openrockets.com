@@ -10,6 +10,7 @@
         "@fontsource/jetbrains-mono": "^5.2.8",
         "@fontsource/playfair-display": "^5.2.8",
         "@hono/node-server": "^2.0.6",
+        "@hono/zod-validator": "^0.8.0",
         "@react-three/drei": "^10.7.7",
         "@react-three/fiber": "^9.6.1",
         "@tanstack/react-query": "^5.97.0",
@@ -294,6 +295,8 @@
     "@fontsource/playfair-display": ["@fontsource/playfair-display@5.2.8", "", {}, "sha512-fUEhib70SszNhQVsGbUMSsWJhr7Je0rdeuZdtGpDNu0GKF1xJM8QhpI/y0pckU25GcChXm9TLOmeZupkvvZo2g=="],
 
     "@hono/node-server": ["@hono/node-server@2.0.6", "", { "peerDependencies": { "hono": "^4" } }, "sha512-7DeRlKG57JDBNZ5Qj2jwVdgwQy4b0tLubRLl3zCf91/rCf9i7p1V5FtW/yWibm1uUHE493ts9ZXH/7g/LQWl+g=="],
+
+    "@hono/zod-validator": ["@hono/zod-validator@0.8.0", "", { "peerDependencies": { "hono": ">=4.10.0", "zod": "^3.25.0 || ^4.0.0" } }, "sha512-5uS4S1/LKtZQYvD4BtpPUFkOv8d1wNxHHrChm26buMiEYc1FrHWvDUaKVBwkiVtvSExHSpLGDvcnpI2Copyj9w=="],
 
     "@humanfs/core": ["@humanfs/core@0.19.1", "", {}, "sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA=="],
 
