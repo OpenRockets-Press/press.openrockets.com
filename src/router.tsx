@@ -509,7 +509,6 @@ const routeTree = rootRoute.addChildren([
   adminReviewRoute,
   adminUsersRoute,
   embedRoute,
-  aboutRoute,
   browseRoute,
   searchRoute,
   categoryRoute,
