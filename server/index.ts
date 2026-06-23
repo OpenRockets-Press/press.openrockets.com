@@ -40,6 +40,21 @@ app.use('/api/*', cors({
   maxAge: 86400, // 24 hours preflight cache
 }));
 
+// Content-Type Validation Middleware (Phase 28)
+app.use('/api/*', async (c, next) => {
+  const method = c.req.method;
+  if (['POST', 'PUT', 'PATCH'].includes(method)) {
+    const contentType = c.req.header('content-type');
+    if (!contentType || !contentType.toLowerCase().includes('application/json')) {
+      return c.json({ 
+        success: false, 
+        error: { code: 'UNSUPPORTED_MEDIA_TYPE', message: 'Content-Type must be application/json' } 
+      }, 415);
+    }
+  }
+  await next();
+});
+
 app.route('/api/publications', publicationsRouter);
 app.route('/api/users', usersRouter);
 app.route('/api/cases', casesRouter);
