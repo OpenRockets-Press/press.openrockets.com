@@ -109,12 +109,44 @@ dashboardsRouter.get('/moderation', authMiddleware, async (c) => {
   });
 });
 
-dashboardsRouter.get('/admin', async (c) => {
+dashboardsRouter.get('/admin', authMiddleware, async (c) => {
+  const user = c.get('user');
+
+  if (user.role !== 'admin') {
+    return c.json({ success: false, error: { code: 'FORBIDDEN', message: 'Administrator access required' } }, 403);
+  }
+
+  // Count total platform users
+  const [userStats] = await db
+    .select({ count: sql`COUNT(${users.id})`.mapWith(Number) })
+    .from(users);
+
+  // Fetch the 10 most recent global system audit logs
+  const recentAuditLogs = await db
+    .select({
+      log: auditLogs,
+      actorName: users.displayName,
+    })
+    .from(auditLogs)
+    .leftJoin(users, eq(auditLogs.actorId, users.id))
+    .orderBy(desc(auditLogs.createdAt))
+    .limit(10);
+
+  // Format the logs
+  const formattedAuditLogs = recentAuditLogs.map(r => ({
+    ...r.log,
+    actorName: r.actorName || 'System',
+  }));
+
+  // Note: activeSuspensions and dsarRequestsPending are mocked for now until Phase 23 (DSAR Engine)
   return c.json({
-    totalUsers: 0,
-    activeSuspensions: 0,
-    dsarRequestsPending: 0,
-    systemHealth: "operational",
-    recentAuditLogs: [],
+    success: true,
+    data: {
+      totalUsers: userStats?.count || 0,
+      activeSuspensions: 0, 
+      dsarRequestsPending: 0,
+      systemHealth: "operational",
+      recentAuditLogs: formattedAuditLogs,
+    }
   });
 });
