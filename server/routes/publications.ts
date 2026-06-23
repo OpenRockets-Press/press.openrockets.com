@@ -6,7 +6,7 @@ import { BUCKET_NAME, uploadToStorage } from '../storage/s3';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { authMiddleware } from '../middleware/auth';
-import { createPublicationSchema } from '../validators/schemas';
+import { createPublicationSchema, updatePublicationSchema } from '../validators/schemas';
 export const publicationsRouter = new Hono();
 
 const getListQuerySchema = z.object({
@@ -156,6 +156,41 @@ publicationsRouter.get('/:pubId', async (c) => {
   };
 
   return c.json({ success: true, data: formattedData });
+});
+
+publicationsRouter.put('/:pubId', authMiddleware, zValidator('json', updatePublicationSchema), async (c) => {
+  const pubId = c.req.param('pubId');
+  const user = c.get('user');
+  const body = c.req.valid('json');
+
+  // Verify existence and ownership
+  const pub = await db.query.publications.findFirst({
+    where: eq(publications.pubId, pubId),
+  });
+
+  if (!pub) {
+    return c.json({ success: false, error: { code: 'NOT_FOUND', message: 'Publication not found' } }, 404);
+  }
+
+  // Only the author or an admin/moderator should be allowed to edit
+  if (pub.authorId !== user.id && user.role !== 'admin' && user.role !== 'moderator') {
+    return c.json({ success: false, error: { code: 'FORBIDDEN', message: 'You do not have permission to edit this publication' } }, 403);
+  }
+
+  try {
+    await db.update(publications)
+      .set({
+        title: body.title,
+        abstract: body.abstract,
+        tags: body.tags,
+      })
+      .where(eq(publications.pubId, pubId));
+
+    return c.json({ success: true, message: 'Publication updated' });
+  } catch (error) {
+    console.error("Publication update failed:", error);
+    return c.json({ success: false, error: { code: 'DATABASE_ERROR', message: 'Failed to update publication' } }, 500);
+  }
 });
 
 publicationsRouter.get('/:pubId/download', async (c) => {
