@@ -5,6 +5,7 @@ export const users = mysqlTable('users', {
   displayName: varchar('display_name', { length: 255 }).notNull(),
   email: varchar('email', { length: 255 }).notNull(),
   role: mysqlEnum('role', ['contributor', 'moderator', 'admin']).default('contributor'),
+  isSuspended: boolean('is_suspended').default(false),
   createdAt: timestamp('created_at').defaultNow(),
 });
 
