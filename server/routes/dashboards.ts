@@ -10,6 +10,7 @@ dashboardsRouter.get('/contributor', async (c) => {
     totalDownloads: 0,
     reputationScore: 0,
     recentSubmissions: [],
+    recentCases: [],
   });
 });
 
