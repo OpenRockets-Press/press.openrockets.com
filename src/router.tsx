@@ -504,7 +504,7 @@ const routeTree = rootRoute.addChildren([
   casesRoute,
   artifactsRoute,
   settingsRoute,
-  moderationDashboardRoute,
+  moderationRoute,
   adminQueueRoute,
   adminReviewRoute,
   adminUsersRoute,
