@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { db } from '../db';
-import { publications, users } from '../db/schema';
+import { publications, users, auditLogs } from '../db/schema';
 import { desc, eq, and, asc, sql } from 'drizzle-orm';
 import { BUCKET_NAME, uploadToStorage } from '../storage/s3';
 import { zValidator } from '@hono/zod-validator';
@@ -212,19 +212,73 @@ publicationsRouter.get('/:pubId/download', async (c) => {
   }
 });
 
-publicationsRouter.post('/:pubId/review', async (c) => {
+
+
+publicationsRouter.post('/:pubId/review', authMiddleware, async (c) => {
   const pubId = c.req.param('pubId');
+  const user = c.get('user');
+
+  if (user.role !== 'admin' && user.role !== 'moderator') {
+    return c.json({ success: false, error: { code: 'FORBIDDEN', message: 'Only moderators can review publications' } }, 403);
+  }
+
   const { action, feedback } = await c.req.json();
+  const newStatus = action === 'approved' ? 'published' : 'rejected';
 
-  await db.update(publications)
-    .set({ status: action === 'approved' ? 'published' : 'rejected' })
-    .where(eq(publications.pubId, pubId));
+  try {
+    await db.update(publications)
+      .set({ 
+        status: newStatus,
+        publishedAt: newStatus === 'published' ? new Date() : null,
+      })
+      .where(eq(publications.pubId, pubId));
 
-  return c.json({ success: true });
+    // Audit Log (Phase 21 related, doing it now for deep implementation)
+    await db.insert(auditLogs).values({
+      id: crypto.randomUUID(),
+      actorId: user.id,
+      action: `publication_${newStatus}`,
+      targetId: pubId,
+      metadata: JSON.stringify({ feedback, previousStatus: 'pending_review' }),
+    });
+
+    return c.json({ success: true });
+  } catch (err) {
+    console.error("Review update failed:", err);
+    return c.json({ success: false, error: { code: 'DATABASE_ERROR', message: 'Failed to process review' } }, 500);
+  }
 });
 
-publicationsRouter.post('/:pubId/retract', async (c) => {
+publicationsRouter.post('/:pubId/retract', authMiddleware, async (c) => {
   const pubId = c.req.param('pubId');
-  await db.delete(publications).where(eq(publications.pubId, pubId));
-  return c.json({ success: true });
+  const user = c.get('user');
+
+  // Verify ownership or admin rights
+  const pub = await db.query.publications.findFirst({
+    where: eq(publications.pubId, pubId),
+  });
+
+  if (!pub) return c.json({ success: false, error: { code: 'NOT_FOUND', message: 'Publication not found' } }, 404);
+
+  if (pub.authorId !== user.id && user.role !== 'admin' && user.role !== 'moderator') {
+    return c.json({ success: false, error: { code: 'FORBIDDEN', message: 'Permission denied' } }, 403);
+  }
+
+  try {
+    await db.delete(publications).where(eq(publications.pubId, pubId));
+
+    // Audit Log
+    await db.insert(auditLogs).values({
+      id: crypto.randomUUID(),
+      actorId: user.id,
+      action: `publication_retracted`,
+      targetId: pubId,
+      metadata: JSON.stringify({ title: pub.title }),
+    });
+
+    return c.json({ success: true });
+  } catch (err) {
+    console.error("Retraction failed:", err);
+    return c.json({ success: false, error: { code: 'DATABASE_ERROR', message: 'Failed to retract publication' } }, 500);
+  }
 });
