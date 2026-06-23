@@ -1,25 +1,14 @@
-import { useState, type ReactNode } from "react";
-import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import { ReactNode, useState } from "react";
+import { useRouterState, useNavigate, useLocation } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCurrentUser, logout } from "@/lib/api";
 import { getSessionUser } from "@/lib/authStore";
 import { queryKeys } from "@/lib/queryKeys";
-
+import { WorkspaceSidebar } from "@/components/layout/WorkspaceSidebar";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface AppShellProps {
   children: ReactNode;
-}
-
-interface SidebarLinkItem {
-  to: string;
-  label: string;
-  subtitle: string;
-}
-
-interface SidebarSection {
-  title: string;
-  tone: "workspace" | "moderator" | "admin";
-  links: SidebarLinkItem[];
 }
 
 interface ShellMeta {
@@ -69,8 +58,6 @@ export function AppShell({ children }: AppShellProps) {
   const queryClient = useQueryClient();
   const { location } = useRouterState();
   const currentPath = location.pathname;
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [search, setSearch] = useState("");
 
   const { data: user } = useQuery({
     queryKey: queryKeys.auth.currentUser(),
@@ -86,194 +73,69 @@ export function AppShell({ children }: AppShellProps) {
     },
   });
 
-  const isMod = user?.role === "moderator" || user?.role === "admin";
-  const isAdmin = user?.role === "admin";
   const shellMeta = getShellMeta(currentPath);
 
-  const sidebarSections: SidebarSection[] = [
-    {
-      title: "WORKSPACE",
-      tone: "workspace",
-      links: [
-        { to: "/dashboard", label: "Overview", subtitle: "Contributor metrics" },
-        { to: "/cases", label: "Cases Inbox", subtitle: "Open your active threads" },
-        { to: "/publish", label: "New Submission", subtitle: "Upload and submit" },
-      ],
-    },
-  ];
-
-  if (isMod) {
-    sidebarSections.push({
-      title: "MODERATOR",
-      tone: "moderator",
-      links: [
-        { to: "/moderation", label: "Queue and Cases", subtitle: "Review publications" },
-      ],
-    });
-  }
-
-  if (isAdmin) {
-    sidebarSections.push({
-      title: "ADMIN",
-      tone: "admin",
-      links: [
-        { to: "/admin", label: "Control Center", subtitle: "Governance and DSAR" },
-      ],
-    });
-  }
-
-  const initials = user?.displayName
-    ? user.displayName
-      .split(" ")
-      .map((n) => n[0])
-      .slice(0, 2)
-      .join("")
-      .toUpperCase()
-    : "?";
-
-  const sidebar = (
-    <aside className={`app-sidebar${sidebarOpen ? " sidebar-open" : ""}`} aria-label="Dashboard navigation">
-      {user && (
-        <div className="sidebar-user">
-          <div className="sidebar-avatar" aria-hidden="true">
-            {initials}
-          </div>
-          <div className="sidebar-user-info">
-            <strong className="sidebar-user-name">{user.displayName}</strong>
-            <span className={`sidebar-role-pill role-${user.role}`}>{user.role}</span>
-          </div>
-        </div>
-      )}
-
-      <nav className="sidebar-nav">
-        {sidebarSections.map((section) => (
-          <section key={section.title} className={`sidebar-section sidebar-section-${section.tone}`}>
-            <p className="sidebar-section-title">{section.title}</p>
-            <div className="sidebar-section-links">
-              {section.links.map((link) => (
-                <SidebarNavLink
-                  key={link.to}
-                  to={link.to}
-                  current={currentPath}
-                  subtitle={link.subtitle}
-                  onNavigate={() => setSidebarOpen(false)}
-                >
-                  {link.label}
-                </SidebarNavLink>
-              ))}
-            </div>
-          </section>
-        ))}
-      </nav>
-
-    </aside>
-  );
-
-
   return (
-    <>
-      <div className="app-shell">
-        {/* Mobile top bar */}
-        <div className="sidebar-mobile-bar">
-          <button
-            type="button"
-            className="sidebar-mobile-toggle"
-            aria-label={sidebarOpen ? "Close menu" : "Open menu"}
-            onClick={() => setSidebarOpen((v) => !v)}
-          >
-            {sidebarOpen ? "✕" : "☰"}
-          </button>
-        </div>
+    <div className="min-h-screen bg-surface-1 flex">
+      {/* Sidebar - handles its own desktop fixed positioning and mobile bottom bar */}
+      <WorkspaceSidebar 
+        user={user} 
+        onLogout={() => logoutMutation.mutate()} 
+      />
 
-        {/* Sidebar overlay (mobile) */}
-        {sidebarOpen && (
-          <div
-            className="sidebar-overlay"
-            aria-hidden="true"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
-
-        {sidebar}
-
-        <div className="app-main">
-          <header className="app-topbar">
-            <div className="app-topbar-meta">
-              <p className="app-topbar-kicker">{shellMeta.kicker}</p>
-              <div className="app-topbar-title-row">
-                <h1 className="app-topbar-title">{shellMeta.title}</h1>
-                {user ? <span className={`app-topbar-role role-${user.role}`}>{user.role}</span> : null}
-              </div>
+      {/* Main Content Wrapper - push content to right on desktop, pad bottom on mobile */}
+      <div className="flex-1 md:ml-72 pb-16 md:pb-0 flex flex-col min-h-screen">
+        
+        {/* Topbar */}
+        <header className="sticky top-0 z-30 bg-surface-0 border-b border-cream-border px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          
+          <div className="flex flex-col">
+            <span className="t-eyebrow text-gold">{shellMeta.kicker}</span>
+            <div className="flex items-center gap-3">
+              <h1 className="t-section-heading text-ink">{shellMeta.title}</h1>
             </div>
+          </div>
 
-            <div className="app-topbar-search-container" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <label className="app-topbar-search" aria-label="Workspace search" style={{ margin: 0 }}>
-                <input
-                  type="search"
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder={shellMeta.searchPlaceholder}
-                />
-              </label>
-              <button type="button" className="app-topbar-action" aria-label="Search">
+          <div className="flex items-center gap-4">
+            <div className="relative max-w-sm w-full">
+              <input 
+                type="search" 
+                placeholder={shellMeta.searchPlaceholder}
+                className="w-full bg-surface-1 border border-cream-border text-ink rounded-md pl-4 pr-10 py-2 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-colors t-body-sm"
+              />
+              <button className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-light hover:text-gold transition-colors">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="11" cy="11" r="8"></circle>
                   <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
               </button>
             </div>
-
-            <div className="app-topbar-actions">
-              <a
-                href="https://press.openrockets.com/docs/get-started"
-                className="app-topbar-action"
-                style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}
-              >
-                Get started
-              </a>
-              <button
-                type="button"
-                className="app-topbar-action app-topbar-action-primary"
-                onClick={() => logoutMutation.mutate()}
-                disabled={logoutMutation.isPending}
-              >
-                {logoutMutation.isPending ? "Signing out..." : "Sign out"}
-              </button>
-            </div>
-          </header>
-
-          <div className="app-content">
-            {children}
+            
+            <a 
+              href="https://press.openrockets.com/docs/get-started" 
+              className="hidden sm:block t-label text-ink hover:text-gold transition-colors"
+            >
+              Docs
+            </a>
           </div>
-        </div>
+
+        </header>
+
+        {/* Main Content Area with Page Transitions */}
+      <AnimatePresence mode="wait">
+        <motion.main 
+          key={location.pathname}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+          className="flex-grow flex flex-col pt-16 min-h-screen"
+        >
+          {children || <Outlet />}
+        </motion.main>
+      </AnimatePresence>
+
       </div>
-
-    </>
-  );
-}
-
-function SidebarNavLink({
-  to,
-  current,
-  subtitle,
-  onNavigate,
-  children,
-}: {
-  to: string;
-  current: string;
-  subtitle?: string;
-  onNavigate: () => void;
-  children: ReactNode;
-}) {
-  const active = current === to || current.startsWith(`${to}/`);
-  return (
-    <Link
-      to={to}
-      className={`sidebar-nav-link${active ? " active" : ""}`}
-      onClick={onNavigate}
-    >
-      <span className="sidebar-nav-link-label">{children}</span>
-      {subtitle ? <span className="sidebar-nav-link-subtitle">{subtitle}</span> : null}
-    </Link>
+    </div>
   );
 }

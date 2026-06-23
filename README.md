@@ -1,70 +1,89 @@
 # Open Rockets Press
 
-Open Rockets Press is a youth-first publication platform with legally aware consent flows, moderator-led review, and a template-locked public home experience.
+Open Rockets Press is a youth-first publication platform with legally aware consent flows, moderator-led review, and a template-locked public home experience. It serves as the world's first fully open-source repository for aerospace schematics, 3D models, and control software.
 
-## Repository Layout
+## Repository Architecture
 
-- `src`: React + TypeScript frontend with TanStack Router/Query.
-- `public`: static frontend assets.
-- `e2e`: Playwright end-to-end tests.
-- `functions`: Appwrite Function handlers for auth, consent, publication review, cases, analytics, and compliance operations.
-- `migrations`: idempotent Appwrite database migration runner and schema migrations.
-- `shared`: cross-layer shared types.
-- `plan.md`: full product and implementation blueprint.
+This platform utilizes a robust, enterprise-grade architecture hosted on **Oracle Cloud Infrastructure (OCI)** for maximum scale and security.
 
-## Toolchain
+- **Frontend Framework:** React 19 + TypeScript + Vite
+- **Routing:** TanStack Router (File-based, Type-safe)
+- **State Management:** TanStack Query + Zustand
+- **Styling:** Tailwind CSS + Vanilla CSS Tokens
+- **Animation:** Framer Motion
+- **Backend API:** Hono (Node Server)
+- **Database:** Oracle MySQL (via Drizzle ORM)
+- **File Storage:** Oracle Cloud Object Storage (S3 Compatible)
+- **Authentication:** `accounts.openrockets.com` (Unified SSO)
 
-- Runtime/package manager: Bun
-- Frontend: Vite, React 19, TanStack Router, TanStack Query
-- Backend: Appwrite Functions (Node 21)
-- Tests: Vitest, Playwright
+## Directory Structure
+
+- `src/`: React frontend source code
+  - `components/`: UI tokens, complex inputs, and layout frames
+  - `routes/`: TanStack Router page views
+  - `lib/`: Utilities, API layer pointing to OCI backend, and Auth store
+- `public/`: Static assets (fonts, images)
+- `server/`: Backend API and database schemas
+  - `db/`: Drizzle ORM schema and connection pool to Oracle MySQL
+  - `storage/`: S3 Compatible integration for Oracle Cloud Object Storage
 
 ## Quick Start
 
-1. Install dependencies:
-
+1. **Install dependencies:**
 ```bash
 bun install
 ```
 
-2. Run interactive Appwrite setup wizard:
+2. **Configure Environment:**
+Copy the required environment variables from `.env.example` into a local `.env` file. These connect the application to the Oracle Cloud database and SSO.
 
+3. **Start the Development Server:**
 ```bash
-bun run setup
+bun run dev
 ```
 
-The setup wizard prompts for endpoint, project ID, and API key, then:
-
-- creates/validates database and storage buckets,
-- runs all migrations,
-- writes a unified `.env.local` (server + `VITE_*` client vars),
-- optionally applies all server env vars to existing Appwrite functions.
-
-3. Optional non-interactive bootstrap:
-
-```bash
-node migrations/setup.mjs --endpoint <APPWRITE_ENDPOINT> --api-key <APPWRITE_API_KEY> --project <APPWRITE_PROJECT_ID>
-```
-
-4. Validate quality gates:
-
+4. **Validate Build:**
+Ensure the application compiles without type errors before pushing to production:
 ```bash
 bun run typecheck
-bun run lint
-bun run test
 bun run build
 ```
 
-## Implemented Highlights
+---
 
-- Template-locked public home route parity with mandatory structure.
-- Consent tier engine (`coppa`, `gdpr_eu`, `gdpr_es`, `general`) and guardian gating.
-- In-session guardian consent workflow with strict checkbox requirements.
-- Publication and case function handlers with analytics hooks.
-- Migration framework with ordered, idempotent schema files.
+## Environment Variables
 
-## Deployment Notes
+The following environment variables must be configured in your deployment environment (VPS/Oracle Cloud Compute) and your local `.env` file for the backend and frontend to operate.
 
-- `appwrite.json` maps all function directories for Appwrite CLI deployment.
-- Use Appwrite Sites for frontend deployment.
-- Keep all server-only secrets in non-`VITE_` env variables.
+### Oracle Database (MySQL)
+```env
+DATABASE_URL="mysql://orp_user:YOUR_SECURE_PASSWORD@127.0.0.1:3306/orp_db"
+```
+
+### Oracle Cloud Object Storage
+```env
+S3_ENDPOINT="https://<YOUR_NAMESPACE>.compat.objectstorage.<YOUR_REGION>.oraclecloud.com"
+S3_REGION="us-sanjose-1"
+S3_ACCESS_KEY_ID="your_access_key"
+S3_SECRET_ACCESS_KEY="your_secret_key"
+S3_BUCKET_NAME="openrockets-artifacts"
+```
+
+### Authentication (Global SSO)
+```env
+SSO_SESSION_SECRET="your-secure-session-secret"
+```
+
+### App Configuration
+```env
+PORT=3000
+NODE_ENV="development"
+APP_BASE_URL="https://press.openrockets.com"
+VITE_API_BASE_URL="/api"
+```
+
+## Deployment
+
+The application is configured to deploy directly to an **Oracle Cloud VPS**.
+- **Build command:** `bunx --bun vite build`
+- **Deploy Workflow:** Automated via `.github/workflows/deploy.yml` using PM2 restarts.

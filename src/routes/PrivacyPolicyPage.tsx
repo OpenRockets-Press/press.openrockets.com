@@ -218,8 +218,8 @@ export function PrivacyPolicyPage() {
         <h2>10. Cookies and Tracking</h2>
         <p>
           Open Rockets Press does not use third-party advertising or tracking cookies. Session state is
-          maintained via secure, HTTP-only session tokens issued by Appwrite and stored in browser
-          session storage. We do not use fingerprinting, cross-site tracking, or behavioural advertising
+          maintained via secure, HTTP-only session tokens issued by our unified SSO system at accounts.openrockets.com
+          and stored securely. We do not use fingerprinting, cross-site tracking, or behavioural advertising
           technology.
         </p>
       </section>

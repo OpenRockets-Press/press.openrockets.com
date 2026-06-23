@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 
-export type HomeInfoModalKind = "about" | "publish" | "privacy" | "parental";
+export type HomeInfoModalKind = "about" | "publish" | "privacy";
 
 interface HomeInfoModalContentProps {
   kind: HomeInfoModalKind;
@@ -42,23 +42,6 @@ export function HomeInfoModalContent({ kind }: HomeInfoModalContentProps) {
     );
   }
 
-  if (kind === "parental") {
-    return (
-      <div className="info-modal-content">
-        <p>
-          Parent or guardian confirmation is required for contributors in consent tiers governed by
-          COPPA or GDPR Article 8 thresholds.
-        </p>
-        <p>
-          Confirmation requires a guardian email and three explicit consent checkboxes before an
-          account can be activated.
-        </p>
-        <Link to="/legal/parental-consent-form" className="solid-button inline-action">
-          Open Full Consent Form
-        </Link>
-      </div>
-    );
-  }
 
   return (
     <div className="info-modal-content">

@@ -1,4 +1,4 @@
-import { mysqlTable, serial, varchar, text, timestamp, boolean, int, mysqlEnum } from 'drizzle-orm/mysql-core';
+import { mysqlTable, serial, varchar, text, timestamp, boolean, int, enum as mysqlEnum } from 'drizzle-orm/mysql-core';
 
 export const users = mysqlTable('users', {
   id: varchar('id', { length: 255 }).primaryKey(), // ID from global accounts system
@@ -24,4 +24,32 @@ export const publications = mysqlTable('publications', {
   downloadCount: int('download_count').default(0),
   submittedAt: timestamp('submitted_at').defaultNow(),
   publishedAt: timestamp('published_at'),
+});
+export const cases = mysqlTable('cases', {
+  id: varchar('id', { length: 50 }).primaryKey(),
+  contributorUserId: varchar('contributor_user_id', { length: 255 }).references(() => users.id).notNull(),
+  subject: varchar('subject', { length: 255 }).notNull(),
+  status: mysqlEnum('status', ['open', 'in_progress', 'resolved', 'closed']).default('open'),
+  priority: mysqlEnum('priority', ['low', 'normal', 'high', 'urgent']).default('normal'),
+  relatedPubId: varchar('related_pub_id', { length: 50 }),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const caseMessages = mysqlTable('case_messages', {
+  id: varchar('id', { length: 50 }).primaryKey(),
+  caseId: varchar('case_id', { length: 50 }).references(() => cases.id).notNull(),
+  senderId: varchar('sender_id', { length: 255 }).references(() => users.id).notNull(),
+  senderRole: mysqlEnum('sender_role', ['contributor', 'moderator', 'admin', 'system']).notNull(),
+  body: text('body').notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const auditLogs = mysqlTable('audit_logs', {
+  id: varchar('id', { length: 50 }).primaryKey(),
+  actorId: varchar('actor_id', { length: 255 }).references(() => users.id).notNull(),
+  action: varchar('action', { length: 255 }).notNull(),
+  targetId: varchar('target_id', { length: 255 }),
+  metadata: text('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
 });

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState } from 'react';
 
 interface ImageWithShimmerProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   wrapperClassName?: string;
