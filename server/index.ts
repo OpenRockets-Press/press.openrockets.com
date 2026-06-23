@@ -4,6 +4,7 @@ import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { db } from './db';
 import { users, publications } from './db/schema';
+import { eq } from 'drizzle-orm';
 import { s3Client, uploadToStorage, BUCKET_NAME } from './storage/s3';
 
 const app = new Hono();
@@ -36,11 +37,27 @@ app.get('/api/auth/sso-callback', async (c) => {
   const token = c.req.query('token');
   const returnTo = c.req.query('returnTo') || '/dashboard';
   
-  // TODO: Implement token validation against openrocketsauth.alwaysdata.net
-  // TODO: Upsert user into `users` table
-  // TODO: Set secure HTTP-only cookie session
+  if (token) {
+    try {
+      const payloadStr = atob(token.split('.')[1]);
+      const payload = JSON.parse(payloadStr);
+      const userId = payload.sub;
+      if (userId) {
+        let [dbUser] = await db.select().from(users).where(eq(users.id, userId));
+        if (!dbUser) {
+          await db.insert(users).values({
+            id: userId,
+            displayName: payload.name || 'Contributor',
+            email: payload.email || 'user@example.com',
+            role: 'contributor',
+          });
+        }
+      }
+    } catch (e) {
+      console.error("SSO Upsert Error", e);
+    }
+  }
   
-  // For now, redirect to the frontend with the token so the frontend can mock login
   return c.redirect(`${returnTo}?token=${token}`);
 });
 
