@@ -1,4 +1,4 @@
-import { mysqlTable, serial, varchar, text, timestamp, boolean, int, mysqlEnum } from 'drizzle-orm/mysql-core';
+import { mysqlTable, serial, varchar, text, timestamp, boolean, int, mysqlEnum, index } from 'drizzle-orm/mysql-core';
 
 export const users = mysqlTable('users', {
   id: varchar('id', { length: 255 }).primaryKey(), // ID from global accounts system
@@ -30,7 +30,12 @@ export const publications = mysqlTable('publications', {
   downloadCount: int('download_count').default(0),
   submittedAt: timestamp('submitted_at').defaultNow(),
   publishedAt: timestamp('published_at'),
-});
+}, (table) => ({
+  titleIdx: index('title_idx').on(table.title),
+  statusIdx: index('status_idx').on(table.status),
+  divisionIdx: index('division_idx').on(table.division),
+  authorIdx: index('author_idx').on(table.authorId),
+}));
 
 export const cases = mysqlTable('cases', {
   id: varchar('id', { length: 50 }).primaryKey(),
