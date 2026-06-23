@@ -35,6 +35,34 @@ app.get('/api/health', (c) => {
   return c.json({ status: 'ok', message: 'Open Rockets Press API is running' });
 });
 
+// Global Error Handling Middleware (Phase 26)
+app.onError((err, c) => {
+  console.error(`[Global Error] ${c.req.method} ${c.req.url}`, err);
+  
+  const isDev = process.env.NODE_ENV === 'development';
+  const statusCode = err instanceof Error && (err as any).status ? (err as any).status : 500;
+
+  return c.json({
+    success: false,
+    error: {
+      code: 'INTERNAL_SERVER_ERROR',
+      message: isDev ? err.message : 'An unexpected internal server error occurred.',
+      ...(isDev && { stack: err.stack }),
+    }
+  }, statusCode);
+});
+
+// Global Not Found Middleware
+app.notFound((c) => {
+  return c.json({
+    success: false,
+    error: {
+      code: 'NOT_FOUND',
+      message: `The requested endpoint ${c.req.method} ${c.req.url} was not found.`,
+    }
+  }, 404);
+});
+
 // Phase 3 Placeholder: SSO Callback from accounts.openrockets.com
 app.get('/api/auth/sso-callback', async (c) => {
   const token = c.req.query('token');
