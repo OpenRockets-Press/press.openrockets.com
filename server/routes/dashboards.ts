@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
 import { db } from '../db';
 
-import { eq, desc, sql } from 'drizzle-orm';
-import { publications, cases } from '../db/schema';
+import { eq, desc, sql, asc } from 'drizzle-orm';
+import { publications, cases, auditLogs, users } from '../db/schema';
 import { authMiddleware } from '../middleware/auth';
 
 export const dashboardsRouter = new Hono();
@@ -58,12 +58,54 @@ dashboardsRouter.get('/contributor', authMiddleware, async (c) => {
   });
 });
 
-dashboardsRouter.get('/moderation', async (c) => {
+dashboardsRouter.get('/moderation', authMiddleware, async (c) => {
+  const user = c.get('user');
+
+  if (user.role !== 'admin' && user.role !== 'moderator') {
+    return c.json({ success: false, error: { code: 'FORBIDDEN', message: 'Moderator access required' } }, 403);
+  }
+
+  // Calculate the queue length
+  const [queueStats] = await db
+    .select({
+      count: sql`COUNT(${publications.id})`.mapWith(Number)
+    })
+    .from(publications)
+    .where(eq(publications.status, 'pending_review'));
+
+  // Fetch the oldest pending reviews for the queue
+  const pendingReviews = await db
+    .select({
+      pub: publications,
+      authorName: users.displayName,
+    })
+    .from(publications)
+    .leftJoin(users, eq(publications.authorId, users.id))
+    .where(eq(publications.status, 'pending_review'))
+    .orderBy(asc(publications.submittedAt))
+    .limit(10);
+
+  // Fetch recent actions performed by this exact moderator
+  const recentActions = await db.query.auditLogs.findMany({
+    where: eq(auditLogs.actorId, user.id),
+    orderBy: [desc(auditLogs.createdAt)],
+    limit: 10,
+  });
+
+  // Format pending reviews to match UI expectations
+  const formattedPendingReviews = pendingReviews.map(r => ({
+    ...r.pub,
+    authorName: r.authorName || 'Unknown Author',
+  }));
+
   return c.json({
-    queueLength: 0,
-    averageReviewTimeHours: 0,
-    recentActions: [],
-    pendingReviews: [],
+    success: true,
+    data: {
+      queueLength: queueStats?.count || 0,
+      averageReviewTimeHours: 24, // Mock metric for now
+      recentActions,
+      pendingReviews: formattedPendingReviews,
+    }
   });
 });
 
