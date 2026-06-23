@@ -119,15 +119,35 @@ publicationsRouter.post('/', async (c) => {
 
 publicationsRouter.get('/:pubId', async (c) => {
   const pubId = c.req.param('pubId');
-  const pub = await db.query.publications.findFirst({
-    where: eq(publications.pubId, pubId),
-  });
+  
+  const [data] = await db
+    .select({
+      pub: publications,
+      authorName: users.displayName,
+    })
+    .from(publications)
+    .leftJoin(users, eq(publications.authorId, users.id))
+    .where(eq(publications.pubId, pubId))
+    .limit(1);
 
-  if (!pub) {
-    return c.json({ error: 'Publication not found' }, 404);
+  if (!data) {
+    return c.json({ success: false, error: { code: 'NOT_FOUND', message: 'Publication not found' } }, 404);
   }
 
-  return c.json(pub);
+  // Increment view count asynchronously to avoid blocking the response
+  // We use the integer `id` for faster indexing on the update
+  db.update(publications)
+    .set({ viewCount: sql`${publications.viewCount} + 1` })
+    .where(eq(publications.id, data.pub.id))
+    .execute()
+    .catch(err => console.error("Failed to increment view count", err));
+
+  const formattedData = {
+    ...data.pub,
+    authorName: data.authorName || 'Unknown Author',
+  };
+
+  return c.json({ success: true, data: formattedData });
 });
 
 publicationsRouter.get('/:pubId/download', async (c) => {
