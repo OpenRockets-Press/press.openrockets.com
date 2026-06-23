@@ -5,7 +5,8 @@ import { desc, eq, and, asc, sql } from 'drizzle-orm';
 import { BUCKET_NAME, uploadToStorage } from '../storage/s3';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-
+import { authMiddleware } from '../middleware/auth';
+import { createPublicationSchema } from '../validators/schemas';
 export const publicationsRouter = new Hono();
 
 const getListQuerySchema = z.object({
@@ -90,31 +91,38 @@ publicationsRouter.get('/contributor', async (c) => {
   return c.json(pubs);
 });
 
-publicationsRouter.post('/', async (c) => {
-  const body = await c.req.parseBody();
-  // Assume file upload handling here
-  const title = body['title'] as string;
-  const abstract = body['abstract'] as string;
-  const type = body['type'] as any;
-  const license = body['license'] as any;
-  
-  // Fake S3 upload
-  const fileStorageKey = `pubs/${Date.now()}.pdf`;
+publicationsRouter.post('/', authMiddleware, zValidator('json', createPublicationSchema), async (c) => {
+  const user = c.get('user');
+  const body = c.req.valid('json');
 
-  const pubId = "ORP-" + Date.now().toString();
+  // Generate a unique publication ID (e.g., ORP-1718292839)
+  const pubId = `ORP-${Date.now()}`;
 
-  await db.insert(publications).values({
-    pubId,
-    authorId: "mock_user", // from token
-    title,
-    abstract,
-    type,
-    license,
-    status: 'pending_review',
-    fileStorageKey,
-  });
+  try {
+    await db.insert(publications).values({
+      pubId,
+      authorId: user.id, // Authenticated user ID
+      title: body.title,
+      abstract: body.abstract || null,
+      type: body.type,
+      license: body.license,
+      division: body.division,
+      status: 'pending_review',
+      fileStorageKey: body.fileStorageKey,
+      coverStorageKey: body.coverStorageKey || null,
+      customThumbnailStorageKey: body.customThumbnailStorageKey || null,
+      githubRepoUrl: body.githubRepoUrl || null,
+      threejsModelKey: body.threejsModelKey || null,
+      tags: body.tags || null,
+    });
 
-  return c.json({ id: pubId });
+    // Note: Discord Webhook integration will hook in here later (Phase 22)
+
+    return c.json({ success: true, data: { pubId } }, 201);
+  } catch (error) {
+    console.error("Publication creation failed:", error);
+    return c.json({ success: false, error: { code: 'DATABASE_ERROR', message: 'Failed to create publication' } }, 500);
+  }
 });
 
 publicationsRouter.get('/:pubId', async (c) => {
