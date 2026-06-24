@@ -21,28 +21,18 @@ import { HomePage } from "@/routes/HomePage";
 
 
 const PublishPage = lazy(() => import("@/routes/PublishPage").then((module) => ({ default: module.PublishPage })));
-const BrowsePage = lazy(() => import("@/routes/BrowsePage").then((module) => ({ default: module.BrowsePage })));
-const SearchPage = lazy(() => import("@/routes/SearchPage").then((module) => ({ default: module.SearchPage })));
-const CategoryPage = lazy(() => import("@/routes/CategoryPage").then((module) => ({ default: module.CategoryPage })));
-const CreatorProfilePage = lazy(() => import("@/routes/CreatorProfilePage").then((module) => ({ default: module.CreatorProfilePage })));
-const LicensePage = lazy(() => import("@/routes/LicensePage").then((module) => ({ default: module.LicensePage })));
 const AboutPage = lazy(() => import("@/routes/AboutPage").then((module) => ({ default: module.AboutPage })));
-const GetStartedPage = lazy(() => import("@/routes/GetStartedPage").then((module) => ({ default: module.GetStartedPage })));
 const PrivacyPolicyPage = lazy(() =>
   import("@/routes/PrivacyPolicyPage").then((module) => ({ default: module.PrivacyPolicyPage })),
 );
-
+const ParentalConsentFormPage = lazy(() =>
+  import("@/routes/ParentalConsentFormPage").then((module) => ({ default: module.ParentalConsentFormPage })),
+);
 const TermsOfServicePage = lazy(() =>
   import("@/routes/TermsOfServicePage").then((module) => ({ default: module.TermsOfServicePage })),
 );
 const DashboardPage = lazy(() => import("@/routes/DashboardPage").then((module) => ({ default: module.DashboardPage })));
 const CasesPage = lazy(() => import("@/routes/CasesPage").then((module) => ({ default: module.CasesPage })));
-const ArtifactsPage = lazy(() => import("@/routes/ArtifactsPage").then((module) => ({ default: module.ArtifactsPage })));
-const SettingsPage = lazy(() => import("@/routes/SettingsPage").then((module) => ({ default: module.SettingsPage })));
-const AdminQueuePage = lazy(() => import("@/routes/AdminQueuePage").then((module) => ({ default: module.AdminQueuePage })));
-const AdminReviewPage = lazy(() => import("@/routes/AdminReviewPage").then((module) => ({ default: module.AdminReviewPage })));
-const AdminUsersPage = lazy(() => import("@/routes/AdminUsersPage").then((module) => ({ default: module.AdminUsersPage })));
-const EmbedPage = lazy(() => import("@/routes/EmbedPage").then((module) => ({ default: module.EmbedPage })));
 const ModerationPage = lazy(() => import("@/routes/ModerationPage").then((module) => ({ default: module.ModerationPage })));
 const AdminPanelPage = lazy(() => import("@/routes/AdminPanelPage").then((module) => ({ default: module.AdminPanelPage })));
 const PublicationDetailPage = lazy(() =>
@@ -52,7 +42,6 @@ const SuspendedPage = lazy(() =>
   import("@/routes/SuspendedPage").then((module) => ({ default: module.SuspendedPage })),
 );
 const NotFoundPage = lazy(() => import("@/routes/NotFoundPage").then((module) => ({ default: module.NotFoundPage })));
-const ArtifactShowcase = lazy(() => import("@/routes/ArtifactShowcase").then((module) => ({ default: module.ArtifactShowcase })));
 
 // ── Skeleton components ──────────────────────────────────────────────────────
 
@@ -174,52 +163,6 @@ const registerRoute = createRoute({
   component: () => null,
 });
 
-const browseRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/browse",
-  validateSearch: (search: Record<string, unknown>) => ({
-    division: (search.division as string) || "all",
-    license: (search.license as string) || "all",
-    sort: (search.sort as string) || "newest",
-    view: (search.view as string) || "grid",
-    page: Number(search.page) || 1,
-  }),
-  component: () => withRouteSuspense(<BrowsePage />),
-});
-
-const searchRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/search",
-  validateSearch: (search: Record<string, unknown>) => ({
-    q: (search.q as string) || "",
-  }),
-  component: () => withRouteSuspense(<SearchPage />),
-});
-
-const categoryRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/category/$divisionId",
-  component: () => withRouteSuspense(<CategoryPage />),
-});
-
-const creatorRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/creator/$username",
-  component: () => withRouteSuspense(<CreatorProfilePage />),
-});
-
-const licenseRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/license/$licenseId",
-  component: () => withRouteSuspense(<LicensePage />),
-});
-
-const getStartedRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/get-started",
-  component: () => withRouteSuspense(<GetStartedPage />),
-});
-
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/login",
@@ -235,6 +178,7 @@ const publishRoute = createRoute({
   beforeLoad: () => {
     const session = getSessionUser();
     if (!session) throw redirect({ to: "/login" });
+    if (session.accountStatus === "pending_parental") throw redirect({ to: "/consent/in-session" });
     if (session.accountStatus === "suspended") throw redirect({ to: "/" });
   },
   component: () => withRouteSuspense(<PublishPage />),
@@ -252,6 +196,11 @@ const privacyPolicyRoute = createRoute({
   component: () => withRouteSuspense(<PrivacyPolicyPage />),
 });
 
+const parentalConsentRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/legal/parental-consent-form",
+  component: () => withRouteSuspense(<ParentalConsentFormPage />),
+});
 
 const termsOfServiceRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -262,37 +211,10 @@ const termsOfServiceRoute = createRoute({
 const dashboardRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/dashboard",
-  validateSearch: (search: Record<string, unknown>) => ({
-    token: search.token as string | undefined,
-  }),
-  beforeLoad: ({ search }) => {
-    const searchParams = search as { token?: string };
-    if (searchParams.token) {
-      try {
-        const payloadStr = atob(searchParams.token.split('.')[1]);
-        const payload = JSON.parse(payloadStr);
-        window.localStorage.setItem("orp.session.token", searchParams.token);
-        
-        // Mock a user from the JWT payload
-        const user = {
-          userId: payload.sub || "mock-user-id",
-          email: payload.email || "user@example.com",
-          displayName: payload.name || "Contributor",
-          role: "contributor",
-          accountStatus: "active",
-          consentTier: "general"
-        };
-        window.localStorage.setItem("orp.session.v1", JSON.stringify(user));
-        
-        // Remove token from URL
-        window.history.replaceState({}, document.title, window.location.pathname);
-      } catch (e) {
-        console.error("Failed to parse SSO token", e);
-      }
-    }
-
+  beforeLoad: () => {
     const session = getSessionUser();
     if (!session) throw redirect({ to: "/login" });
+    if (session.accountStatus === "pending_parental") throw redirect({ to: "/consent/in-session" });
     if (session.accountStatus === "suspended") throw redirect({ to: "/suspended" });
   },
   loader: async () => {
@@ -321,6 +243,7 @@ const casesRoute = createRoute({
   beforeLoad: () => {
     const session = getSessionUser();
     if (!session) throw redirect({ to: "/login" });
+    if (session.accountStatus === "pending_parental") throw redirect({ to: "/consent/in-session" });
     if (session.accountStatus === "suspended") throw redirect({ to: "/suspended" });
   },
   loader: async () => {
@@ -334,47 +257,6 @@ const casesRoute = createRoute({
   pendingMs: 150,
   pendingMinMs: 250,
   component: () => withRouteSuspense(<CasesPage />),
-});
-
-const artifactsRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/artifacts",
-  beforeLoad: () => {
-    const session = getSessionUser();
-    if (!session) throw redirect({ to: "/login" });
-    if (session.accountStatus === "suspended") throw redirect({ to: "/suspended" });
-  },
-  loader: async () => {
-    await queryClient.prefetchQuery({
-      queryKey: queryKeys.auth.currentUser(),
-      queryFn: () => getCurrentUser(),
-      staleTime: 60_000,
-    });
-  },
-  pendingComponent: PanelPageSkeleton,
-  pendingMs: 150,
-  pendingMinMs: 250,
-  component: () => withRouteSuspense(<ArtifactsPage />),
-});
-
-const settingsRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/profile",
-  beforeLoad: () => {
-    const session = getSessionUser();
-    if (!session) throw redirect({ to: "/login" });
-  },
-  loader: async () => {
-    await queryClient.prefetchQuery({
-      queryKey: queryKeys.auth.currentUser(),
-      queryFn: () => getCurrentUser(),
-      staleTime: 60_000,
-    });
-  },
-  pendingComponent: PanelPageSkeleton,
-  pendingMs: 150,
-  pendingMinMs: 250,
-  component: () => withRouteSuspense(<SettingsPage />),
 });
 
 const moderationRoute = createRoute({
@@ -421,81 +303,6 @@ const adminRoute = createRoute({
   component: () => withRouteSuspense(<AdminPanelPage />),
 });
 
-const adminQueueRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/admin/queue",
-  beforeLoad: () => {
-    const session = getSessionUser();
-    if (!session) throw redirect({ to: "/login" });
-    if (session.role !== "admin" && session.role !== "moderator") {
-      throw redirect({ to: "/dashboard" });
-    }
-  },
-  loader: async () => {
-    await queryClient.prefetchQuery({
-      queryKey: queryKeys.moderation.dashboard(),
-      queryFn: getModerationDashboard,
-      staleTime: 30_000,
-    });
-  },
-  pendingComponent: PanelPageSkeleton,
-  pendingMs: 150,
-  pendingMinMs: 250,
-  component: () => withRouteSuspense(<AdminQueuePage />),
-});
-
-const adminReviewRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/admin/review/$pubId",
-  beforeLoad: () => {
-    const session = getSessionUser();
-    if (!session) throw redirect({ to: "/login" });
-    if (session.role !== "admin" && session.role !== "moderator") {
-      throw redirect({ to: "/dashboard" });
-    }
-  },
-  loader: async () => {
-    await queryClient.prefetchQuery({
-      queryKey: queryKeys.moderation.dashboard(),
-      queryFn: getModerationDashboard,
-      staleTime: 30_000,
-    });
-  },
-  pendingComponent: PanelPageSkeleton,
-  pendingMs: 150,
-  pendingMinMs: 250,
-  component: () => withRouteSuspense(<AdminReviewPage />),
-});
-
-const adminUsersRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/admin/users",
-  beforeLoad: () => {
-    const session = getSessionUser();
-    if (!session) throw redirect({ to: "/login" });
-    if (session.role !== "admin") {
-      throw redirect({ to: "/dashboard" });
-    }
-  },
-  loader: async () => {
-    await queryClient.prefetchQuery({
-      queryKey: queryKeys.moderation.users(),
-      queryFn: listUsers,
-      staleTime: 60_000,
-    });
-  },
-  pendingComponent: PanelPageSkeleton,
-  pendingMs: 150,
-  pendingMinMs: 250,
-  component: () => withRouteSuspense(<AdminUsersPage />),
-});
-
-const embedRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/embed/artifact/$pubId",
-  component: () => withRouteSuspense(<EmbedPage />),
-});
-
 const publicationDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/p/$pubId",
@@ -505,21 +312,7 @@ const publicationDetailRoute = createRoute({
 const suspendedRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/suspended",
-  component: () => (
-    <Suspense fallback={<PageSkeleton />}>
-      <SuspendedPage />
-    </Suspense>
-  ),
-});
-
-const showcaseRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/showcase",
-  component: () => (
-    <Suspense fallback={<PageSkeleton />}>
-      <ArtifactShowcase />
-    </Suspense>
-  ),
+  component: () => withRouteSuspense(<SuspendedPage />),
 });
 
 const routeTree = rootRoute.addChildren([
@@ -530,25 +323,13 @@ const routeTree = rootRoute.addChildren([
   aboutRoute,
   dashboardRoute,
   casesRoute,
-  artifactsRoute,
-  settingsRoute,
   moderationRoute,
-  adminQueueRoute,
-  adminReviewRoute,
-  adminUsersRoute,
-  embedRoute,
-  browseRoute,
-  searchRoute,
-  categoryRoute,
-  creatorRoute,
-  licenseRoute,
-  getStartedRoute,
+  adminRoute,
   privacyPolicyRoute,
-
+  parentalConsentRoute,
   termsOfServiceRoute,
   publicationDetailRoute,
   suspendedRoute,
-  showcaseRoute,
 ]);
 
 export const router = createRouter({

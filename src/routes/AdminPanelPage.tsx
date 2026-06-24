@@ -231,14 +231,11 @@ export function AdminPanelPage() {
               Move between moderation queue and case inbox without leaving governance context.
             </p>
             <div className="admin-hero-actions">
-              <Link className="admin-quick-link" to="/admin/queue">
+              <Link className="admin-quick-link" to="/moderation">
                 Open Moderator Queue
               </Link>
               <Link className="admin-quick-link" to="/cases">
                 Open Cases Inbox
-              </Link>
-              <Link className="admin-quick-link" to="/admin/users">
-                Manage User Directory
               </Link>
             </div>
           </aside>

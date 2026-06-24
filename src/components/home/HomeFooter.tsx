@@ -30,6 +30,7 @@ export function HomeFooter({ onOpenInfo }: HomeFooterProps) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-start' }}>
               <Link to="/legal/terms" style={{ color: '#ffffff', textDecoration: 'none', fontSize: '14px', textAlign: 'left' }}>Terms of Service</Link>
               <Link to="/legal/privacy-policy" style={{ color: '#ffffff', textDecoration: 'none', fontSize: '14px', textAlign: 'left' }}>Privacy Policy</Link>
+              <Link to="/legal/parental-consent-form" style={{ color: '#ffffff', textDecoration: 'none', fontSize: '14px', textAlign: 'left' }}>Parental Consent</Link>
               <button type="button" style={{ color: '#ffffff', textDecoration: 'none', fontSize: '14px', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }} onClick={() => onOpenInfo("about")}>About OpenRockets Press</button>
             </div>
           </div>

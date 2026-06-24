@@ -1,4 +1,4 @@
-@import "./styles/globals.css";
+@import url("https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&family=Ubuntu+Condensed&display=swap");
 
 /* ─────────────────────────────────────────────────────────────────────────────
    Design tokens
@@ -50,49 +50,6 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-.btn {
-  @apply px-4 py-2 rounded-md font-medium transition-all duration-200 shadow-sm border border-transparent disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none active:scale-95 flex items-center justify-center gap-2 min-h-[44px];
-}
-
-.btn-primary {
-  @apply text-cream hover:shadow-md hover:-translate-y-0.5;
-  background-color: var(--gold);
-  border-color: rgba(212, 175, 55, 0.2);
-}
-.btn-primary:hover {
-  background-color: #c09e32;
-}
-
-.btn-secondary {
-  @apply hover:shadow-md hover:-translate-y-0.5;
-  background-color: var(--surface-0);
-  color: var(--ink);
-  border-color: var(--cream-border);
-}
-.btn-secondary:hover {
-  background-color: var(--surface-1);
-}
-
-.btn-danger {
-  @apply text-cream hover:shadow-md hover:-translate-y-0.5;
-  background-color: var(--error);
-  border-color: rgba(239, 68, 68, 0.2);
-}
-.btn-danger:hover {
-  background-color: #dc2626;
-}
-
-.btn-outline {
-  @apply bg-transparent hover:shadow-md hover:-translate-y-0.5;
-  color: var(--ink);
-  border-color: var(--cream-border);
-}
-.btn-outline:hover {
-  color: var(--gold);
-  border-color: var(--gold);
-  background-color: var(--surface-0);
-}
-
 /* ─────────────────────────────────────────────────────────────────────────────
    Reset
    ───────────────────────────────────────────────────────────────────────────── */
@@ -110,12 +67,12 @@ body,
 }
 
 body {
-  font-family: var(--font-body);
+  font-family: 'Ubuntu', sans-serif;
   font-weight: 400;
-  font-size: var(--text-base);
-  line-height: var(--leading-normal);
-  background: var(--color-cream);
-  color: var(--color-ink);
+  font-size: 1rem;
+  line-height: 1.55;
+  background: #ffffff;
+  color: var(--text);
 }
 
 h1,
@@ -124,12 +81,12 @@ h3,
 h4,
 .shelf-head h2,
 .home-banner h2 {
-  font-family: var(--font-display);
+  font-family: 'Ubuntu Condensed', 'Ubuntu', sans-serif;
 }
 
 blockquote,
 .artistic-text {
-  font-family: var(--font-display);
+  font-family: Georgia, 'Times New Roman', serif;
 }
 
 h1,
@@ -162,18 +119,6 @@ button {
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   border: 0;
-}
-
-/* Global Keyboard Navigation Outline */
-*:focus-visible {
-  outline: 2px solid var(--gold);
-  outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.2); /* Soft gold glow */
-  border-radius: 2px;
-}
-
-a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
-  outline: 2px solid var(--gold);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
