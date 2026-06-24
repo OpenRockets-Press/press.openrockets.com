@@ -1,14 +1,17 @@
 import { Hono } from 'hono';
 import { serve } from '@hono/node-server';
+import { serveStatic } from '@hono/node-server/serve-static';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { secureHeaders } from 'hono/secure-headers';
+import fs from 'node:fs';
+import path from 'node:path';
 import { db } from './db';
 import { users, publications } from './db/schema';
 import { eq } from 'drizzle-orm';
 import { s3Client, uploadToStorage, BUCKET_NAME } from './storage/s3';
 
-const app = new Hono();
+export const app = new Hono();
 
 import { publicationsRouter } from './routes/publications';
 import { usersRouter } from './routes/users';
@@ -128,15 +131,18 @@ app.onError((err, c) => {
   }, statusCode);
 });
 
-// Global Not Found Middleware
+// Global Not Found Middleware for APIs
 app.notFound((c) => {
-  return c.json({
-    success: false,
-    error: {
-      code: 'NOT_FOUND',
-      message: `The requested endpoint ${c.req.method} ${c.req.url} was not found.`,
-    }
-  }, 404);
+  if (c.req.path.startsWith('/api')) {
+    return c.json({
+      success: false,
+      error: {
+        code: 'NOT_FOUND',
+        message: `The requested endpoint ${c.req.method} ${c.req.url} was not found.`,
+      }
+    }, 404);
+  }
+  return c.text('Not Found', 404);
 });
 
 // Phase 3 Placeholder: SSO Callback from accounts.openrockets.com
@@ -168,7 +174,22 @@ app.get('/api/auth/sso-callback', async (c) => {
   return c.redirect(`${returnTo}?token=${token}`);
 });
 
-// Discord webhook utility is decoupled and called natively within the publications POST router
+// Serve Frontend Assets
+app.use('/*', serveStatic({ root: './dist' }));
+
+// Client-side Routing Fallback (React Router)
+app.get('*', async (c) => {
+  if (c.req.path.startsWith('/api')) {
+    return c.json({ success: false, error: { code: 'NOT_FOUND', message: 'Not found' } }, 404);
+  }
+  try {
+    const indexPath = path.resolve('./dist/index.html');
+    const html = fs.readFileSync(indexPath, 'utf-8');
+    return c.html(html);
+  } catch (e) {
+    return c.text('Frontend build not found. Please run npm run build.', 500);
+  }
+});
 
 const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 
