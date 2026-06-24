@@ -10,7 +10,7 @@ export const users = mysqlTable('users', {
 });
 
 export const publications = mysqlTable('publications', {
-  id: serial('id').primaryKey(),
+  id: int('id').autoincrement().primaryKey(),
 
   pubId: varchar('pub_id', { length: 50 }).unique().notNull(), // e.g. ORP-1234
   authorId: varchar('author_id', { length: 255 }).references(() => users.id),
