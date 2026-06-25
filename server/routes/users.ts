@@ -6,6 +6,19 @@ import { authMiddleware } from '../middleware/auth';
 
 export const usersRouter = new Hono();
 
+usersRouter.get('/me', authMiddleware, async (c) => {
+  const user = c.get('user');
+  
+  return c.json({
+    userId: user.id,
+    displayName: user.displayName,
+    email: user.email,
+    role: user.role,
+    accountStatus: user.isSuspended ? 'suspended' : 'active',
+    consentTier: 'general', // Mocked or fetched from another table if it existed
+  });
+});
+
 usersRouter.get('/', authMiddleware, async (c) => {
   const user = c.get('user');
   

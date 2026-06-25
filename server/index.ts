@@ -1,11 +1,22 @@
+import fs from 'node:fs';
+import path from 'node:path';
+const envPath = path.resolve(process.cwd(), '.env');
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf8');
+  envContent.split('\n').forEach(line => {
+    const parts = line.split('=');
+    const key = parts[0];
+    if (key && parts.length > 1) {
+      process.env[key.trim()] = parts.slice(1).join('=').trim();
+    }
+  });
+}
 import { Hono } from 'hono';
 import { serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { secureHeaders } from 'hono/secure-headers';
-import fs from 'node:fs';
-import path from 'node:path';
 import { db } from './db';
 import { users, publications } from './db/schema';
 import { eq } from 'drizzle-orm';
@@ -157,13 +168,23 @@ app.get('/api/auth/sso-callback', async (c) => {
       const userId = payload.sub;
       if (userId) {
         let [dbUser] = await db.select().from(users).where(eq(users.id, userId));
+        
+        const fallbackName = payload.email ? payload.email.split('@')[0] : 'Contributor';
+        const bestName = payload.name || payload.username || payload.preferred_username || payload.nickname || fallbackName;
+        
         if (!dbUser) {
           await db.insert(users).values({
             id: userId,
-            displayName: payload.name || 'Contributor',
+            displayName: bestName,
             email: payload.email || 'user@example.com',
             role: 'contributor',
           });
+        } else {
+          // Always update name and email in case they changed on the SSO side
+          await db.update(users).set({
+            displayName: bestName,
+            email: payload.email || dbUser.email,
+          }).where(eq(users.id, userId));
         }
       }
     } catch (e) {

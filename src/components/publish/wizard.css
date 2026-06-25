@@ -1,0 +1,162 @@
+.wizard-container {
+  display: flex;
+  flex-direction: column;
+  max-width: 800px;
+  margin: 0 auto;
+  background-color: #ffffff;
+  color: #000000;
+  font-family: 'Ubuntu', sans-serif;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid #000000;
+}
+
+.wizard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #000000;
+}
+
+.wizard-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.wizard-step-indicator {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #000000;
+}
+
+.wizard-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.wizard-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #000000;
+}
+
+.wizard-btn {
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Ubuntu', sans-serif;
+}
+
+.wizard-btn-primary {
+  background-color: #0000ff;
+  color: #ffffff;
+  border: none;
+}
+
+.wizard-btn-primary:hover {
+  background-color: #0000cc;
+}
+
+.wizard-btn-secondary {
+  background-color: #ffffff;
+  color: #000000;
+  border: 1px solid #000000;
+}
+
+.wizard-btn-secondary:hover {
+  background-color: #f0f0f0;
+}
+
+.wizard-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Specific Step Styles */
+.dropzone {
+  border: 2px dashed #0000ff;
+  border-radius: 8px;
+  padding: 3rem;
+  text-align: center;
+  cursor: pointer;
+  background-color: #ffffff;
+  transition: background-color 0.2s;
+}
+
+.dropzone:hover, .dropzone.active {
+  background-color: rgba(0, 0, 255, 0.05);
+}
+
+.dropzone p {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #000000;
+}
+
+.content-google-sans {
+  font-family: 'Google Sans', 'Open Sans', sans-serif;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.input-label {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #000000;
+}
+
+.input-field {
+  padding: 0.75rem;
+  border: 1px solid #000000;
+  border-radius: 4px;
+  font-family: 'Google Sans', 'Open Sans', sans-serif;
+  font-size: 1rem;
+  background-color: #ffffff;
+  color: #000000;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: #0000ff;
+  box-shadow: 0 0 0 2px rgba(0, 0, 255, 0.1);
+}
+
+.checkbox-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.checkbox-group input {
+  margin-top: 0.25rem;
+}
+
+.checkbox-group label {
+  font-size: 0.875rem;
+  color: #000000;
+  line-height: 1.4;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+}
+
+.loading-container img {
+  width: 150px;
+}

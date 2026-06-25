@@ -6,44 +6,34 @@
 :root {
   /* surface */
   --bg: #ffffff;
-  --parch: #f0ece3;
-  /* interior page background  */
-  --panel: #fffef9;
-  /* card / panel surface      */
-  --panel-2: #f7f4ed;
-  /* nested section background */
+  --parch: #ffffff;
+  --panel: #ffffff;
+  --panel-2: #ffffff;
 
   /* text */
-  --text: #1a1714;
-  /* primary                   */
-  --text-2: #5c5650;
-  /* secondary                 */
-  --text-3: #9e9890;
-  /* muted                     */
+  --text: #000000;
+  --text-2: #000000;
+  --text-3: #000000;
 
   /* borders */
-  --line: #dbd5c9;
-  --line-2: #ece8e0;
+  --line: #000000;
+  --line-2: #000000;
 
   /* brand */
-  --navy: #1d3461;
-  /* links, focus accents      */
-  --rust: #b84b1a;
-  /* eyebrows, highlights      */
-  --ink: #111008;
-  /* primary button fill       */
-  --accent: #008460;
+  --navy: #0000ff;
+  --rust: #ff0000;
+  --ink: #000000;
+  --accent: #0000ff;
 
   /* feedback */
-  --danger: #c0392b;
-  --success: #1a6641;
-  --warn: #7c5500;
+  --danger: #ff0000;
+  --success: #0000ff;
+  --warn: #000000;
 
   /* misc */
   --radius: 8px;
-  --brand: #2563eb;
-  /* home-page accent – kept   */
-  --shadow-soft: 0 12px 32px -24px rgba(17, 24, 39, .55);
+  --brand: #0000ff;
+  --shadow-soft: 0 12px 32px -24px rgba(0, 0, 0, .55);
 
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;

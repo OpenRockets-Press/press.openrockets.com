@@ -28,14 +28,23 @@ export async function authMiddleware(c: Context, next: Next) {
     // Upsert user logic (Phase 5)
     let [dbUser] = await db.select().from(users).where(eq(users.id, userId));
     
+    const fallbackName = payload.email ? payload.email.split('@')[0] : 'Contributor';
+    const bestName = payload.name || payload.username || payload.preferred_username || payload.nickname || fallbackName;
+        
     if (!dbUser) {
       await db.insert(users).values({
         id: userId,
-        displayName: payload.name || 'Contributor',
+        displayName: bestName,
         email: payload.email || 'user@example.com',
         role: 'contributor',
       });
       [dbUser] = await db.select().from(users).where(eq(users.id, userId));
+    } else {
+      // Opportunistically update their info if they had generic values
+      if (dbUser.displayName === 'Contributor' && bestName !== 'Contributor') {
+        await db.update(users).set({ displayName: bestName }).where(eq(users.id, userId));
+        dbUser.displayName = bestName;
+      }
     }
 
     // Attach to context

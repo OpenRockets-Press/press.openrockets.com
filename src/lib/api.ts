@@ -96,8 +96,8 @@ async function callApi<T>(
   }
 
   if (!opts?.skipAuth) {
-    const jwt = await getJWT();
-    if (jwt) headers["X-Appwrite-JWT"] = jwt;
+    const token = window.localStorage.getItem("orp.session.token");
+    if (token) headers["Authorization"] = `Bearer ${token}`;
   }
 
   const res = await fetch(`/api/${path}`, {
@@ -207,12 +207,8 @@ function toCasePriority(value: unknown): CasePriority {
 }
 
 async function hydrateCurrentUserFromRemote(forceProbe = false) {
-  if (!isAppwriteConfigured || !account) return null;
   if (!forceProbe && Date.now() < remoteAuthBackoffUntil) return null;
 
-  // Use the server-side /api/me endpoint for reliable role resolution.
-  // It runs under the admin API key so it can read labels and the users
-  // collection without browser-level permission issues.
   try {
     const profile = await callApi<{
       userId: string;
@@ -221,7 +217,7 @@ async function hydrateCurrentUserFromRemote(forceProbe = false) {
       role: Role;
       accountStatus: string;
       consentTier: string;
-    }>("me", undefined, { method: "GET" });
+    }>("users/me", undefined, { method: "GET" });
 
     remoteAuthBackoffUntil = 0;
 
@@ -241,7 +237,6 @@ async function hydrateCurrentUserFromRemote(forceProbe = false) {
     setSessionUser(next);
     return next;
   } catch (error: unknown) {
-    // 401 means no active session — clear local state so the UI reflects reality
     if (getErrorMessage(error).includes("request failed 401")) {
       clearSessionUser();
       return null;
@@ -400,10 +395,7 @@ export async function login(email: string, password: string): Promise<{ ok: true
 }
 
 export async function logout(): Promise<void> {
-  if (isAppwriteConfigured && account) {
-    await account.deleteSession("current").catch(() => undefined);
-  }
-  invalidateJWT();
+  window.localStorage.removeItem("orp.session.token");
   clearSessionUser();
 }
 
