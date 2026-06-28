@@ -7,9 +7,10 @@ import imageCompression from 'browser-image-compression';
 interface Props {
   state: WizardState;
   setState: React.Dispatch<React.SetStateAction<WizardState>>;
+  onComplete?: () => void;
 }
 
-export const Step2Editor: React.FC<Props> = ({ state, setState }) => {
+export const Step2Editor: React.FC<Props> = ({ state, setState, onComplete }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [currentFileUrl, setCurrentFileUrl] = useState<string | null>(null);
@@ -59,11 +60,17 @@ export const Step2Editor: React.FC<Props> = ({ state, setState }) => {
   };
 
   const updateProcessedFiles = (file: File) => {
-    const newProcessed = [...state.processedFiles];
-    newProcessed[currentIndex] = file;
-    setState(s => ({ ...s, processedFiles: newProcessed }));
+    setState(s => {
+      const newProcessed = [...s.processedFiles];
+      newProcessed[currentIndex] = file;
+      return { ...s, processedFiles: newProcessed };
+    });
     if (currentIndex < state.files.length - 1) {
       setCurrentIndex(currentIndex + 1);
+    } else {
+      if (onComplete) {
+        onComplete();
+      }
     }
   };
 
@@ -89,6 +96,7 @@ export const Step2Editor: React.FC<Props> = ({ state, setState }) => {
       {isImage && currentFileUrl ? (
         <div style={{ width: '100%', height: '400px', backgroundColor: '#f0f0f0' }}>
           <Cropper
+            key={currentFileUrl}
             src={currentFileUrl}
             style={{ height: '100%', width: '100%' }}
             initialAspectRatio={1}

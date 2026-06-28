@@ -6,6 +6,7 @@ import { Step3Metadata } from './Step3Metadata';
 import { Step4Finalize } from './Step4Finalize';
 
 export type WizardState = {
+  division: 'div1' | 'div2';
   files: File[];
   processedFiles: File[];
   name: string;
@@ -22,6 +23,7 @@ export type WizardState = {
 export const PublishWizard = () => {
   const [step, setStep] = useState(1);
   const [state, setState] = useState<WizardState>({
+    division: 'div1',
     files: [],
     processedFiles: [],
     name: '',
@@ -46,7 +48,7 @@ export const PublishWizard = () => {
       </div>
       <div className="wizard-content">
         {step === 1 && <Step1Upload state={state} setState={setState} />}
-        {step === 2 && <Step2Editor state={state} setState={setState} />}
+        {step === 2 && <Step2Editor state={state} setState={setState} onComplete={nextStep} />}
         {step === 3 && <Step3Metadata state={state} setState={setState} />}
         {step === 4 && <Step4Finalize state={state} setState={setState} />}
       </div>
@@ -64,8 +66,8 @@ export const PublishWizard = () => {
             onClick={nextStep}
             disabled={
               (step === 1 && state.files.length === 0) ||
-              (step === 2 && state.processedFiles.length === 0 && state.files.length > 0) ||
-              (step === 3 && !state.name)
+              (step === 2 && state.processedFiles.filter(Boolean).length !== state.files.length) ||
+              (step === 3 && (!state.name || !state.shortDescription))
             }
           >
             Next

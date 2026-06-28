@@ -61,7 +61,20 @@ export const Step1Upload: React.FC<Props> = ({ state, setState }) => {
 
   return (
     <div>
-      <h3 style={{ marginBottom: '1rem', fontWeight: 600 }}>Select Files (Max 5, 10MB per file)</h3>
+      <div style={{ marginBottom: '1.5rem' }}>
+        <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.5rem' }}>Select Artifact Type</label>
+        <select 
+          style={{ padding: '0.5rem', width: '100%', border: '1px solid #ccc', borderRadius: '4px' }}
+          value={state.division}
+          onChange={(e) => setState(s => ({ ...s, division: e.target.value as 'div1' | 'div2', files: [], processedFiles: [] }))}
+        >
+          <option value="div1">Division 1: Physical & Traditional Creations (Max 10MB)</option>
+          <option value="div2">Division 2: 3D Artifacts (Unlimited)</option>
+        </select>
+      </div>
+      <h3 style={{ marginBottom: '1rem', fontWeight: 600 }}>
+        Select Files (Max 5, {state.division === 'div1' ? '10MB' : '100MB'} per file)
+      </h3>
       <div 
         className={`dropzone ${isDragActive ? 'active' : ''}`}
         onDragOver={handleDragOver}

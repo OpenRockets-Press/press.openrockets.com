@@ -75,10 +75,11 @@ export const Step3Metadata: React.FC<Props> = ({ state, setState }) => {
             value={state.category} 
             onChange={e => setState(s => ({ ...s, category: e.target.value }))}
           >
-            <option value="science">Science</option>
-            <option value="technology">Technology</option>
+            <option value="physical_sciences">Physical Sciences</option>
+            <option value="biological_sciences">Biological Sciences</option>
             <option value="social_sciences">Social Sciences</option>
-            <option value="arts">Arts and Human Sciences</option>
+            <option value="arts_humanities">Arts and Humanities</option>
+            <option value="technology">Technology</option>
           </select>
         </div>
       </div>
@@ -100,6 +101,18 @@ export const Step3Metadata: React.FC<Props> = ({ state, setState }) => {
           rows={5}
           value={state.longDescription} 
           onChange={e => setState(s => ({ ...s, longDescription: e.target.value }))}
+        />
+      </div>
+
+      <div className="input-group">
+        <label className="input-label">Artifact About Page (Optional Formatting)</label>
+        <textarea 
+          className="input-field" 
+          rows={8}
+          style={{ fontFamily: '"Google Sans", sans-serif' }}
+          value={state.aboutPage} 
+          onChange={e => setState(s => ({ ...s, aboutPage: e.target.value }))}
+          placeholder="Write a complete thesis or introduction here..."
         />
       </div>
 

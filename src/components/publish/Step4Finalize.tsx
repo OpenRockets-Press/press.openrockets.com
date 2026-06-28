@@ -10,6 +10,7 @@ interface Props {
 export const Step4Finalize: React.FC<Props> = ({ state }) => {
   const [certs, setCerts] = useState([false, false, false, false]);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const toggleCert = (index: number) => {
     const newCerts = [...certs];
@@ -17,8 +18,25 @@ export const Step4Finalize: React.FC<Props> = ({ state }) => {
     setCerts(newCerts);
   };
 
+  const handleSubmit = () => {
+    setIsSubmitting(true);
+    setTimeout(() => {
+      setIsSubmitting(false);
+      alert('Successfully submitted to Open Rockets Press!');
+    }, 2000);
+  };
+
   const allChecked = certs.every(Boolean);
-  const canSubmit = allChecked && captchaToken;
+  const canSubmit = allChecked && captchaToken && !isSubmitting;
+
+  if (isSubmitting) {
+    return (
+      <div className="loading-container">
+        <img src="https://assets-v2.lottiefiles.com/a/fd37a886-9bba-459d-a45d-ad106cd1e882/3Ytsmfmjml.gif" alt="Loading..." />
+        <p>Publishing your artifact to Open Rockets Press...</p>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -66,9 +84,8 @@ export const Step4Finalize: React.FC<Props> = ({ state }) => {
       </div>
 
       <div style={{ alignSelf: 'flex-start' }}>
-        {/* Placeholder sitekey for testing */}
         <HCaptcha
-          sitekey="10000000-ffff-ffff-ffff-000000000001"
+          sitekey="3e60ef44-d6a0-4192-bcee-9f92f38a085c"
           onVerify={(token: string) => setCaptchaToken(token)}
         />
       </div>
@@ -77,7 +94,7 @@ export const Step4Finalize: React.FC<Props> = ({ state }) => {
         className="wizard-btn wizard-btn-primary" 
         style={{ alignSelf: 'flex-start' }}
         disabled={!canSubmit}
-        onClick={() => alert('Successfully submitted to Open Rockets Press!')}
+        onClick={handleSubmit}
       >
         Submit to Open Rockets Press
       </button>

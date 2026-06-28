@@ -89,6 +89,21 @@ export function HomeBanner() {
             ))}
           </div>
 
+          <div className="home-banner-indicators">
+            {SLIDES.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                className={`home-banner-indicator ${i === activeSlide ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveSlide(i);
+                  setIsPlaying(false);
+                }}
+                aria-label={`Go to slide ${i + 1} of ${SLIDES.length}`}
+              />
+            ))}
+          </div>
+
           <button
             type="button"
             className="home-banner-toggle"

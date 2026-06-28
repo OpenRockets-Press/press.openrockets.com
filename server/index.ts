@@ -163,29 +163,37 @@ app.get('/api/auth/sso-callback', async (c) => {
   
   if (token) {
     try {
-      const payloadStr = atob(token.split('.')[1]);
-      const payload = JSON.parse(payloadStr);
-      const userId = payload.sub;
-      if (userId) {
+      const response = await fetch("https://openrocketsauth.alwaysdata.net/api/auth/me", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        const userId = String(userData.id);
+        const bestName = userData.name || 'Contributor';
+        const email = userData.email || 'user@example.com';
+
         let [dbUser] = await db.select().from(users).where(eq(users.id, userId));
-        
-        const fallbackName = payload.email ? payload.email.split('@')[0] : 'Contributor';
-        const bestName = payload.name || payload.username || payload.preferred_username || payload.nickname || fallbackName;
         
         if (!dbUser) {
           await db.insert(users).values({
             id: userId,
             displayName: bestName,
-            email: payload.email || 'user@example.com',
+            email: email,
             role: 'contributor',
           });
         } else {
           // Always update name and email in case they changed on the SSO side
           await db.update(users).set({
             displayName: bestName,
-            email: payload.email || dbUser.email,
+            email: email,
           }).where(eq(users.id, userId));
         }
+      } else {
+        console.error("SSO Token validation failed", response.status);
       }
     } catch (e) {
       console.error("SSO Upsert Error", e);

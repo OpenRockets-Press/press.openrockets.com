@@ -36,7 +36,7 @@ function PublicationCardComponent({ item }: PublicationCardProps) {
       <h3 className="card-title" title={item.title}>
         {item.title}
       </h3>
-      <p className="card-author">{item.authorDisplayName}</p>
+      <p className="card-author notranslate">{item.authorDisplayName}</p>
       <div className="card-meta">{meta}</div>
     </>
   );

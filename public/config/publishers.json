@@ -1,0 +1,48 @@
+{
+  "publishers": [
+    {
+      "id": "scienteen",
+      "name": "Scienteen Library of Science",
+      "domain": "scienteen.com",
+      "about": "Scienteen Library of Science is an official publisher of OpenRockets Press. It is a highly secure, encrypted preprint repository that serves the benefit of science, technology, and the overall advancement of human cognition. Hosted in Oracle Cloud Infrastructure data centers in San Jose and operated by OpenRockets Inc., it is the home of many new findings, drafts, and artifacts that contribute to the scientific community.",
+      "learnMoreLink": "https://scienteen.com/",
+      "logoUrl": "/brand/welcomepage2.png",
+      "isInternal": true,
+      "categoryHashtags": ["Mathematics", "Computer Science", "Neuroscience", "Molecular Biology", "Astrophysics", "Chemistry", "Quantum Computing"],
+      "normalHashtags": ["Machine Learning", "Brain", "Biology", "Research", "Equations", "Algorithms", "Telescope", "DNA", "Genetics", "Atoms"]
+    },
+    {
+      "id": "nyrj",
+      "name": "National Youth Research Journal",
+      "domain": "nyrj.org",
+      "about": "The National Youth Research Journal is a monthly publication that accepts applications from students ranging from middle school to med school. We accept research in any topic or category \u2014 from molecular biology and astrophysics to history, social sciences, and economics. Our mission is to give young scholars real experience conducting research and publishing it before they ever set foot on a college campus.",
+      "learnMoreLink": "https://nyrj.org",
+      "logoUrl": "https://nyrj.org/__l5e/assets-v1/be7a6a34-6559-4b90-a604-47cb5938f332/nyrj-logo.png",
+      "isInternal": false,
+      "categoryHashtags": ["Mathematics", "Computer Science", "Neuroscience", "Molecular Biology", "Astrophysics", "Chemistry", "Quantum Computing"],
+      "normalHashtags": ["Machine Learning", "Brain", "Biology", "Research", "Equations", "Algorithms", "Telescope", "DNA", "Genetics", "Atoms"]
+    },
+    {
+      "id": "ajsr",
+      "name": "American Journal of Student Research",
+      "domain": "ajsr.org",
+      "about": "A multidisciplinary open-access journal highlighting outstanding research conducted by students across the Americas. We provide a rigorous peer-review process and a prestigious platform for early-career researchers.",
+      "learnMoreLink": "https://ajsr.org",
+      "logoUrl": "https://ajosr.org/wp-content/uploads/2024/05/pipetting.webp",
+      "isInternal": false,
+      "categoryHashtags": ["Computer Science", "Neuroscience", "Mathematics"],
+      "normalHashtags": ["Machine Learning", "Research", "Algorithms"]
+    },
+    {
+      "id": "ijhsb",
+      "name": "International Journal of High School Biology",
+      "domain": "ijhsb.org",
+      "about": "Peer-reviewed publication dedicated to student science. Our open-access, non-profit journal gives high school and undergraduate students a platform to share their work with the world. We publish original research articles, review papers, and concise short communications across all biology related fields, striving to make cutting-edge science accessible to a broad audience.",
+      "learnMoreLink": "https://ijhsb.org",
+      "logoUrl": "https://ijhsb.org/wp-content/uploads/2025/10/chatgpt-image-sep-30-2025-09_38_18-am-4.png",
+      "isInternal": false,
+      "categoryHashtags": ["Molecular Biology", "Neuroscience"],
+      "normalHashtags": ["Biology", "DNA", "Genetics", "Brain", "Research"]
+    }
+  ]
+}

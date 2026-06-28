@@ -83,7 +83,7 @@ export function PublicationDetailPage() {
         </div>
 
         <p className="meta-author">
-          By <strong>{publication.authorDisplayName}</strong>
+          By <strong className="notranslate">{publication.authorDisplayName}</strong>
         </p>
 
         {publication.abstract ? (

@@ -421,7 +421,7 @@ export async function getContributorPublications(limit = 20): Promise<Publicatio
     Query.limit(limit),
   ]);
 
-  return publications.documents.map((doc) => mapPublication(doc as unknown as AppwriteDocument));
+  return publications.documents.map((doc: any) => mapPublication(doc as unknown as AppwriteDocument));
 }
 
 export async function getContributorCases(limit = 30): Promise<CaseSummary[]> {
@@ -492,10 +492,10 @@ export async function getContributorDashboard(): Promise<ContributorDashboardDat
   return {
     publicationCount: recentPublications.total,
     openCaseCount: openCases.total,
-    recentPublications: recentPublications.documents.map((doc) =>
+    recentPublications: recentPublications.documents.map((doc: any) =>
       mapPublication(doc as unknown as AppwriteDocument),
     ),
-    recentCases: recentCases.documents.map((doc) =>
+    recentCases: recentCases.documents.map((doc: any) =>
       mapCaseSummary(doc as unknown as AppwriteDocument),
     ),
   };

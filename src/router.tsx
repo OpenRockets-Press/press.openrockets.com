@@ -6,7 +6,7 @@ import {
   createRouter,
   redirect,
 } from "@tanstack/react-router";
-import { getSessionUser } from "@/lib/authStore";
+import { getSessionUser, setSessionUser } from "@/lib/authStore";
 import { queryClient } from "@/lib/queryClient";
 import { queryKeys } from "@/lib/queryKeys";
 import {
@@ -32,7 +32,8 @@ const TermsOfServicePage = lazy(() =>
   import("@/routes/TermsOfServicePage").then((module) => ({ default: module.TermsOfServicePage })),
 );
 const DashboardPage = lazy(() => import("@/routes/DashboardPage").then((module) => ({ default: module.DashboardPage })));
-const CasesPage = lazy(() => import("@/routes/CasesPage").then((module) => ({ default: module.CasesPage })));
+const SubmissionsPage = lazy(() => import("@/routes/SubmissionsPage").then((module) => ({ default: module.SubmissionsPage })));
+const ProfilePage = lazy(() => import("@/routes/ProfilePage").then((module) => ({ default: module.ProfilePage })));
 const ModerationPage = lazy(() => import("@/routes/ModerationPage").then((module) => ({ default: module.ModerationPage })));
 const AdminPanelPage = lazy(() => import("@/routes/AdminPanelPage").then((module) => ({ default: module.AdminPanelPage })));
 const PublicationDetailPage = lazy(() =>
@@ -217,23 +218,30 @@ const dashboardRoute = createRoute({
     const searchParams = search as { token?: string };
     if (searchParams.token) {
       try {
-        const payloadStr = atob(searchParams.token.split('.')[1]);
-        const payload = JSON.parse(payloadStr);
-        window.localStorage.setItem("orp.session.token", searchParams.token);
-        
-        // Mock a user from the JWT payload until we implement fetch /api/me
-        const user = {
-          userId: payload.sub || "mock-user-id",
-          email: payload.email || "user@example.com",
-          displayName: payload.name || "Contributor",
-          role: "contributor",
-          accountStatus: "active",
-          consentTier: "general"
-        };
-        window.localStorage.setItem("orp.session.v1", JSON.stringify(user));
-        
-        // Remove token from URL
-        window.history.replaceState({}, document.title, window.location.pathname);
+        const payloadBase64 = searchParams.token.split('.')[1];
+        if (payloadBase64) {
+          // Robust base64url decode
+          const base64 = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
+          const pad = base64.length % 4;
+          const padded = pad ? base64 + '='.repeat(4 - pad) : base64;
+          const payloadStr = atob(padded);
+          const payload = JSON.parse(payloadStr);
+          
+          window.localStorage.setItem("orp.session.token", searchParams.token);
+          
+          const user = {
+            userId: String(payload.sub || payload.id || "mock-user-id"),
+            email: payload.email || "user@example.com",
+            displayName: payload.name || "Contributor",
+            role: "contributor",
+            accountStatus: "active",
+            consentTier: "general"
+          };
+          window.localStorage.setItem("orp.session.v1", JSON.stringify(user));
+          
+          // Remove token from URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
       } catch (e) {
         console.error("Failed to parse SSO token", e);
       }
@@ -242,34 +250,18 @@ const dashboardRoute = createRoute({
     const session = getSessionUser();
     if (!session) throw redirect({ to: "/login" });
     if (session.accountStatus === "suspended") throw redirect({ to: "/suspended" });
+    
+    throw redirect({ to: "/publish" });
   },
-  loader: async () => {
-    await Promise.all([
-      queryClient.prefetchQuery({
-        queryKey: queryKeys.auth.currentUser(),
-        queryFn: () => getCurrentUser(),
-        staleTime: 60_000,
-      }),
-      queryClient.prefetchQuery({
-        queryKey: queryKeys.contributor.dashboard(),
-        queryFn: getContributorDashboard,
-        staleTime: 60_000,
-      }),
-    ]);
-  },
-  pendingComponent: DashboardSkeleton,
-  pendingMs: 150,
-  pendingMinMs: 250,
-  component: () => withRouteSuspense(<DashboardPage />),
 });
 
-const casesRoute = createRoute({
+const submissionsRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/cases",
+  path: "/submissions",
   beforeLoad: () => {
     const session = getSessionUser();
     if (!session) throw redirect({ to: "/login" });
-    if (session.accountStatus === "pending_parental") throw redirect({ to: "/consent/in-session" });
+    if (session.accountStatus === "pending_parental") throw redirect({ to: "/publish" });
     if (session.accountStatus === "suspended") throw redirect({ to: "/suspended" });
   },
   loader: async () => {
@@ -282,7 +274,28 @@ const casesRoute = createRoute({
   pendingComponent: PanelPageSkeleton,
   pendingMs: 150,
   pendingMinMs: 250,
-  component: () => withRouteSuspense(<CasesPage />),
+  component: () => withRouteSuspense(<SubmissionsPage />),
+});
+
+const profileRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/profile",
+  beforeLoad: () => {
+    const session = getSessionUser();
+    if (!session) throw redirect({ to: "/login" });
+    if (session.accountStatus === "suspended") throw redirect({ to: "/suspended" });
+  },
+  loader: async () => {
+    await queryClient.prefetchQuery({
+      queryKey: queryKeys.auth.currentUser(),
+      queryFn: () => getCurrentUser(),
+      staleTime: 60_000,
+    });
+  },
+  pendingComponent: PanelPageSkeleton,
+  pendingMs: 150,
+  pendingMinMs: 250,
+  component: () => withRouteSuspense(<ProfilePage />),
 });
 
 const moderationRoute = createRoute({
@@ -292,7 +305,7 @@ const moderationRoute = createRoute({
     const session = getSessionUser();
     if (!session) throw redirect({ to: "/login" });
     if (session.role !== "moderator" && session.role !== "admin") {
-      throw redirect({ to: "/dashboard" });
+      throw redirect({ to: "/dashboard", search: { token: undefined } });
     }
   },
   loader: async () => {
@@ -314,7 +327,7 @@ const adminRoute = createRoute({
   beforeLoad: () => {
     const session = getSessionUser();
     if (!session) throw redirect({ to: "/login" });
-    if (session.role !== "admin") throw redirect({ to: "/dashboard" });
+    if (session.role !== "admin") throw redirect({ to: "/dashboard", search: { token: undefined } });
   },
   loader: async () => {
     await queryClient.prefetchQuery({
@@ -341,14 +354,50 @@ const suspendedRoute = createRoute({
   component: () => withRouteSuspense(<SuspendedPage />),
 });
 
+const HashtagPage = lazy(() => import("@/routes/HashtagPage").then((module) => ({ default: module.HashtagPage })));
+const hashtagRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/hashtag/$hashtagId",
+  component: () => withRouteSuspense(<HashtagPage />),
+});
+
+const Template1Page = lazy(() => import("@/templates/template1/Template1Page").then((module) => ({ default: module.Template1Page })));
+const template1Route = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/templates/1",
+  component: () => withRouteSuspense(<Template1Page />),
+});
+
+const ssoCallbackRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/api/auth/sso-callback",
+  validateSearch: (search: Record<string, unknown>) => ({
+    token: search.token as string | undefined,
+    returnTo: search.returnTo as string | undefined,
+  }),
+  beforeLoad: ({ search }) => {
+    const searchParams = search as { token?: string; returnTo?: string };
+    if (searchParams.token) {
+      throw redirect({
+        to: "/dashboard",
+        search: { token: searchParams.token },
+      });
+    }
+    throw redirect({ to: "/login" });
+  },
+  component: () => null,
+});
+
 const routeTree = rootRoute.addChildren([
   homeRoute,
+  hashtagRoute,
   registerRoute,
   loginRoute,
   publishRoute,
   aboutRoute,
   dashboardRoute,
-  casesRoute,
+  submissionsRoute,
+  profileRoute,
   moderationRoute,
   adminRoute,
   privacyPolicyRoute,
@@ -356,6 +405,8 @@ const routeTree = rootRoute.addChildren([
   termsOfServiceRoute,
   publicationDetailRoute,
   suspendedRoute,
+  ssoCallbackRoute,
+  template1Route,
 ]);
 
 export const router = createRouter({

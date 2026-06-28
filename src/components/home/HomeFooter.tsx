@@ -6,11 +6,31 @@ interface HomeFooterProps {
 }
 
 export function HomeFooter({ onOpenInfo }: HomeFooterProps) {
+  if (typeof window !== "undefined" && window.location.href.includes("/templates")) return null;
+
   return (
     <footer className="home-footer" data-testid="home-footer" style={{ borderTop: '1px solid #ffffff', paddingTop: '40px', paddingBottom: '40px', backgroundColor: '#000000', color: '#ffffff' }}>
       <div className="home-shell footer-content" style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: '100%', marginBottom: '10px' }}>
-          <img src="/brand/DARKMODEFAVICON.png?v=999" alt="OpenRockets Mode Logo" style={{ width: '7rem', maxWidth: '100%' }} />
+        <div style={{ display: 'flex', flexDirection: 'column', width: '100%', marginBottom: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+            <img src="/brand/DARKMODEFAVICON.png?v=999" alt="OpenRockets Mode Logo" style={{ width: '8rem', maxWidth: '100%', flexShrink: 0 }} />
+            <div className="notranslate" style={{ 
+              flexGrow: 1, 
+              textAlign: 'right', 
+              fontSize: 'clamp(60px, 11vw, 200px)', 
+              fontWeight: 400, 
+              lineHeight: 1, 
+              color: 'rgba(255, 255, 255, 0.4)', 
+              textTransform: 'uppercase',
+              letterSpacing: '2px',
+              fontFamily: "'Anton', sans-serif",
+              userSelect: 'none',
+              whiteSpace: 'nowrap',
+              marginLeft: '3vw'
+            }}>
+              OPENROCKETS.COM
+            </div>
+          </div>
           <hr style={{ width: '100%', border: 'none', borderTop: '1px solid rgba(255,255,255,0.2)', marginTop: '20px' }} />
         </div>
         <div className="footer-top-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '40px' }}>
@@ -86,7 +106,19 @@ export function HomeFooter({ onOpenInfo }: HomeFooterProps) {
             OpenRockets is a 100% teen-run United States C-Corporation.<br />
             © & (TM) 2022-2026 OpenRockets Incorporated. All Rights Reserved.
           </span>
-          <a href="#" id="open_preferences_center" style={{ color: '#ffffff', fontSize: '13px', textDecoration: 'none' }}>Update cookies preferences</a>
+          <a 
+            href="#" 
+            id="open_preferences_center" 
+            style={{ color: '#ffffff', fontSize: '13px', textDecoration: 'none' }}
+            onClick={(e) => {
+              e.preventDefault();
+              if (typeof window !== 'undefined' && (window as any).cookieconsent) {
+                (window as any).cookieconsent.openPreferencesCenter();
+              }
+            }}
+          >
+            Update cookies preferences
+          </a>
         </div>
       </div>
     </footer>

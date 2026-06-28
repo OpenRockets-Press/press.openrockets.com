@@ -6,10 +6,14 @@ import { queryClient } from "@/lib/queryClient";
 import { router } from "@/router";
 import "./index.css";
 
+import { TranslationProvider } from "@/lib/TranslationContext";
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>
+    <TranslationProvider>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </TranslationProvider>
   </StrictMode>,
 );
