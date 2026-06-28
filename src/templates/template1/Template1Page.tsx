@@ -9,6 +9,7 @@ import { queryKeys } from "@/lib/queryKeys";
 import { ModelViewerBox } from "./ModelViewerBox";
 import { PDFViewerBox } from "./PDFViewerBox";
 import { CodeViewerBox } from "./CodeViewerBox";
+import { ImageViewerBox } from "./ImageViewerBox";
 import { AdsInfoModal } from "@/components/ui/AdsInfoModal";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
@@ -333,6 +334,11 @@ export function Template1Page() {
               licenseIcon="/brand/licences/beaver,png.png"
               licenseLink="https://press.openrockets.com/licenses/beaver"
             />
+          </div>
+
+          {/* IMAGE VIEWER */}
+          <div className="no-print image-container image-content" style={{ width: '100%', marginBottom: '2rem' }}>
+            <ImageViewerBox files={['/brand/welcomepage2.png', '/brand/DARKMODEFAVICON.png', '/brand/271742354.png', '/brand/9283527.png', '/brand/987935879357.png']} />
           </div>
 
           {/* Abstract / Description */}

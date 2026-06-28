@@ -84,12 +84,13 @@ export function PDFViewerBox({ files }: PDFViewerBoxProps) {
           {/* PDF Viewer */}
           <div style={{
             width: '100%',
+            height: '500px',
             backgroundColor: '#fff',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            minHeight: '500px',
             position: 'relative',
+            overflowY: 'auto',
           }}>
             <Document
               file={files[activeIdx]}
