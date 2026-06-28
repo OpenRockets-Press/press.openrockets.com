@@ -125,6 +125,7 @@ export function Template1Page() {
   const [modelError, setModelError] = useState<string | null>(null);
   const [modelLeftHovered, setModelLeftHovered] = useState(false);
   const [modelRightHovered, setModelRightHovered] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const handlePrint = () => {
     window.print();
@@ -137,6 +138,12 @@ export function Template1Page() {
     } catch (err) {
       console.error("Failed to copy:", err);
     }
+  };
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(window.location.href);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
   };
 
   const chevronStyle = (disabled: boolean, hovered: boolean): React.CSSProperties => ({
@@ -447,13 +454,23 @@ export function Template1Page() {
               value={bibtex}
               style={{ width: '100%', height: '120px', padding: '12px', fontFamily: 'monospace', fontSize: '0.9rem', backgroundColor: '#faf8f0', border: '1px solid #000', borderRadius: '4px', resize: 'vertical' }}
             />
-            <button 
-              onClick={handleCopyBib}
-              style={{ padding: '8px 24px', backgroundColor: '#000', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '0.95rem', fontWeight: 500, cursor: 'pointer', fontFamily: '"Noto Sans", sans-serif', display: 'flex', alignItems: 'center', gap: '8px' }}
-            >
-              <img src="/bibtex_badge.png" alt="Copy BibTeX" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
-              Copy Bibliography
-            </button>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button 
+                onClick={handleCopyBib}
+                style={{ padding: '8px 24px', backgroundColor: '#000', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '0.95rem', fontWeight: 500, cursor: 'pointer', fontFamily: '"Noto Sans", sans-serif', display: 'flex', alignItems: 'center', gap: '8px' }}
+              >
+                <img src="/bibtex_badge.png" alt="Copy BibTeX" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
+                Copy Bibliography
+              </button>
+              
+              <button 
+                onClick={handleCopyLink}
+                style={{ padding: '8px 24px', backgroundColor: '#000', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '0.95rem', fontWeight: 500, cursor: 'pointer', fontFamily: '"Noto Sans", sans-serif', display: 'flex', alignItems: 'center', gap: '8px' }}
+              >
+                <img src="/paper_clip_3d.png" alt="Copy link" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
+                {linkCopied ? "Copied" : "Copy link"}
+              </button>
+            </div>
           </div>
 
         </div>
