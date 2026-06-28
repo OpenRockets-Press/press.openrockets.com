@@ -6,7 +6,7 @@ interface HomeFooterProps {
 }
 
 export function HomeFooter({ onOpenInfo }: HomeFooterProps) {
-  if (typeof window !== "undefined" && window.location.href.includes("/templates")) return null;
+  if (typeof window !== "undefined" && window.location.href.toLowerCase().includes("/template")) return null;
 
   return (
     <footer className="home-footer" data-testid="home-footer" style={{ borderTop: '1px solid #ffffff', paddingTop: '40px', paddingBottom: '40px', backgroundColor: '#000000', color: '#ffffff' }}>
