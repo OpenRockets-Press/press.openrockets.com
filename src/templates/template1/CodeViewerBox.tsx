@@ -386,7 +386,7 @@ export function CodeViewerBox({ initialFiles, licenseName, licenseIcon, licenseL
                 {activeNode.isArchive ? (
                   <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
                     <span style={{ color: '#666', fontFamily: 'monospace', fontSize: '0.95rem' }}>
-                      {activeNode.isExtracted ? "Archive extracted. Select a file from the sidebar." : "Archive selected. Click to extract contents."}
+                      {activeNode.isExtracted ? "" : "Archive selected. Click to extract contents."}
                     </span>
                   </div>
                 ) : activeNode.isTooLarge ? (
@@ -416,7 +416,7 @@ export function CodeViewerBox({ initialFiles, licenseName, licenseIcon, licenseL
             </>
           ) : (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ color: '#666', fontFamily: 'monospace', fontSize: '0.95rem' }}>Select a file to view.</span>
+              <span style={{ color: '#666', fontFamily: 'monospace', fontSize: '0.95rem' }}></span>
             </div>
           )}
         </div>

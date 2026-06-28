@@ -11,7 +11,7 @@ interface HomeHeaderProps {
 }
 
 export function HomeHeader({ onOpenInfo }: HomeHeaderProps) {
-  if (typeof window !== "undefined" && window.location.href.includes("/templates")) return null;
+  if (typeof window !== "undefined" && window.location.href.toLowerCase().includes("/template")) return null;
 
   const { search, setSearch, selectedCategory, setSelectedCategory, selectedHashtags, setSelectedHashtags } = useContext(SearchContext);
   const navigate = useNavigate();
