@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" media="(prefers-color-scheme: light)" href="/brand/LIGHTMODEFAVICON.png?v=999" />
+    <link rel="icon" media="(prefers-color-scheme: dark)" href="/brand/DARKMODEFAVICON.png?v=999" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Open Rockets Press is a youth-led publication platform protecting intellectual property with compliant publishing workflows."
+    />
+    <title>OpenRockets Press</title>
+    
+    <!-- Google Fonts for Editor -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&family=Dosis&family=Fira+Sans&family=Inconsolata&family=Lato&family=Lora&family=Merriweather&family=Montserrat&family=Nunito&family=Open+Sans&family=Oswald&family=Pacifico&family=PT+Sans&family=PT+Serif&family=Playfair+Display&family=Raleway&family=Roboto&family=Source+Sans+Pro&family=Titillium+Web&family=Ubuntu&display=swap" rel="stylesheet">
+    
+    <!-- KaTeX for Quill formula module -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    
+    <!-- Puter.js for AI Grammar Correction -->
+    <script src="https://js.puter.com/v2/"></script>
+
+    <script>
+      (() => {
+        const doNotTrack =
+          navigator.doNotTrack === "1" ||
+          window.doNotTrack === "1" ||
+          navigator.globalPrivacyControl === true;
+
+        if (doNotTrack) return;
+
+        const script = document.createElement("script");
+        script.defer = true;
+        script.dataset.domain = "press.openrockets.com";
+        script.src = "https://plausible.io/js/script.outbound-links.js";
+        document.head.appendChild(script);
+      })();
+    </script>
+    
+    <!-- Cookie Consent by TermsFeed https://www.TermsFeed.com -->
+    <script type="text/javascript" src="https://www.termsfeed.com/public/cookie-consent/4.2.0/cookie-consent.js" charset="UTF-8"></script>
+    <script type="text/javascript" charset="UTF-8">
+    document.addEventListener('DOMContentLoaded', function () {
+    cookieconsent.run({"notice_banner_type":"simple","consent_type":"implied","palette":"dark","language":"en","page_load_consent_levels":["strictly-necessary","functionality","tracking","targeting"],"notice_banner_reject_button_hide":false,"preferences_center_close_button_hide":false,"page_refresh_confirmation_buttons":false,"website_privacy_policy_url":"https://privacy.openrockets.com"});
+    });
+    </script>
+    <!-- End Cookie Consent by TermsFeed https://www.TermsFeed.com -->
+  </head>
+  <body>
+    <noscript>Free cookie consent management tool by <a href="https://www.termsfeed.com/">TermsFeed</a></noscript>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -8,6 +8,7 @@ import { getSessionUser } from "@/lib/authStore";
 import { queryKeys } from "@/lib/queryKeys";
 import { ModelViewerBox } from "./ModelViewerBox";
 import { PDFViewerBox } from "./PDFViewerBox";
+import { CodeViewerBox } from "./CodeViewerBox";
 import { AdsInfoModal } from "@/components/ui/AdsInfoModal";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
@@ -92,8 +93,8 @@ export function Template1Page() {
   }, []);
 
   // MOCK DATA FOR TEMPLATE PREVIEW
-  const artifactType = "research_paper";
-  const title = "Research about collecting microorganisms from a sample of building";
+  const artifactType = "software_code"; // Changed for testing CodeViewerBox
+  const title = "Sample Code Artifact";
   const subtitle = "A comprehensive analysis of biological accumulation in urban environments and structural health impacts.";
   const description = "Microorganisms are ubiquitous in the built environment, yet their community dynamics within building materials remain poorly understood. This study analyzes samples collected from commercial building facades to identify the dominant microbial taxa and their potential metabolic pathways. Using high-throughput 16S rRNA sequencing, we observed significant variations in microbial diversity correlated with the material's porosity and ambient humidity levels. These findings offer preliminary insights into how structural materials might be engineered to selectively resist pathogenic colonization while supporting benign biofilms.";
   
@@ -109,6 +110,9 @@ export function Template1Page() {
 }`;
 
   const isResearch = artifactType === "research_paper";
+  const isSoftware = artifactType === "software_code";
+  const is3DModel = artifactType === "3d_model";
+
   const downloadText = isResearch ? "Download abstract only" : "Download basic only";
   const contentHeading = isResearch ? "Abstract" : "Description";
 
@@ -194,13 +198,14 @@ export function Template1Page() {
             </p>
           </div>
 
-          {/* ============ PDF VIEWER CONTAINER ============ */}
-          <div className="no-print" style={{ width: '100%' }}>
+          {/* ============ VIEWER CONTAINERS ============ */}
+          {/* PDF VIEWER */}
+          <div className="no-print" style={{ width: '100%', marginBottom: '2rem' }}>
             <PDFViewerBox files={['/sample1.pdf', '/sample2.pdf', '/sample3.pdf']} />
           </div>
 
-          {/* ============ 3D MODEL VIEWER CONTAINER ============ */}
-          <div className="no-print" style={{ display: 'flex', width: '100%', alignItems: 'flex-start', gap: '0' }}>
+          {/* 3D MODEL VIEWER */}
+          <div className="no-print" style={{ display: 'flex', width: '100%', alignItems: 'flex-start', gap: '0', marginBottom: '2rem' }}>
             {/* Left Chevron */}
             <div style={{ position: 'sticky', top: '7rem', height: 'fit-content', zIndex: 10 }}>
               <button
@@ -314,6 +319,20 @@ export function Template1Page() {
                 <FontAwesomeIcon icon={faChevronRight} />
               </button>
             </div>
+          </div>
+
+          {/* CODE VIEWER */}
+          <div className="no-print" style={{ width: '100%', marginBottom: '2rem' }}>
+            <CodeViewerBox 
+              initialFiles={[
+                { url: "/brand/18-basemodel.rar", name: "18-basemodel.rar" },
+                { url: "/brand/index.html", name: "index.html" },
+                { url: "/brand/vite.config.ts", name: "vite.config.ts" }
+              ]}
+              licenseName="OpenRockets® Beaver" 
+              licenseIcon="/brand/licences/beaver,png.png"
+              licenseLink="https://press.openrockets.com/licenses/beaver"
+            />
           </div>
 
           {/* Abstract / Description */}

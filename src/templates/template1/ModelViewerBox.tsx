@@ -140,7 +140,7 @@ const ModelViewerBoxComponent = ({ url, isThumbnail = false, isHovered = false, 
     >
       <ErrorBoundary onError={onError}>
         <Suspense fallback={
-          <Html center>
+          <Html center style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#ffffff', zIndex: 20 }}>
             <Spinner color="#0067b8" />
           </Html>
         }>
