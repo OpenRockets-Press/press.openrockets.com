@@ -30,7 +30,7 @@ export function Template1Footer({ onOpenInfo }: Template1FooterProps) {
   }, []);
 
   return (
-    <footer className="template1-footer" data-testid="template1-footer" style={{ borderTop: '1px solid #000000', paddingTop: '40px', paddingBottom: '15px', backgroundColor: '#ffffff', color: '#000000' }}>
+    <footer translate="no" className="template1-footer notranslate" data-testid="template1-footer" style={{ borderTop: '1px solid #000000', paddingTop: '40px', paddingBottom: '15px', backgroundColor: '#ffffff', color: '#000000' }}>
       <div className="home-shell footer-content" style={{ display: 'flex', flexDirection: 'column', gap: '30px', maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
         
         {/* Top Section: Publisher Info */}

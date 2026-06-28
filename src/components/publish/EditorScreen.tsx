@@ -132,6 +132,7 @@ function useTypewriter(strings: string[], typingSpeed = 50, deletingSpeed = 30, 
 
 export interface ExternalLink {
   url: string;
+  customName?: string;
   title?: string;
   description?: string;
   image?: string;
@@ -152,6 +153,7 @@ export function EditorScreen() {
   
   const [links, setLinks] = useState<ExternalLink[]>([]);
   const [linkInput, setLinkInput] = useState("");
+  const [linkNameInput, setLinkNameInput] = useState("");
   const [isLinkLoading, setIsLinkLoading] = useState(false);
   const [labelSearchQuery, setLabelSearchQuery] = useState("");
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
@@ -327,23 +329,27 @@ export function EditorScreen() {
       const res = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(url)}`);
       const data = await res.json();
       
+      const customName = linkNameInput.trim() || undefined;
+
       if (data && data.status === "success" && data.data) {
         setLinks([...links, {
           url: data.data.url || url,
+          customName,
           title: data.data.title || "",
           description: data.data.description || "",
           image: data.data.image?.url || "",
           favicon: data.data.logo?.url || ""
         }]);
       } else {
-        setLinks([...links, { url }]);
+        setLinks([...links, { url, customName }]);
       }
     } catch (e) {
       console.error("Microlink API error:", e);
-      setLinks([...links, { url }]);
+      setLinks([...links, { url, customName: linkNameInput.trim() || undefined }]);
     } finally {
       setIsLinkLoading(false);
       setLinkInput("");
+      setLinkNameInput("");
     }
   };
 
@@ -658,18 +664,30 @@ export function EditorScreen() {
 
             {links.length < 10 && (
               <div style={{ marginBottom: "2rem" }}>
-                <input
-                  type="text"
-                  placeholder="Type your link here"
-                  className="search-input black-placeholder"
-                  value={linkInput}
-                  onChange={(e) => setLinkInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleAddLink();
-                  }}
-                  style={{ width: "100%", marginBottom: "1rem" }}
-                  disabled={isLinkLoading}
-                />
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px", width: "100%", marginBottom: "1rem" }}>
+                  <input 
+                    type="text" 
+                    placeholder="Type your link here (e.g. https://example.com)"
+                    style={{ padding: "12px 16px", borderRadius: "8px", border: "1px solid #000", fontSize: "16px", width: "100%", fontFamily: "Ubuntu, sans-serif" }}
+                    value={linkInput}
+                    onChange={(e) => setLinkInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleAddLink();
+                    }}
+                    disabled={isLinkLoading}
+                  />
+                  <input 
+                    type="text" 
+                    placeholder="Name the link (optional)"
+                    style={{ padding: "12px 16px", borderRadius: "8px", border: "1px solid #000", fontSize: "16px", width: "100%", fontFamily: "Ubuntu, sans-serif" }}
+                    value={linkNameInput}
+                    onChange={(e) => setLinkNameInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleAddLink();
+                    }}
+                    disabled={isLinkLoading}
+                  />
+                </div>
                 <button
                   onClick={handleAddLink}
                   disabled={isLinkLoading || !linkInput.trim()}
@@ -705,7 +723,7 @@ export function EditorScreen() {
                   <div className="sidebar-header" style={{ margin: 0, borderRadius: 0, borderBottom: "1px solid #000" }}>
                     <div className="sidebar-header-left">
                       <img src="/brand/983473984834.png" alt="Icon" className="sidebar-book-icon" />
-                      <h3 style={{ fontFamily: "Ubuntu, sans-serif", fontSize: "16px", fontWeight: "bold" }}>Link {idx + 1}</h3>
+                      <h3 style={{ fontFamily: "Ubuntu, sans-serif", fontSize: "16px", fontWeight: "bold" }}>{link.customName ? link.customName : `Link ${idx + 1}`}</h3>
                     </div>
                     <button onClick={() => setLinks(links.filter((_, i) => i !== idx))} style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", fontWeight: "bold", fontSize: "14px", display: "flex", alignItems: "center", gap: "4px" }}>
                       ✕ Remove
@@ -727,8 +745,14 @@ export function EditorScreen() {
                       </p>
                     )}
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      {link.favicon && <img src={link.favicon} alt="Favicon" style={{ width: "16px", height: "16px", objectFit: "contain" }} />}
-                      <span style={{ fontSize: "0.8rem", color: "#000", fontFamily: "Ubuntu, sans-serif" }}>{link.url}</span>
+                      {link.favicon ? (
+                        <img src={link.favicon} alt="Favicon" style={{ width: "16px", height: "16px", objectFit: "contain", flexShrink: 0 }} />
+                      ) : (
+                        <div style={{ width: '16px', height: '16px', backgroundColor: '#ccc', borderRadius: '4px', flexShrink: 0 }}></div>
+                      )}
+                      <span style={{ fontSize: "0.8rem", color: "#000", fontFamily: "Ubuntu, sans-serif", maxWidth: '50%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {link.url}
+                      </span>
                     </div>
                   </div>
                 </div>

@@ -1,12 +1,16 @@
 import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faInfoCircle, faTimes } from "@fortawesome/free-solid-svg-icons";
+import React from "react";
 
 interface AdsInfoModalProps {
   onClose: () => void;
+  title?: string;
+  icon?: React.ReactNode;
+  children?: React.ReactNode;
 }
 
-export function AdsInfoModal({ onClose }: AdsInfoModalProps) {
+export function AdsInfoModal({ onClose, title, icon, children }: AdsInfoModalProps) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -27,7 +31,7 @@ export function AdsInfoModal({ onClose }: AdsInfoModalProps) {
   }, [onClose]);
 
   return (
-    <div className="ads-modal-overlay fade-in" onClick={onClose}>
+    <div className="ads-modal-overlay fade-in" onClick={onClose} style={{ zIndex: 9999 }}>
       <div 
         className="ads-modal-container slide-down" 
         onClick={(e) => e.stopPropagation()}
@@ -37,8 +41,8 @@ export function AdsInfoModal({ onClose }: AdsInfoModalProps) {
       >
         <div className="ads-modal-header sidebar-header" style={{ margin: 0, borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}>
           <div className="sidebar-header-left">
-            <img src="/brand/ad-info-icon.png" alt="Info" style={{ width: 22, height: 22, marginRight: 8 }} />
-            <h3 id="ads-modal-title">Why?</h3>
+            {icon ? icon : <img src="/brand/ad-info-icon.png" alt="Info" style={{ width: 22, height: 22, marginRight: 8 }} />}
+            <h3 id="ads-modal-title">{title || "Why?"}</h3>
           </div>
           <button type="button" className="ads-modal-close-btn" onClick={onClose} aria-label="Close modal">
             <span>Close</span>
@@ -57,22 +61,26 @@ export function AdsInfoModal({ onClose }: AdsInfoModalProps) {
             </div>
           ) : (
             <div className="ads-modal-content fade-in">
-              <img 
-                src="/brand/ad-modal-logo.png" 
-                alt="OpenRockets Ads Logo" 
-                className="ads-modal-logo" 
-              />
-              <p>
-                OpenRockets ads is an advertisement network for nonprofits and communities started by people under the age of 20. 
-                We provide them the ability to post ads for 100% free with a rigorous moderation process, abuse protection, 
-                and analytics for the best visibility.
-              </p>
-              <p>
-                You are seeing this ad because you are using a product or service developed by OpenRockets Inc.
-              </p>
-              <a href="https://zeroprofit.org/ads" target="_blank" rel="noopener noreferrer" className="ads-modal-link">
-                Learn more at zeroprofit.org/ads
-              </a>
+              {children ? children : (
+                <>
+                  <img 
+                    src="/brand/ad-modal-logo.png" 
+                    alt="OpenRockets Ads Logo" 
+                    className="ads-modal-logo" 
+                  />
+                  <p>
+                    OpenRockets ads is an advertisement network for nonprofits and communities started by people under the age of 20. 
+                    We provide them the ability to post ads for 100% free with a rigorous moderation process, abuse protection, 
+                    and analytics for the best visibility.
+                  </p>
+                  <p>
+                    You are seeing this ad because you are using a product or service developed by OpenRockets Inc.
+                  </p>
+                  <a href="https://zeroprofit.org/ads" target="_blank" rel="noopener noreferrer" className="ads-modal-link">
+                    Learn more at zeroprofit.org/ads
+                  </a>
+                </>
+              )}
             </div>
           )}
         </div>

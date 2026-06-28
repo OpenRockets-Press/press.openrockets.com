@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFileAlt, faImage, faCode, faCube, faTimes, faInfoCircle, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { Document, Page, pdfjs } from "react-pdf";
@@ -16,6 +17,7 @@ import { compressImage, compressPdf } from "./compressionUtils";
 import { useTranslationContext } from "@/lib/TranslationContext";
 import { Spinner } from "@/components/ui/Spinner";
 import { AlertModal } from "@/components/ui/AlertModal";
+import { AdsInfoModal } from "@/components/ui/AdsInfoModal";
 
 // Configure react-pdf worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
@@ -189,6 +191,11 @@ export function UploadScreen() {
   const [showTransition, setShowTransition] = useState(false);
   const [errorModal, setErrorModal] = useState<{ title: string; message: string } | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  
+  // New 3D Checkbox State
+  const [make3D, setMake3D] = useState(false);
+  const [show3DInfo, setShow3DInfo] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { setIsContentLoading } = useTranslationContext();
 
@@ -559,6 +566,41 @@ export function UploadScreen() {
             />
           ))}
         </div>
+        
+        {/* Make it 3D Checkbox (Only for Image Artifacts) */}
+        {coreCategory === "Images" && (
+          <div style={{ marginTop: "2rem", display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+            <label style={{ display: "flex", alignItems: "center", gap: "12px", cursor: successCount <= 3 ? "default" : "pointer", textAlign: "left" }}>
+              <input 
+                type="checkbox" 
+                checked={make3D} 
+                onChange={(e) => {
+                  if (successCount > 3) setMake3D(e.target.checked);
+                }}
+                disabled={successCount <= 3}
+                style={{ 
+                  width: "20px", 
+                  height: "20px", 
+                  accentColor: "#c7511f",
+                  cursor: successCount <= 3 ? "default" : "pointer",
+                  flexShrink: 0
+                }} 
+              />
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <span style={{ fontFamily: "Ubuntu, sans-serif", fontSize: "1.1rem", color: "#111", opacity: successCount <= 3 ? 0.5 : 1, fontWeight: 500 }}>
+                  Make it 3D
+                </span>
+                <button 
+                  type="button" 
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShow3DInfo(true); }} 
+                  style={{ marginLeft: "12px", background: "none", border: "none", color: "#0067b8", cursor: "pointer", fontSize: "0.95rem", fontWeight: "bold", display: "flex", alignItems: "center", gap: "6px", padding: 0 }}
+                >
+                  <FontAwesomeIcon icon={faInfoCircle} /> Why?
+                </button>
+              </div>
+            </label>
+          </div>
+        )}
       </div>
 
       {/* Navigation buttons */}
@@ -598,6 +640,10 @@ export function UploadScreen() {
                 "publish_artifact_upload_count",
                 String(successCount)
               );
+              localStorage.setItem(
+                "publish_artifact_make_3d",
+                String(make3D)
+              );
               window.location.hash = "#hashtags";
             }, 2000);
           }}
@@ -630,6 +676,22 @@ export function UploadScreen() {
         message={errorModal?.message || ""}
         showSupportLink={errorModal?.title === "Artifact type mismatch"}
       />
+
+      {/* Image to 3D Custom Modal */}
+      {show3DInfo && typeof document !== 'undefined' && createPortal(
+        <AdsInfoModal 
+          onClose={() => setShow3DInfo(false)}
+          title="Image to 3D"
+        >
+          <p style={{ lineHeight: 1.6, fontSize: "1.05rem", marginBottom: "1.5rem", color: "#111" }}>
+            Image to 3D is a technology used in OpenRockets Press that merges your images into a 3D object, allowing viewers to explore your project by rotating, moving, and zooming into it.
+          </p>
+          <p style={{ lineHeight: 1.6, fontSize: "1.05rem", color: "#111" }}>
+            Use this feature only if your artifact falls into one of these categories: statues, 3-dimensional artworks, hardware inventions, or anything in general where you can capture all four sides. To enable this, you must upload at least 4 images capturing different sides of the object. For the best quality, we recommend uploading 6 images, including a top aerial view and a bottom view.
+          </p>
+        </AdsInfoModal>,
+        document.body
+      )}
     </div>
   );
 }
