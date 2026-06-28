@@ -71,83 +71,66 @@ export function LanguagePicker() {
   };
 
   return (
-    <div className="language-picker-container" ref={ref} style={{ position: "relative" }}>
+    <div ref={ref} style={{ position: "relative" }}>
       <button 
         type="button" 
-        className="nav-link language-toggle-btn"
         onClick={() => setIsOpen(!isOpen)}
-        style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#000', padding: 0 }}
+        style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#000', padding: '4px 8px', backgroundColor: 'transparent', border: '1px solid transparent', borderRadius: '4px', cursor: 'pointer' }}
       >
         <img 
           src={`https://flagcdn.com/w20/${selectedLang.flag}.png`} 
           alt={selectedLang.flag} 
           style={{ width: "20px", height: "auto", borderRadius: "2px" }}
         />
-        {selectedLang.code.split("-")[0].toUpperCase()}
-        <FontAwesomeIcon icon={faChevronDown} style={{ fontSize: "0.75rem", marginLeft: "2px" }} />
+        <span style={{ fontWeight: 500, fontSize: '0.9rem' }}>{selectedLang.code.split("-")[0].toUpperCase()}</span>
+        <FontAwesomeIcon icon={faChevronDown} style={{ fontSize: "0.75rem", marginLeft: "2px", color: '#4b5563' }} />
       </button>
 
       {isOpen && (
-        <div className="language-dropdown profile-dropdown slide-down" style={{ width: "280px", right: "0" }}>
-          <div className="profile-dropdown-header sidebar-header" style={{ margin: 0, borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}>
-            <div className="sidebar-header-left">
-              <FontAwesomeIcon icon={faGlobe} style={{ fontSize: "1.1rem", color: "#fff" }} />
-              <h3>Select Language</h3>
-            </div>
+        <div style={{ position: 'absolute', top: 'calc(100% + 8px)', right: '0', width: '280px', backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', zIndex: 50, overflow: 'hidden' }}>
+          <div style={{ padding: '12px 16px', backgroundColor: '#111827', color: '#fff', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <FontAwesomeIcon icon={faGlobe} style={{ fontSize: "1.1rem" }} />
+            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>Select Language</h3>
           </div>
-          <div className="language-dropdown-body" style={{ padding: "0.5rem 0", maxHeight: "300px", overflowY: "auto" }}>
+          <div style={{ maxHeight: "320px", overflowY: "auto" }}>
             {REGIONS.map(region => (
-              <div key={region.name} className="language-region">
+              <div key={region.name}>
                 <button 
                   type="button" 
-                  className="language-region-header"
                   onClick={() => toggleRegion(region.name)}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', backgroundColor: '#f9fafb', border: 'none', borderBottom: '1px solid #e5e7eb', cursor: 'pointer', textAlign: 'left', color: '#374151' }}
                 >
                   <FontAwesomeIcon 
                     icon={faChevronRight} 
-                    className="chevron-icon" 
                     style={{ 
                       transform: expandedRegions[region.name] ? 'rotate(90deg)' : 'rotate(0deg)',
                       transition: 'transform 0.2s',
-                      width: '12px'
+                      width: '12px',
+                      color: '#6b7280'
                     }} 
                   />
-                  <strong>{region.name}</strong>
+                  <strong style={{ fontSize: '0.9rem' }}>{region.name}</strong>
                 </button>
                 {expandedRegions[region.name] && (
-                  <div className="language-region-list" style={{ marginTop: "4px" }}>
+                  <div style={{ backgroundColor: '#fff' }}>
                     {region.languages.map(lang => (
                       <button
                         key={lang.code}
                         type="button"
-                        className={`language-item dropdown-item ${selectedLang.code === lang.code ? 'active' : ''}`}
-                        onClick={async () => {
+                        onClick={() => {
                           setSelectedLang(lang);
                           const newLangCode = lang.code.split('-')[0];
                           setLanguage(newLangCode);
                           setIsOpen(false);
-
-                          if (newLangCode !== 'en') {
-                            const { translateTextBatch } = await import('@/lib/translator');
-                            const baseMsg = `You have changed your language from English to ${lang.name}.`;
-                            try {
-                              const [translatedMsg] = await translateTextBatch([baseMsg], newLangCode);
-                              setSuccessMessage(translatedMsg);
-                            } catch (e) {
-                              setSuccessMessage(baseMsg);
-                            }
-                          } else {
-                            setSuccessMessage("You have changed your language back to English.");
-                          }
                         }}
-                        style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingLeft: '32px' }}
+                        style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px 10px 36px', backgroundColor: selectedLang.code === lang.code ? '#eff6ff' : 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', color: '#111827', borderBottom: '1px solid #f3f4f6' }}
                       >
                         <img 
                           src={`https://flagcdn.com/w20/${lang.flag}.png`} 
                           alt="" 
                           style={{ width: "16px", borderRadius: "2px", border: "1px solid rgba(0,0,0,0.1)", flexShrink: 0 }}
                         />
-                        <span style={{ fontWeight: selectedLang.code === lang.code ? 600 : 400 }}>{lang.name}</span>
+                        <span style={{ fontWeight: selectedLang.code === lang.code ? 600 : 400, fontSize: '0.9rem' }}>{lang.name}</span>
                       </button>
                     ))}
                   </div>

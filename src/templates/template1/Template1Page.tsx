@@ -74,6 +74,26 @@ export function Template1Page() {
           
           {/* Metadata Section */}
           <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            
+            {/* Hashtags Section */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '8px' }}>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <span style={{ fontFamily: '"Noto Sans", sans-serif', fontWeight: 600, color: '#4b5563', fontSize: '0.95rem' }}>Repository:</span>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <a href="/?q=%23COMPUTER_SCIENCE" style={{ fontFamily: '"Noto Sans", sans-serif', color: '#0000ff', textDecoration: 'none', fontSize: '0.95rem', fontWeight: 500 }}>#COMPUTER_SCIENCE</a>
+                  <a href="/?q=%23BIOLOGY" style={{ fontFamily: '"Noto Sans", sans-serif', color: '#0000ff', textDecoration: 'none', fontSize: '0.95rem', fontWeight: 500 }}>#BIOLOGY</a>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <span style={{ fontFamily: '"Noto Sans", sans-serif', fontWeight: 600, color: '#4b5563', fontSize: '0.95rem' }}>Related:</span>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <a href="/?q=%23MICROBES" style={{ fontFamily: '"Noto Sans", sans-serif', color: '#0000ff', textDecoration: 'none', fontSize: '0.95rem', fontWeight: 500 }}>#MICROBES</a>
+                  <a href="/?q=%23BUILDING_MATERIALS" style={{ fontFamily: '"Noto Sans", sans-serif', color: '#0000ff', textDecoration: 'none', fontSize: '0.95rem', fontWeight: 500 }}>#BUILDING_MATERIALS</a>
+                  <a href="/?q=%23DNA_SEQUENCING" style={{ fontFamily: '"Noto Sans", sans-serif', color: '#0000ff', textDecoration: 'none', fontSize: '0.95rem', fontWeight: 500 }}>#DNA_SEQUENCING</a>
+                </div>
+              </div>
+            </div>
+
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <img 
                 src={getAvatarUrl()} 
@@ -149,7 +169,7 @@ export function Template1Page() {
               onClick={handleCopyBib}
               style={{ padding: '8px 24px', backgroundColor: 'transparent', color: '#000', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '0.95rem', fontWeight: 500, cursor: 'pointer', fontFamily: '"Noto Sans", sans-serif', display: 'flex', alignItems: 'center', gap: '8px' }}
             >
-              <img src="/bibtex_badge.png" alt="Copy BibTeX" style={{ width: '50px', height: 'auto', objectFit: 'contain' }} />
+              <img src="/bibtex_badge.png" alt="Copy BibTeX" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
               Copy Bibliography
             </button>
           </div>
