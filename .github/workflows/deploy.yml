@@ -61,8 +61,8 @@ jobs:
             BUN_PATH=$(which bun || echo "$HOME/.bun/bin/bun")
             PM2_PATH=$(which pm2 || echo "pm2")
             
-            # Force kill everything to avoid port conflicts or stale processes
-            $PM2_PATH kill || true
-            killall bun node || true
+            # Clean up the duplicate process we created by mistake
+            $PM2_PATH delete openrockets-press || true
             
-            $PM2_PATH start server/index.ts --name openrockets-press --interpreter $BUN_PATH
+            # Restart the correct process using the ecosystem config
+            $PM2_PATH restart ecosystem.config.cjs --update-env || $PM2_PATH start ecosystem.config.cjs
