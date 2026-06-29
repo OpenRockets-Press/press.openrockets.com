@@ -511,14 +511,18 @@ export async function getModerationDashboard(): Promise<ModerationDashboardData>
 
 export async function reviewPublication(
   publicationId: string,
-  decision: "approved" | "rejected",
+  decision: "approved" | "rejected" | "pending",
   rejectionReason = "",
 ) {
-  return callApi<{ status: string; pub_id?: string }>("review-publication", {
-    publication_id: publicationId,
-    decision,
-    rejection_reason: rejectionReason,
+  return callApi<{ status: string; pub_id?: string }>(`publications/${publicationId}/review`, {
+    action: decision,
+    feedback: rejectionReason,
   });
+}
+
+export async function getAllAdminPublications(): Promise<Publication[]> {
+  const res = await callApi<{ data: any[] }>("publications/admin-all", undefined, { method: "GET" });
+  return res.data.map((doc: any) => mapPublication({ ...doc, $id: doc.id } as unknown as AppwriteDocument));
 }
 
 export async function openCase(payload: {

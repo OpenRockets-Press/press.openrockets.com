@@ -35,6 +35,11 @@ export function Template1Page({ data }: { data?: any }) {
     initialData: () => getSessionUser() ?? undefined,
   });
 
+  const isAdmin = user?.email === 'press@openrockets.com';
+  const isPreviewMode = isAdmin && data?.status !== 'published';
+  const shouldShow404 = data?.status !== 'published' && !isAdmin;
+
+
   const getAvatarUrl = () => {
     if (data?.authorAvatar) return data.authorAvatar;
     if ((user as any)?.avatarUrl) return (user as any).avatarUrl;
@@ -293,9 +298,24 @@ export function Template1Page({ data }: { data?: any }) {
       />
       <div className="no-print">
         <Template1Header onOpenInfo={setInfoModalOpen} />
+        {isPreviewMode && (
+          <div style={{
+            backgroundColor: '#c7511f',
+            color: '#fff',
+            padding: '10px',
+            textAlign: 'center',
+            fontFamily: 'Ubuntu, sans-serif',
+            fontWeight: 'bold',
+            fontSize: '14px',
+            textTransform: 'uppercase',
+            letterSpacing: '1px'
+          }}>
+            Preview Mode: This artifact is currently {data?.status}
+          </div>
+        )}
       </div>
       
-      {data?.status !== 'published' ? (
+      {shouldShow404 ? (
         <main style={{ flex: 1, padding: '2rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
           <h2 style={{ fontFamily: '"Noto Sans", sans-serif', color: '#111', fontSize: '1.5rem', fontWeight: 500, textAlign: 'center' }}>
             Sorry, this artifact is not found or is currently in review.

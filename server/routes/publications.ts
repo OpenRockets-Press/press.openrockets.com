@@ -228,6 +228,35 @@ publicationsRouter.get('/by-slug/:slug', async (c) => {
   }
 });
 
+publicationsRouter.get('/admin-all', authMiddleware, async (c) => {
+  const user = c.get('user');
+
+  // Verify the user is the super-admin
+  if (user.email !== 'press@openrockets.com' && user.role !== 'admin') {
+    return c.json({ success: false, error: { code: 'FORBIDDEN', message: 'Administrator access required' } }, 403);
+  }
+
+  try {
+    const data = await db
+      .select({
+        pub: publications,
+        authorName: users.displayName,
+      })
+      .from(publications)
+      .leftJoin(users, eq(publications.authorId, users.id))
+      .orderBy(desc(publications.submittedAt));
+
+    const formattedData = data.map(r => ({
+      ...r.pub,
+      authorName: r.authorName || 'Unknown Author',
+    }));
+
+    return c.json({ success: true, data: formattedData });
+  } catch (err: any) {
+    return c.json({ success: false, error: { message: err.message } }, 500);
+  }
+});
+
 publicationsRouter.get('/:pubId', async (c) => {
   const pubId = c.req.param('pubId');
   
@@ -326,7 +355,9 @@ publicationsRouter.post('/:pubId/review', authMiddleware, async (c) => {
   }
 
   const { action, feedback } = await c.req.json();
-  const newStatus = action === 'approved' ? 'published' : 'rejected';
+  let newStatus = 'rejected';
+  if (action === 'approved') newStatus = 'published';
+  else if (action === 'pending') newStatus = 'pending_review';
 
   try {
     await db.update(publications)
