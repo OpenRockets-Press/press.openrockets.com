@@ -22,6 +22,12 @@ export function Template1Page({ data }: { data?: any }) {
   const [infoModalOpen, setInfoModalOpen] = useState<HomeInfoModalKind | null>(null);
   const [alertState, setAlertState] = useState({ isOpen: false, message: "", title: "Warning" });
 
+  useEffect(() => {
+    if (data?.title) {
+      document.title = `${data.title} - OpenRockets`;
+    }
+  }, [data]);
+
   // Fetch Current User for Author Block
   const { data: user } = useQuery({
     queryKey: queryKeys.auth.currentUser(),
@@ -194,41 +200,22 @@ export function Template1Page({ data }: { data?: any }) {
       const mainZip = new JSZip();
       const filesZip = new JSZip();
       
-      // Add each file to the inner files.zip archive
+      // Add nested zip containing the files
       for (let i = 0; i < fileUrls.length; i++) {
         const url = fileUrls[i];
         let filename = url.split('/').pop() || `file-${i}`;
-        if (!filename.includes('.')) {
-          if (isPDF) filename += '.pdf';
-          else if (is3DModel) filename += '.glb'; 
-          else if (isImage) filename += '.png';
-        }
-
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`Failed to fetch ${url}`);
-        const blob = await response.blob();
-        filesZip.file(filename, blob);
-      }
-
-      // Add related badges to inner files.zip
-      if (communities && communities.length > 0) {
-        const badgesFolder = filesZip.folder("related_badges");
-        for (let i = 0; i < communities.length; i++) {
-          const badgeId = communities[i];
-          const labelInfo = labelsData.find(l => l.id === badgeId);
-          if (labelInfo && labelInfo.image) {
-            try {
-              const res = await fetch(labelInfo.image);
-              if (res.ok) {
-                const blob = await res.blob();
-                let ext = labelInfo.image.split('.').pop() || 'png';
-                if (ext.length > 4) ext = 'png';
-                badgesFolder?.file(`badge-${badgeId}.${ext}`, blob);
-              }
-            } catch (e) {
-              console.error("Failed to fetch badge", e);
-            }
-          }
+        
+        // Exclude specific files from raw data if needed
+        if (filename.includes('worker-bundle')) continue;
+        
+        try {
+          const response = await fetch(url);
+          if (!response.ok) throw new Error("Failed to fetch file");
+          const blob = await response.blob();
+          
+          filesZip.file(filename, blob);
+        } catch (error) {
+          console.error("Error fetching file to zip:", error);
         }
       }
       
@@ -240,12 +227,13 @@ export function Template1Page({ data }: { data?: any }) {
       const element = document.getElementById("printable-area");
       if (element && (window as any).html2pdf) {
         const opt = {
-          margin:       10,
-          filename:     'article.pdf',
+          margin:       0.5,
+          filename:     'document.pdf',
           image:        { type: 'jpeg', quality: 0.98 },
           html2canvas:  { scale: 2, useCORS: true },
-          jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+          jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
         };
+        
         const pdfBlob = await (window as any).html2pdf().from(element).set(opt).output('blob');
         mainZip.file("content.pdf", pdfBlob);
       }
@@ -310,26 +298,6 @@ export function Template1Page({ data }: { data?: any }) {
           {/* Metadata Section */}
           <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             
-            {/* Hashtags Section - NOT translatable */}
-            <div translate="no" className="notranslate" style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '8px' }}>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <span style={{ fontFamily: '"Noto Sans", sans-serif', fontWeight: 600, color: '#4b5563', fontSize: '0.95rem' }}>Repository:</span>
-                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                  {mainTags.map((tag, idx) => (
-                     <span key={tag.id}><a href={`/hashtag/${tag.name.toLowerCase()}`} style={{ fontFamily: '"Noto Sans", sans-serif', color: '#0000ff', textDecoration: 'none', fontSize: '0.95rem', fontWeight: 500 }}>{tag.name}</a>{idx < mainTags.length - 1 ? <span style={{ color: '#4b5563' }}>,</span> : null}</span>
-                  ))}
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <span style={{ fontFamily: '"Noto Sans", sans-serif', fontWeight: 600, color: '#4b5563', fontSize: '0.95rem' }}>Related:</span>
-                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                  {generalTags.map((tag, idx) => (
-                     <span key={tag.id}><a href={`/hashtag/${tag.name.toLowerCase()}`} style={{ fontFamily: '"Noto Sans", sans-serif', color: '#0000ff', textDecoration: 'none', fontSize: '0.95rem', fontWeight: 500 }}>{tag.name}</a>{idx < generalTags.length - 1 ? <span style={{ color: '#4b5563' }}>,</span> : null}</span>
-                  ))}
-                </div>
-              </div>
-            </div>
-
             {/* Contributor name/date - NOT translatable */}
             <div translate="no" className="notranslate" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <img 
@@ -500,6 +468,40 @@ export function Template1Page({ data }: { data?: any }) {
           )}
 
           {/* Abstract / Description */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #000', paddingBottom: '8px', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <h2 style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1.25rem', fontWeight: 600, margin: 0, color: '#111' }}>
+                Repository
+              </h2>
+              {mainTags.length > 0 && (
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  {mainTags.map((tag, idx) => (
+                    <a key={`main-${idx}`} href={`/tags/${tag.id}`} style={{
+                      color: '#0066cc', 
+                      textDecoration: 'none',
+                      fontFamily: '"Noto Sans", sans-serif', 
+                      fontSize: '0.95rem',
+                      fontWeight: 500
+                    }}>
+                      {tag.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            <div style={{ 
+              width: '40px', 
+              height: '40px', 
+              borderRadius: '20px', 
+              backgroundColor: '#000', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center' 
+            }}>
+              <span style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 'bold' }}>+</span>
+            </div>
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <h2 style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1.5rem', fontWeight: 500, color: '#000000', margin: 0 }}>
               {contentHeading}
@@ -632,46 +634,51 @@ export function Template1Page({ data }: { data?: any }) {
           {/* Related Section (Badges & General Tags) - MUST NOT BE NO-PRINT */}
           {(communities.length > 0 || generalTags.length > 0) && (
             <div translate="no" className="notranslate" style={{ 
-              marginTop: '24px', 
+              marginTop: '16px', 
               display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'flex-start',
-              gap: '1rem'
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              width: '100%'
             }}>
-              <h3 style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1.25rem', fontWeight: 500, color: '#111', margin: 0 }}>
-                Related
-              </h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <h3 style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1.25rem', fontWeight: 500, color: '#111', margin: 0 }}>
+                  Related
+                </h3>
+                {generalTags.length > 0 && (
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    {generalTags.map((tag, idx) => (
+                      <span key={`gen-${idx}`} style={{
+                        color: '#000', 
+                        fontFamily: '"Noto Sans", sans-serif', 
+                        fontSize: '0.9rem',
+                        fontWeight: 600
+                      }}>
+                        #{tag.name.toLowerCase()}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
               <div style={{ 
+                padding: '8px', 
+                borderRadius: '8px', 
                 display: 'flex', 
-                flexWrap: 'wrap', 
-                alignItems: 'center',
-                gap: '12px',
-                width: '100%',
-                padding: '12px',
-                backgroundColor: '#faf8f0',
-                borderRadius: '4px'
+                alignItems: 'center', 
+                backgroundColor: 'transparent'
               }}>
-                {generalTags.map((tag, idx) => (
-                  <span key={`gen-${idx}`} style={{
-                    fontFamily: '"Noto Sans", sans-serif',
-                    fontSize: '0.9rem',
-                    color: '#000000',
-                    fontWeight: 500,
-                  }}>
-                    #{tag.name.replace(/\s+/g, '')}
-                  </span>
-                ))}
                 {communities.map((badgeId, idx) => {
                   const labelInfo = labelsData.find(l => l.id === badgeId);
-                  if (!labelInfo) return null;
-                  return (
-                    <img 
-                      key={`badge-${idx}`} 
-                      src={labelInfo.image} 
-                      alt={labelInfo.name} 
-                      style={{ height: '4em', width: 'auto', objectFit: 'contain', marginLeft: idx === 0 && generalTags.length > 0 ? '12px' : '0' }} 
-                    />
-                  );
+                  if (labelInfo && labelInfo.image) {
+                    return (
+                      <img 
+                        key={`badge-${idx}`} 
+                        src={labelInfo.image} 
+                        alt={labelInfo.name} 
+                        style={{ height: '3.5em', width: 'auto', objectFit: 'contain', marginLeft: idx === 0 ? '0' : '12px' }} 
+                      />
+                    );
+                  }
+                  return null;
                 })}
               </div>
             </div>
@@ -681,7 +688,7 @@ export function Template1Page({ data }: { data?: any }) {
       </main>
 
       {/* Footer - NOT translatable */}
-      <div translate="no" className="notranslate">
+      <div translate="no" className="notranslate no-print">
         <Template1Footer onOpenInfo={setInfoModalOpen} />
       </div>
 
