@@ -36,18 +36,8 @@ import { cronRouter } from './routes/cron';
 app.use('*', logger());
 app.use('*', secureHeaders());
 
-app.use('/api/*', cors({
-  origin: (origin) => {
-    const allowedOrigins = [
-      process.env.APP_BASE_URL || 'http://localhost:5173',
-      'https://press.openrockets.com',
-      'https://openrockets.com'
-    ];
-    if (!origin || allowedOrigins.includes(origin)) {
-      return origin || allowedOrigins[0];
-    }
-    return null;
-  },
+app.use('*', cors({
+  origin: (origin) => origin || '*',
   credentials: true,
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization', 'Cookie'],
@@ -224,12 +214,7 @@ app.use('/assets/*', async (c, next) => {
   try {
     const filePath = path.join(process.cwd(), 'dist', c.req.path);
     if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-      const ext = path.extname(filePath);
-      let mimeType = 'text/plain';
-      if (ext === '.js') mimeType = 'text/javascript';
-      else if (ext === '.css') mimeType = 'text/css';
-      else if (ext === '.png') mimeType = 'image/png';
-      else if (ext === '.svg') mimeType = 'image/svg+xml';
+      const mimeType = getMimeType(filePath) || 'application/octet-stream';
       
       const file = fs.readFileSync(filePath);
       return c.body(file, 200, {
@@ -247,10 +232,7 @@ app.use('/*', async (c, next) => {
   try {
     const filePath = path.join(process.cwd(), 'dist', c.req.path);
     if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-      const ext = path.extname(filePath);
-      let mimeType = 'text/plain';
-      if (ext === '.js') mimeType = 'text/javascript';
-      else if (ext === '.css') mimeType = 'text/css';
+      const mimeType = getMimeType(filePath) || 'application/octet-stream';
       
       const file = fs.readFileSync(filePath);
       return c.body(file, 200, { 'Content-Type': mimeType });
