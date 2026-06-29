@@ -39,10 +39,6 @@ export function Template1Page({ data }: { data?: any }) {
   const isPreviewMode = isAdmin && data?.status !== 'published';
   const shouldShow404 = data?.status !== 'published' && !isAdmin;
 
-  if (isUserLoading && data?.status !== 'published') {
-    return <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}><Spinner /></div>;
-  }
-
 
   const getAvatarUrl = () => {
     if (data?.authorAvatar) return data.authorAvatar;
@@ -291,6 +287,10 @@ export function Template1Page({ data }: { data?: any }) {
     transition: 'color 0.2s ease',
     opacity: disabled ? 0.3 : 1,
   });
+
+  if (isUserLoading && data?.status !== 'published') {
+    return <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}><Spinner /></div>;
+  }
 
   return (
     <div className="home-page" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#ffffff' }}>
