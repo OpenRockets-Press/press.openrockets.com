@@ -30,7 +30,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "dist/*"
+          source: "dist"
           target: "~/press.openrockets.com"
 
       - name: Pull Code and Restart Backend
@@ -45,6 +45,6 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
             git clean -fd
-            bun install --production
-            bunx drizzle-kit push || echo "Drizzle push failed or not needed"
-            pm2 restart openrockets-press || pm2 start server/index.ts --name openrockets-press --interpreter bun
+            ~/.bun/bin/bun install --production
+            ~/.bun/bin/bunx drizzle-kit push || echo "Drizzle push failed or not needed"
+            pm2 restart openrockets-press || pm2 start server/index.ts --name openrockets-press --interpreter ~/.bun/bin/bun
