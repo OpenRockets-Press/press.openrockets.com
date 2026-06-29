@@ -65,4 +65,4 @@ jobs:
             $PM2_PATH kill || true
             killall bun node || true
             
-            $PM2_PATH start server/index.ts --name openrockets-press --interpreter $BUN_PATH --cwd ~/press.openrockets.com
+            $PM2_PATH start server/index.ts --name openrockets-press --interpreter $BUN_PATH
