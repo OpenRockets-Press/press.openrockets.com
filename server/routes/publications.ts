@@ -451,3 +451,16 @@ publicationsRouter.post('/:pubId/retract', authMiddleware, async (c) => {
     return c.json({ success: false, error: { code: 'DATABASE_ERROR', message: 'Failed to retract publication' } }, 500);
   }
 });
+
+publicationsRouter.post('/:pubId/view', async (c) => {
+  const pubId = c.req.param('pubId');
+  try {
+    await db.update(publications)
+      .set({ viewCount: sql`view_count + 1` })
+      .where(eq(publications.pubId, pubId));
+    return c.json({ success: true });
+  } catch (err) {
+    console.error('Failed to increment view', err);
+    return c.json({ success: false }, 500);
+  }
+});

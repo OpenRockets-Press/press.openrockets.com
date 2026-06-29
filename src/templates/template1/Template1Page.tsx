@@ -145,6 +145,13 @@ export function Template1Page({ data }: { data?: any }) {
   }, [fileStorageKey, extraFiles]);
 
   useEffect(() => {
+    if (data && data.status === 'published' && !isPreviewMode && data.pubId) {
+      // Fire and forget view increment
+      fetch(`/api/publications/${data.pubId}/view`, { method: 'POST' }).catch(() => {});
+    }
+  }, [data?.status, data?.pubId, isPreviewMode]);
+
+  useEffect(() => {
     if (data?.title) {
       document.title = `${data.title} - OpenRockets Press`;
     }
@@ -396,6 +403,14 @@ export function Template1Page({ data }: { data?: any }) {
               <span style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1.1rem', color: '#111827', fontWeight: 500 }}>
                 By {authorName} <span style={{ color: '#000000', marginLeft: '6px' }}>• {publishDate}</span>
               </span>
+              {data?.status === 'published' && (
+                <div style={{ marginLeft: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <img src="/brand/views_icon.png" alt="Views" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
+                  <span style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1rem', color: '#6b7280', fontWeight: 500 }}>
+                    {data?.viewCount || 0}
+                  </span>
+                </div>
+              )}
             </div>
 
             <h1 style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '2.5rem', fontWeight: 500, color: '#000000', lineHeight: 1.2, margin: 0, marginTop: '12px' }}>
