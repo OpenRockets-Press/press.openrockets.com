@@ -29,7 +29,7 @@ export function Template1Page({ data }: { data?: any }) {
   }, [data]);
 
   // Fetch Current User for Author Block
-  const { data: user } = useQuery({
+  const { data: user, isLoading: isUserLoading } = useQuery({
     queryKey: queryKeys.auth.currentUser(),
     queryFn: () => getCurrentUser(),
     initialData: () => getSessionUser() ?? undefined,
@@ -38,6 +38,10 @@ export function Template1Page({ data }: { data?: any }) {
   const isAdmin = user?.email === 'press@openrockets.com';
   const isPreviewMode = isAdmin && data?.status !== 'published';
   const shouldShow404 = data?.status !== 'published' && !isAdmin;
+
+  if (isUserLoading && data?.status !== 'published') {
+    return <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}><Spinner /></div>;
+  }
 
 
   const getAvatarUrl = () => {

@@ -520,9 +520,9 @@ export async function reviewPublication(
   });
 }
 
-export async function getAllAdminPublications(): Promise<Publication[]> {
+export async function getAllAdminPublications(): Promise<any[]> {
   const res = await callApi<{ data: any[] }>("publications/admin-all", undefined, { method: "GET" });
-  return res.data.map((doc: any) => mapPublication({ ...doc, $id: doc.id } as unknown as AppwriteDocument));
+  return res.data;
 }
 
 export async function openCase(payload: {

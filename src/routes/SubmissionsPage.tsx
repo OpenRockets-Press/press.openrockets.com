@@ -50,19 +50,32 @@ export function SubmissionsPage() {
       try {
         if (isAdmin) {
           const pubs = await getAllAdminPublications();
-          const mapped = pubs.map((p: any) => ({
-            id: p.pubId || p.id,
-            type: p.type,
-            title: p.title,
-            subtitle: p.abstract || "",
-            fileCount: p.fileStorageKey || p.fileStorageId ? 1 : 0,
-            publisherDomain: "press.openrockets.com",
-            linkId: `artifacts/${p.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}-${p.pubId || p.id}`,
-            hashtags: p.tags?.map((t: string) => ({ id: t, name: t, type: "general" as const })),
-            author: p.authorName || "Unknown Author",
-            status: p.status,
-            createdAt: new Date(p.submittedAt).getTime()
-          }));
+          const mapped = pubs.map((p: any) => {
+            let fileCount = p.fileStorageKey || p.fileStorageId ? 1 : 0;
+            if (p.extraFiles) {
+              try {
+                const extra = JSON.parse(p.extraFiles);
+                if (Array.isArray(extra)) fileCount += extra.length;
+              } catch (e) {}
+            }
+            
+            // Also count 3D models and code gist as a file
+            if (p.threejsModelKey) fileCount += 1;
+
+            return {
+              id: p.pubId || p.id,
+              type: p.type,
+              title: p.title,
+              subtitle: p.subtitle || "",
+              fileCount,
+              publisherDomain: "press.openrockets.com",
+              linkId: `artifacts/${(p.title || "").toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}-${p.pubId || p.id}`,
+              hashtags: p.tags?.map ? p.tags.map((t: string) => ({ id: t, name: t, type: "general" as const })) : [],
+              author: p.authorName || "Unknown Author",
+              status: p.status,
+              createdAt: p.submittedAt ? new Date(p.submittedAt).getTime() : Date.now()
+            };
+          });
           setSubmissions(mapped);
         } else {
           const data = await localforage.getItem<Submission[]>("openRockets_submissions");

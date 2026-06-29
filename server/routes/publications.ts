@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { authMiddleware } from '../middleware/auth';
 import { createPublicationSchema, updatePublicationSchema } from '../validators/schemas';
 import { notifyDiscordWebhook } from '../utils/discord';
+import { sendReviewEmail } from '../utils/email';
 export const publicationsRouter = new Hono();
 
 const getListQuerySchema = z.object({
@@ -360,6 +361,22 @@ publicationsRouter.post('/:pubId/review', authMiddleware, async (c) => {
   else if (action === 'pending') newStatus = 'pending_review';
 
   try {
+    const pubWithAuthor = await db
+      .select({
+        pub: publications,
+        authorEmail: users.email,
+        authorFirstName: users.displayName,
+      })
+      .from(publications)
+      .leftJoin(users, eq(publications.authorId, users.id))
+      .where(eq(publications.pubId, pubId))
+      .limit(1);
+
+    const pubData = pubWithAuthor[0];
+    if (!pubData) {
+      return c.json({ success: false, error: { code: 'NOT_FOUND', message: 'Publication not found' } }, 404);
+    }
+
     await db.update(publications)
       .set({ 
         status: newStatus,
@@ -375,6 +392,18 @@ publicationsRouter.post('/:pubId/review', authMiddleware, async (c) => {
       targetId: pubId,
       metadata: JSON.stringify({ feedback, previousStatus: 'pending_review' }),
     });
+
+    if ((newStatus === 'published' || newStatus === 'rejected') && pubData.authorEmail) {
+      // Send email without blocking the response
+      sendReviewEmail(
+        pubData.authorEmail,
+        pubData.authorFirstName || 'Contributor',
+        pubData.pub.title,
+        pubData.pub.publisherId || 'nyrj', // default to an arbitrary one if null
+        newStatus,
+        pubData.pub.pubId
+      ).catch(e => console.error("Email dispatch failed:", e));
+    }
 
     return c.json({ success: true });
   } catch (err) {
