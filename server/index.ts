@@ -34,7 +34,9 @@ import { cronRouter } from './routes/cron';
 
 // Middleware
 app.use('*', logger());
-app.use('*', secureHeaders());
+app.use('*', secureHeaders({
+  crossOriginResourcePolicy: 'cross-origin',
+}));
 
 app.use('*', cors({
   origin: (origin) => origin || '*',
