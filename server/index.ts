@@ -204,11 +204,12 @@ app.get('/api/auth/sso-callback', async (c) => {
 });
 
 // Serve Frontend Assets
+app.use('/assets/*', serveStatic({ root: './dist' }));
 app.use('/*', serveStatic({ root: './dist' }));
 
 // Client-side Routing Fallback (React Router)
 app.get('*', async (c) => {
-  if (c.req.path.startsWith('/api')) {
+  if (c.req.path.startsWith('/api') || c.req.path.startsWith('/assets')) {
     return c.json({ success: false, error: { code: 'NOT_FOUND', message: 'Not found' } }, 404);
   }
   try {
