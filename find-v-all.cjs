@@ -4,7 +4,7 @@ const sourceMap = require('source-map');
 
 (async () => {
   const dir = 'dist/assets';
-  const files = fs.readdirSync(dir).filter(f => f.endsWith('.js'));
+  const files = ['vendor-react-CC3837th.js', 'Template1Page-DrpmFi-l.js'];
   
   for (const file of files) {
     const mapFile = file + '.map';
@@ -23,12 +23,7 @@ const sourceMap = require('source-map');
       while ((m = regex.exec(line)) !== null) {
         const col = m.index + m[0].indexOf('V');
         const pos = consumer.originalPositionFor({ line: i + 1, column: col });
-        if (pos.source && pos.source.includes('three')) {
-          console.log(`[${file}] Found 'V' at ${i + 1}:${col} maps to ->`, pos);
-        }
-        if (pos.source && pos.source.includes('react-three')) {
-          console.log(`[${file}] Found 'V' at ${i + 1}:${col} maps to ->`, pos);
-        }
+        console.log(`[${file}] Found 'V' at ${i + 1}:${col} maps to ->`, pos);
       }
     }
   }

@@ -43,11 +43,12 @@ jobs:
             git clean -fd || true
           "
           
-          echo "Cleaning remote dist folder..."
-          ssh $USER@$HOST "rm -rf ~/press.openrockets.com/dist || true"
+          echo "Uploading new dist folder to temporary location..."
+          ssh $USER@$HOST "rm -rf ~/press.openrockets.com/dist_new || true"
+          scp -r dist $USER@$HOST:~/press.openrockets.com/dist_new
           
-          echo "Uploading new dist folder..."
-          scp -r dist $USER@$HOST:~/press.openrockets.com/
+          echo "Swapping dist folders for zero-downtime deployment..."
+          ssh $USER@$HOST "cd ~/press.openrockets.com && rm -rf dist_old || true && mv dist dist_old || true && mv dist_new dist"
           
           echo "Restarting backend..."
           ssh $USER@$HOST "
