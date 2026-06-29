@@ -57,8 +57,8 @@ export function Template1Page({ data }: { data?: any }) {
 
   const fileStorageKey = data?.fileStorageKey;
   const extraFiles = data?.extraFiles ? (typeof data.extraFiles === 'string' ? JSON.parse(data.extraFiles) : data.extraFiles) : [];
-  const publishDate = data?.createdAt 
-    ? new Date(data.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) 
+  const publishDate = data?.submittedAt 
+    ? new Date(data.submittedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) 
     : "2 Mar. 2025";
 
   // Hashtag engine - loads from hashtags.json
@@ -184,7 +184,7 @@ export function Template1Page({ data }: { data?: any }) {
   const uniqueFileKeys = Array.from(new Set(allFileKeys)).filter(Boolean);
   
   const fileUrls = uniqueFileKeys.length > 0 
-    ? uniqueFileKeys.map(k => k.startsWith('http') ? k : `/storage/${k}`)
+    ? uniqueFileKeys.map(k => k.startsWith('http') ? k : `/api/publications/${data?.pubId || data?.id}/download?fileKey=${encodeURIComponent(k)}`)
     : []; // fallback used later if empty
 
   // 3D Model state
@@ -331,9 +331,55 @@ export function Template1Page({ data }: { data?: any }) {
           
           {/* Metadata Section */}
           <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            
+            <h1 style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '2.5rem', fontWeight: 500, color: '#000000', lineHeight: 1.2, margin: 0 }}>
+              {title}
+            </h1>
+            <p style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1.25rem', fontWeight: 400, color: '#4b5563', margin: 0 }}>
+              {subtitle}
+            </p>
+
+            {/* Repository Section */}
+            {data?.githubRepoUrl && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '8px' }}>
+                <h2 style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1.1rem', fontWeight: 600, margin: 0, color: '#111' }}>
+                  Repository
+                </h2>
+                <a href={data.githubRepoUrl} target="_blank" rel="noopener noreferrer" style={{
+                  color: '#0066cc', 
+                  textDecoration: 'none',
+                  fontFamily: '"Noto Sans", sans-serif', 
+                  fontSize: '0.95rem',
+                  fontWeight: 500
+                }}>
+                  {data.githubRepoUrl.toLowerCase()}
+                </a>
+              </div>
+            )}
+
+            {/* Related Section */}
+            {(mainTags.length > 0 || generalTags.length > 0) && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '4px' }}>
+                <h2 style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1.1rem', fontWeight: 600, margin: 0, color: '#111' }}>
+                  Related
+                </h2>
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                  {[...mainTags, ...generalTags].map((tag, idx) => (
+                    <a key={`tag-${idx}`} href={`/tags/${tag.id}`} style={{
+                      color: '#0066cc', 
+                      textDecoration: 'none',
+                      fontFamily: '"Noto Sans", sans-serif', 
+                      fontSize: '0.95rem',
+                      fontWeight: 500
+                    }}>
+                      {tag.name.replace(/^#/, '')}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Contributor name/date - NOT translatable */}
-            <div translate="no" className="notranslate" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div translate="no" className="notranslate" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '8px' }}>
               <img 
                 src={getAvatarUrl()} 
                 alt="Profile" 
@@ -343,12 +389,6 @@ export function Template1Page({ data }: { data?: any }) {
                 By {authorName} <span style={{ color: '#000000', marginLeft: '6px' }}>• {publishDate}</span>
               </span>
             </div>
-            <h1 style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '2.5rem', fontWeight: 500, color: '#000000', lineHeight: 1.2, margin: 0 }}>
-              {title}
-            </h1>
-            <p style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1.25rem', fontWeight: 400, color: '#4b5563', margin: 0 }}>
-              {subtitle}
-            </p>
           </div>
 
           {/* ============ VIEWER CONTAINERS ============ */}
@@ -512,40 +552,6 @@ export function Template1Page({ data }: { data?: any }) {
           )}
 
           {/* Abstract / Description */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #000', paddingBottom: '8px', marginBottom: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <h2 style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1.25rem', fontWeight: 600, margin: 0, color: '#111' }}>
-                Repository
-              </h2>
-              {mainTags.length > 0 && (
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  {mainTags.map((tag, idx) => (
-                    <a key={`main-${idx}`} href={`/tags/${tag.id}`} style={{
-                      color: '#0066cc', 
-                      textDecoration: 'none',
-                      fontFamily: '"Noto Sans", sans-serif', 
-                      fontSize: '0.95rem',
-                      fontWeight: 500
-                    }}>
-                      {tag.name}
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
-            
-            <div style={{ 
-              width: '40px', 
-              height: '40px', 
-              borderRadius: '20px', 
-              backgroundColor: '#000', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center' 
-            }}>
-              <span style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 'bold' }}>+</span>
-            </div>
-          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <h2 style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1.5rem', fontWeight: 500, color: '#000000', margin: 0 }}>
               {contentHeading}
@@ -675,56 +681,30 @@ export function Template1Page({ data }: { data?: any }) {
             </div>
           </div>
 
-          {/* Related Section (Badges & General Tags) - MUST NOT BE NO-PRINT */}
-          {(communities.length > 0 || generalTags.length > 0) && (
+          {/* Communities Section */}
+          {communities.length > 0 && (
             <div translate="no" className="notranslate" style={{ 
               marginTop: '16px', 
               display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'space-between',
+              flexDirection: 'column', 
+              gap: '16px',
               width: '100%'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <h3 style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1.25rem', fontWeight: 500, color: '#111', margin: 0 }}>
-                  Related
-                </h3>
-                {generalTags.length > 0 && (
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    {generalTags.map((tag, idx) => (
-                      <span key={`gen-${idx}`} style={{
-                        color: '#000', 
-                        fontFamily: '"Noto Sans", sans-serif', 
-                        fontSize: '0.9rem',
-                        fontWeight: 600
-                      }}>
-                        #{tag.name.toLowerCase()}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div style={{ 
-                padding: '8px', 
-                borderRadius: '8px', 
-                display: 'flex', 
-                alignItems: 'center', 
-                backgroundColor: 'transparent'
-              }}>
-                {communities.map((badgeId, idx) => {
-                  const labelInfo = labelsData.find(l => l.id === badgeId);
-                  if (labelInfo && labelInfo.image) {
-                    return (
+              {communities.map((badgeId, idx) => {
+                const labelInfo = labelsData.find(l => l.id === badgeId);
+                if (labelInfo && labelInfo.image) {
+                  return (
+                    <div key={`badge-${idx}`} style={{ display: 'flex', width: '100%' }}>
                       <img 
-                        key={`badge-${idx}`} 
                         src={labelInfo.image} 
                         alt={labelInfo.name} 
-                        style={{ height: '3.5em', width: 'auto', objectFit: 'contain', marginLeft: idx === 0 ? '0' : '12px' }} 
+                        style={{ height: '7rem', width: 'auto', objectFit: 'contain' }} 
                       />
-                    );
-                  }
-                  return null;
-                })}
-              </div>
+                    </div>
+                  );
+                }
+                return null;
+              })}
             </div>
           )}
 

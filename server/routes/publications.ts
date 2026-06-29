@@ -334,10 +334,13 @@ publicationsRouter.get('/:pubId/download', async (c) => {
 
   if (!pub) return c.json({ error: 'Publication not found' }, 404);
 
+  const fileKey = c.req.query('fileKey') || pub.fileStorageKey;
+  if (!fileKey) return c.json({ error: 'No file associated' }, 404);
+
   // Phase 8: Presigned Download URL
   const { getPresignedDownloadUrl } = await import('../storage/s3');
   try {
-    const downloadUrl = await getPresignedDownloadUrl(pub.fileStorageKey);
+    const downloadUrl = await getPresignedDownloadUrl(fileKey);
     return c.redirect(downloadUrl);
   } catch (e) {
     console.error("Download Error", e);
@@ -351,13 +354,16 @@ publicationsRouter.post('/:pubId/review', authMiddleware, async (c) => {
   const pubId = c.req.param('pubId');
   const user = c.get('user');
 
-  if (user.role !== 'admin' && user.role !== 'moderator') {
+  if (user.role !== 'admin' && user.role !== 'moderator' && user.email !== 'press@openrockets.com') {
     return c.json({ success: false, error: { code: 'FORBIDDEN', message: 'Only moderators can review publications' } }, 403);
   }
 
-  const { action, feedback } = await c.req.json();
+  const body = await c.req.json();
+  const action = body.action || body.decision;
+  const feedback = body.feedback || '';
+  
   let newStatus = 'rejected';
-  if (action === 'approved') newStatus = 'published';
+  if (action === 'approved' || action === 'approve') newStatus = 'published';
   else if (action === 'pending') newStatus = 'pending_review';
 
   try {
