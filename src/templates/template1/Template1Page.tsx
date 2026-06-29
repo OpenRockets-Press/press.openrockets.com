@@ -329,7 +329,9 @@ export function Template1Page({ data }: { data?: any }) {
           {/* PDF VIEWER */}
           {isPDF && (
             <div className="no-print" style={{ width: '100%', marginBottom: '2rem' }}>
-              <PDFViewerBox files={fileUrls.length > 0 ? fileUrls : ['/sample1.pdf']} />
+              <Suspense fallback={<div style={{padding: '2rem', textAlign: 'center'}}>Loading Viewer...</div>}>
+<PDFViewerBox files={fileUrls.length > 0 ? fileUrls : ['/sample1.pdf']} />
+</Suspense>
             </div>
           )}
 
@@ -368,12 +370,14 @@ export function Template1Page({ data }: { data?: any }) {
                   onTouchStart={() => setIsModelInteracting(true)}
                   onTouchEnd={() => setIsModelInteracting(false)}
                 >
-                  <ModelViewerBox
+                  <Suspense fallback={<div style={{padding: '2rem', textAlign: 'center'}}>Loading Viewer...</div>}>
+<ModelViewerBox
                     url={modelList[activeModelIndex]}
                     isThumbnail={false}
                     isHovered={isModelHovered}
                     onError={(err) => setModelError(err?.message || "Unknown error")}
                   />
+</Suspense>
                   {/* Hover overlay: Drag, Zoom, Move - shows when OUTSIDE container */}
                   <div
                     style={{
@@ -429,7 +433,9 @@ export function Template1Page({ data }: { data?: any }) {
                       title={`Preview Model ${idx + 1}`}
                     >
                       <div style={{ width: '100%', height: '100%', pointerEvents: 'none' }}>
-                        <ModelViewerBox url={file} isThumbnail={true} />
+                        <Suspense fallback={<div style={{padding: '2rem', textAlign: 'center'}}>Loading Viewer...</div>}>
+<ModelViewerBox url={file} isThumbnail={true} />
+</Suspense>
                       </div>
                     </button>
                   ))}
@@ -455,7 +461,8 @@ export function Template1Page({ data }: { data?: any }) {
           {/* CODE VIEWER */}
           {isCode && (
             <div className="no-print" style={{ width: '100%', marginBottom: '2rem' }}>
-              <CodeViewerBox 
+              <Suspense fallback={<div style={{padding: '2rem', textAlign: 'center'}}>Loading Viewer...</div>}>
+<CodeViewerBox 
                 initialFiles={fileUrls.length > 0 ? fileUrls.map(u => ({ url: u, name: u.split('/').pop() || 'code' })) : [
                   { url: "/brand/18-basemodel.rar", name: "18-basemodel.rar" },
                   { url: "/brand/index.html", name: "index.html" },
@@ -465,13 +472,16 @@ export function Template1Page({ data }: { data?: any }) {
                 licenseIcon="/brand/licences/beaver,png.png"
                 licenseLink="https://press.openrockets.com/licenses/beaver"
               />
+</Suspense>
             </div>
           )}
 
           {/* IMAGE VIEWER */}
           {isImage && (
             <div className="no-print image-container image-content" style={{ width: '100%', marginBottom: '2rem' }}>
-              <ImageViewerBox files={fileUrls.length > 0 ? fileUrls : ['/brand/welcomepage2.png', '/brand/DARKMODEFAVICON.png']} />
+              <Suspense fallback={<div style={{padding: '2rem', textAlign: 'center'}}>Loading Viewer...</div>}>
+<ImageViewerBox files={fileUrls.length > 0 ? fileUrls : ['/brand/welcomepage2.png', '/brand/DARKMODEFAVICON.png']} />
+</Suspense>
             </div>
           )}
 
