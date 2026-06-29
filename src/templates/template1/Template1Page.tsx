@@ -1,5 +1,4 @@
 
-import JSZip from "jszip";
 import { Template1Header } from "./Template1Header";
 import { Template1Footer } from "./Template1Footer";
 import type { HomeInfoModalKind } from "@/components/home/HomeInfoModal";
@@ -198,6 +197,8 @@ export function Template1Page({ data }: { data?: any }) {
 
   const handleDownloadAll = async () => {
     try {
+      const JSZipModule = await import("jszip");
+      const JSZip = JSZipModule.default || JSZipModule;
       const mainZip = new JSZip();
       const filesZip = new JSZip();
       
