@@ -40,8 +40,11 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
+            export PATH="$HOME/.bun/bin:$PATH"
             cd ~/press.openrockets.com
-            git pull origin main
+            git fetch origin main
+            git reset --hard origin/main
+            git clean -fd
             bun install --production
-            bunx drizzle-kit push
-            pm2 restart openrockets-press
+            bunx drizzle-kit push || echo "Drizzle push failed or not needed"
+            pm2 restart openrockets-press || pm2 start server/index.ts --name openrockets-press --interpreter bun
