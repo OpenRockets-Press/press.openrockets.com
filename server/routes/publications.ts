@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import * as crypto from 'crypto';
 import { db } from '../db';
 import { publications, users, auditLogs } from '../db/schema';
 import { desc, eq, and, or, like, asc, sql } from 'drizzle-orm';
@@ -149,8 +150,8 @@ publicationsRouter.post('/', authMiddleware, zValidator('json', createPublicatio
   const user = c.get('user');
   const body = c.req.valid('json');
 
-  // Generate a unique publication ID (e.g., ORP-1718292839)
-  const pubId = `ORP-${Date.now()}`;
+  // Generate a unique 16-character alphanumeric publication ID
+  const pubId = crypto.randomBytes(8).toString('hex');
 
   try {
     await db.insert(publications).values({

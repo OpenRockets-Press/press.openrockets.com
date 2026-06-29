@@ -263,16 +263,16 @@ export function HashtagsScreen() {
         </button>
         <button 
           onClick={handleConfirm}
-          disabled={selectedTags.length === 0}
+          disabled={!selectedTags.some(t => t.type === 'main') || !selectedTags.some(t => t.type === 'general')}
           style={{
             padding: "8px 24px",
-            backgroundColor: selectedTags.length === 0 ? "#ccc" : "#000",
+            backgroundColor: (!selectedTags.some(t => t.type === 'main') || !selectedTags.some(t => t.type === 'general')) ? "#ccc" : "#000",
             color: "#fff",
             border: "none",
             borderRadius: "6px",
             fontSize: "0.95rem",
             fontWeight: "bold",
-            cursor: selectedTags.length === 0 ? "not-allowed" : "pointer",
+            cursor: (!selectedTags.some(t => t.type === 'main') || !selectedTags.some(t => t.type === 'general')) ? "not-allowed" : "pointer",
             fontFamily: "Ubuntu, sans-serif"
           }}
         >

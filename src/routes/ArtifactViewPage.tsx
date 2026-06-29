@@ -23,8 +23,9 @@ export function ArtifactViewPage() {
 
     async function fetchArtifact() {
       try {
-        // Fetch from backend using the title slug. 
-        const res = await fetch(`/api/publications/by-slug/${titleSlug}`);
+        // Extract the pubId (the 16-character code) from the end of the URL slug
+        const pubId = titleSlug ? titleSlug.split('-').pop() : '';
+        const res = await fetch(`/api/publications/${pubId}`);
         const result = await res.json();
         
         if (res.ok && result.success) {

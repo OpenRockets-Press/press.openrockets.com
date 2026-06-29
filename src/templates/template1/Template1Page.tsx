@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import JSZip from "jszip";
 import { Template1Header } from "./Template1Header";
 import { Template1Footer } from "./Template1Footer";
 import type { HomeInfoModalKind } from "@/components/home/HomeInfoModal";
@@ -11,11 +12,15 @@ import { PDFViewerBox } from "./PDFViewerBox";
 import { CodeViewerBox } from "./CodeViewerBox";
 import { ImageViewerBox } from "./ImageViewerBox";
 import { AdsInfoModal } from "@/components/ui/AdsInfoModal";
+import labelsData from "@/data/labels.json";
+import "react-quill-new/dist/quill.snow.css";
+import { AlertModal } from "@/components/ui/AlertModal";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 
 export function Template1Page({ data }: { data?: any }) {
   const [infoModalOpen, setInfoModalOpen] = useState<HomeInfoModalKind | null>(null);
+  const [alertState, setAlertState] = useState({ isOpen: false, message: "", title: "Warning" });
 
   // Fetch Current User for Author Block
   const { data: user } = useQuery({
@@ -49,17 +54,28 @@ export function Template1Page({ data }: { data?: any }) {
   useEffect(() => {
     if (data?.tags) {
       try {
-        const tagIds = Array.isArray(data.tags) ? data.tags : JSON.parse(data.tags);
-        fetch('/config/hashtags.json')
-          .then(res => res.json())
-          .then(config => {
-             const all = config.hashtags || config;
-             const matched = all.filter((t: any) => tagIds.includes(t.id));
-             setMainTags(matched.filter((t: any) => t.type === 'main'));
-             setGeneralTags(matched.filter((t: any) => t.type === 'general'));
-          }).catch(console.error);
+        const parsedTags = typeof data.tags === 'string' ? JSON.parse(data.tags) : data.tags;
+        if (Array.isArray(parsedTags)) {
+          // Sometimes tags are just strings (IDs) and sometimes full objects
+          if (parsedTags.length > 0 && typeof parsedTags[0] === 'object') {
+            setMainTags(parsedTags.filter((t: any) => t.type === 'main'));
+            setGeneralTags(parsedTags.filter((t: any) => t.type === 'general'));
+          } else {
+            // If they are just IDs, fallback to fetching
+            fetch('/config/hashtags.json')
+              .then(res => res.json())
+              .then(config => {
+                 const all = config.hashtags || config;
+                 const matched = all.filter((t: any) => parsedTags.includes(t.id));
+                 setMainTags(matched.filter((t: any) => t.type === 'main'));
+                 setGeneralTags(matched.filter((t: any) => t.type === 'general'));
+              }).catch(console.error);
+          }
+        }
         return;
-      } catch (e) {}
+      } catch (e) {
+        console.error("Failed to parse tags", e);
+      }
     }
 
     // Fallback for mock preview
@@ -112,7 +128,13 @@ export function Template1Page({ data }: { data?: any }) {
       }
     }
     fetchLinks();
-  }, []);
+  }, [fileStorageKey, extraFiles]);
+
+  useEffect(() => {
+    if (data?.title) {
+      document.title = `${data.title} - OpenRockets Press`;
+    }
+  }, [data?.title]);
 
   // MOCK DATA FOR TEMPLATE PREVIEW
   const artifactType = data?.type || "software_code";
@@ -121,6 +143,7 @@ export function Template1Page({ data }: { data?: any }) {
   const abstract = data?.abstract || "This study investigates the prevalence of biofilms and fungal growth on high-rise structures... (Mock abstract)";
   const fileStorageKey = data?.fileStorageKey;
   const extraFiles = data?.extraFiles ? (typeof data.extraFiles === 'string' ? JSON.parse(data.extraFiles) : data.extraFiles) : [];
+  const communities: string[] = data?.communities ? (typeof data.communities === 'string' ? JSON.parse(data.communities) : data.communities) : [];
   
   const pubDomain = "press.openrockets.com";
   const pubId = data?.id || "A8F29X";
@@ -166,12 +189,89 @@ export function Template1Page({ data }: { data?: any }) {
     window.print();
   };
 
+  const handleDownloadAll = async () => {
+    try {
+      const mainZip = new JSZip();
+      const filesZip = new JSZip();
+      
+      // Add each file to the inner files.zip archive
+      for (let i = 0; i < fileUrls.length; i++) {
+        const url = fileUrls[i];
+        let filename = url.split('/').pop() || `file-${i}`;
+        if (!filename.includes('.')) {
+          if (isPDF) filename += '.pdf';
+          else if (is3DModel) filename += '.glb'; 
+          else if (isImage) filename += '.png';
+        }
+
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Failed to fetch ${url}`);
+        const blob = await response.blob();
+        filesZip.file(filename, blob);
+      }
+
+      // Add related badges to inner files.zip
+      if (communities && communities.length > 0) {
+        const badgesFolder = filesZip.folder("related_badges");
+        for (let i = 0; i < communities.length; i++) {
+          const badgeId = communities[i];
+          const labelInfo = labelsData.find(l => l.id === badgeId);
+          if (labelInfo && labelInfo.image) {
+            try {
+              const res = await fetch(labelInfo.image);
+              if (res.ok) {
+                const blob = await res.blob();
+                let ext = labelInfo.image.split('.').pop() || 'png';
+                if (ext.length > 4) ext = 'png';
+                badgesFolder?.file(`badge-${badgeId}.${ext}`, blob);
+              }
+            } catch (e) {
+              console.error("Failed to fetch badge", e);
+            }
+          }
+        }
+      }
+      
+      // Generate the inner files.zip as a blob and add it to mainZip
+      const filesZipBlob = await filesZip.generateAsync({ type: "blob" });
+      mainZip.file("files.zip", filesZipBlob);
+
+      // Generate the PDF
+      const element = document.getElementById("printable-area");
+      if (element && (window as any).html2pdf) {
+        const opt = {
+          margin:       10,
+          filename:     'article.pdf',
+          image:        { type: 'jpeg', quality: 0.98 },
+          html2canvas:  { scale: 2, useCORS: true },
+          jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        const pdfBlob = await (window as any).html2pdf().from(element).set(opt).output('blob');
+        mainZip.file("content.pdf", pdfBlob);
+      }
+      
+      // Generate the outer zip file
+      const content = await mainZip.generateAsync({ type: "blob" });
+      
+      // Trigger download
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(content);
+      a.download = "contents.zip";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch (err) {
+      console.error("Failed to generate zip", err);
+      setAlertState({ isOpen: true, message: "Failed to download files.", title: "Warning" });
+    }
+  };
+
   const handleCopyBib = async () => {
     try {
       await navigator.clipboard.writeText(bibtex);
-      alert("Bibliography copied to clipboard!");
+      setAlertState({ isOpen: true, message: "Bibliography copied to clipboard!", title: "Notice" });
     } catch (err) {
       console.error("Failed to copy:", err);
+      setAlertState({ isOpen: true, message: "Failed to copy bibliography.", title: "Warning" });
     }
   };
 
@@ -194,9 +294,17 @@ export function Template1Page({ data }: { data?: any }) {
 
   return (
     <div className="home-page" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#ffffff' }}>
-      <Template1Header onOpenInfo={setInfoModalOpen} />
+      <AlertModal 
+        isOpen={alertState.isOpen} 
+        onClose={() => setAlertState(prev => ({ ...prev, isOpen: false }))} 
+        title={alertState.title} 
+        message={alertState.message} 
+      />
+      <div className="no-print">
+        <Template1Header onOpenInfo={setInfoModalOpen} />
+      </div>
       
-      <main style={{ flex: 1, padding: '2rem 1rem' }}>
+      <main id="printable-area" style={{ flex: 1, padding: '2rem 1rem' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
           
           {/* Metadata Section */}
@@ -396,9 +504,13 @@ export function Template1Page({ data }: { data?: any }) {
             <h2 style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1.5rem', fontWeight: 500, color: '#000000', margin: 0 }}>
               {contentHeading}
             </h2>
-            <p style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1.1rem', lineHeight: 1.8, color: '#111827', textAlign: 'justify', margin: 0, fontWeight: 400 }}>
-              {abstract}
-            </p>
+            <div className="ql-snow">
+              <div 
+                className="ql-editor"
+                style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1.1rem', lineHeight: 1.8, color: '#111827', textAlign: 'justify', margin: 0, fontWeight: 400, padding: 0 }}
+                dangerouslySetInnerHTML={{ __html: abstract }}
+              />
+            </div>
           </div>
 
           {/* Action Buttons (Excluded on Print) */}
@@ -411,6 +523,7 @@ export function Template1Page({ data }: { data?: any }) {
               {downloadText}
             </button>
             <button 
+              onClick={handleDownloadAll}
               style={{ padding: '8px 24px', backgroundColor: '#000', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '0.95rem', fontWeight: 500, cursor: 'pointer', fontFamily: '"Noto Sans", sans-serif', display: 'flex', alignItems: 'center', gap: '8px' }}
             >
               <img src="/paper_clip_3d.png" alt="Download all" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
@@ -451,7 +564,7 @@ export function Template1Page({ data }: { data?: any }) {
                       </h3>
                     </div>
                     {link.image && (
-                      <div style={{ width: '100%', height: '120px', overflow: 'hidden', borderBottom: '1px solid #eee' }}>
+                      <div style={{ width: '100%', height: '80px', overflow: 'hidden', borderBottom: '1px solid #eee' }}>
                         <img src={link.image} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       </div>
                     )}
@@ -460,7 +573,7 @@ export function Template1Page({ data }: { data?: any }) {
                         {link.title || link.url}
                       </h4>
                       {link.description && (
-                        <p style={{ margin: '0 0 10px 0', fontSize: '0.85rem', color: '#555', fontFamily: '"Noto Sans", sans-serif', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                        <p style={{ margin: '0 0 10px 0', fontSize: '0.85rem', color: '#555', fontFamily: '"Noto Sans", sans-serif', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {link.description}
                         </p>
                       )}
@@ -516,25 +629,50 @@ export function Template1Page({ data }: { data?: any }) {
             </div>
           </div>
 
-          {/* Communities Section */}
-          {mainTags.length > 0 && (
-            <div translate="no" className="notranslate no-print" style={{ 
-              marginTop: '32px', 
+          {/* Related Section (Badges & General Tags) - MUST NOT BE NO-PRINT */}
+          {(communities.length > 0 || generalTags.length > 0) && (
+            <div translate="no" className="notranslate" style={{ 
+              marginTop: '24px', 
               display: 'flex', 
               flexDirection: 'column', 
               alignItems: 'flex-start',
               gap: '1rem'
             }}>
               <h3 style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1.25rem', fontWeight: 500, color: '#111', margin: 0 }}>
-                Communities
+                Related
               </h3>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-                {mainTags.map(tag => (
-                  <div key={tag.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', backgroundColor: '#000', borderRadius: '10px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-                    <img src="/brand/983473984834.png" alt={tag.name} style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
-                    <span style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1rem', fontWeight: 600, color: '#fff' }}>{tag.name}</span>
-                  </div>
+              <div style={{ 
+                display: 'flex', 
+                flexWrap: 'wrap', 
+                alignItems: 'center',
+                gap: '12px',
+                width: '100%',
+                padding: '12px',
+                backgroundColor: '#faf8f0',
+                borderRadius: '4px'
+              }}>
+                {generalTags.map((tag, idx) => (
+                  <span key={`gen-${idx}`} style={{
+                    fontFamily: '"Noto Sans", sans-serif',
+                    fontSize: '0.9rem',
+                    color: '#000000',
+                    fontWeight: 500,
+                  }}>
+                    #{tag.name.replace(/\s+/g, '')}
+                  </span>
                 ))}
+                {communities.map((badgeId, idx) => {
+                  const labelInfo = labelsData.find(l => l.id === badgeId);
+                  if (!labelInfo) return null;
+                  return (
+                    <img 
+                      key={`badge-${idx}`} 
+                      src={labelInfo.image} 
+                      alt={labelInfo.name} 
+                      style={{ height: '4em', width: 'auto', objectFit: 'contain', marginLeft: idx === 0 && generalTags.length > 0 ? '12px' : '0' }} 
+                    />
+                  );
+                })}
               </div>
             </div>
           )}

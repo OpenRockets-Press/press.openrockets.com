@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { PublishLayout } from "@/components/publish/PublishLayout";
 import localforage from "localforage";
-import { X, CheckCircle } from "lucide-react";
-
 import { useNavigate } from "@tanstack/react-router";
 import { clsx } from "clsx";
 

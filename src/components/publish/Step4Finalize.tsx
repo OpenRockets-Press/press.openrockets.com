@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { WizardState } from './PublishWizard';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
+import { AlertModal } from "@/components/ui/AlertModal";
 
 interface Props {
   state: WizardState;
@@ -11,6 +12,7 @@ export const Step4Finalize: React.FC<Props> = ({ state }) => {
   const [certs, setCerts] = useState([false, false, false, false]);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [alertState, setAlertState] = useState({ isOpen: false, message: "" });
 
   const toggleCert = (index: number) => {
     const newCerts = [...certs];
@@ -22,7 +24,7 @@ export const Step4Finalize: React.FC<Props> = ({ state }) => {
     setIsSubmitting(true);
     setTimeout(() => {
       setIsSubmitting(false);
-      alert('Successfully submitted to Open Rockets Press!');
+      setAlertState({ isOpen: true, message: 'Successfully submitted to Open Rockets Press!' });
     }, 2000);
   };
 
@@ -40,6 +42,12 @@ export const Step4Finalize: React.FC<Props> = ({ state }) => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      <AlertModal 
+        isOpen={alertState.isOpen} 
+        onClose={() => setAlertState({ isOpen: false, message: "" })} 
+        title="Notice" 
+        message={alertState.message} 
+      />
       <div>
         <h3 style={{ fontWeight: 700, fontSize: '1.25rem', marginBottom: '1rem' }}>Review Your Artifact</h3>
         <div style={{ padding: '1.5rem', backgroundColor: '#f9f9f9', border: '1px solid #000', borderRadius: '8px' }}>

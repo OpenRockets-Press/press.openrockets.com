@@ -35,6 +35,14 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H $HOST >> ~/.ssh/known_hosts
           
+          echo "Updating backend code first..."
+          ssh $USER@$HOST "
+            cd ~/press.openrockets.com
+            git fetch origin main
+            git reset --hard origin/main
+            git clean -fd
+          "
+          
           echo "Cleaning remote dist folder..."
           ssh $USER@$HOST "rm -rf ~/press.openrockets.com/dist"
           
@@ -45,9 +53,6 @@ jobs:
           ssh $USER@$HOST "
             export PATH=\"\$HOME/.bun/bin:/usr/local/bin:\$PATH\"
             cd ~/press.openrockets.com
-            git fetch origin main
-            git reset --hard origin/main
-            git clean -fd
             bun install --production
             bun x drizzle-kit push || echo 'Drizzle push failed or not needed'
             

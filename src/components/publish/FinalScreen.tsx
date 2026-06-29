@@ -39,6 +39,7 @@ export function FinalScreen() {
   const canSubmit = certify1 && certify2;
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [alertState, setAlertState] = useState({ isOpen: false, message: "" });
 
   const handleSubmit = async () => {
     if (canSubmit && !isSubmitting) {
@@ -53,7 +54,7 @@ export function FinalScreen() {
         const activeFiles = slots ? slots.filter(s => s.file !== null).map(s => s.file) : [];
 
         if (activeFiles.length === 0) {
-          alert("No files to upload.");
+          setAlertState({ isOpen: true, message: "No files to upload." });
           setIsSubmitting(false);
           return;
         }
@@ -157,14 +158,22 @@ export function FinalScreen() {
         // Clear caches
         await localforage.removeItem("openRockets_title");
         await localforage.removeItem("openRockets_tagline");
+        await localforage.removeItem("openRockets_desc");
+        await localforage.removeItem("openRockets_links");
+        await localforage.removeItem("openRockets_labels");
         await localforage.removeItem("openRockets_uploadSlots");
+        localStorage.removeItem("publish_artifact_type");
+        localStorage.removeItem("publish_artifact_license");
+        localStorage.removeItem("publish_artifact_hashtags");
+        localStorage.removeItem("publish_artifact_publisher");
+        localStorage.removeItem("publish_artifact_link_id");
         
         // Redirect to new artifact route
         const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-        window.location.href = `/artifacts/${slug}`;
+        window.location.href = `/artifacts/${slug}-${submitData.data.pubId}`;
       } catch (err: any) {
         console.error("Submission error:", err);
-        alert(`Error during submission: ${err.message}`);
+        setAlertState({ isOpen: true, message: `Error during submission: ${err.message}` });
         setIsSubmitting(false);
       }
     }
@@ -195,6 +204,12 @@ export function FinalScreen() {
         boxSizing: "border-box"
       }}
     >
+      <AlertModal 
+        isOpen={alertState.isOpen} 
+        onClose={() => setAlertState({ isOpen: false, message: "" })} 
+        title="Warning" 
+        message={alertState.message} 
+      />
       <style>{`
         @keyframes shapeShift {
           0% { clip-path: circle(50% at 50% 50%); transform: rotate(0deg) scale(1); }
