@@ -102,13 +102,34 @@ export function FinalScreen() {
         const communities = await localforage.getItem<string[]>("openRockets_labels") || [];
         const links = await localforage.getItem<any[]>("openRockets_links") || [];
 
-        // 4. Submit to backend
+        const rawType = localStorage.getItem("publish_artifact_type") || "unknown";
+        const rawLicense = localStorage.getItem("publish_artifact_license") || "ORP_BEAVER";
+
+        // Map frontend license to backend enum
+        let mappedLicense = "ORP_BEAVER";
+        if (rawLicense === "kangaroo") mappedLicense = "ORP_KANGAROO";
+        if (rawLicense === "hummingbird") mappedLicense = "ORP_EAGLE";
+        
+        // Map frontend type to backend enum
+        let mappedType = "other";
+        if (["research", "lit-review", "meta-analysis", "case-study", "survey-results", "math-proof"].includes(rawType)) {
+          mappedType = "research_paper";
+        } else if (["painting", "creative-photo", "still-photo", "landscape", "portrait", "abstract-art"].includes(rawType)) {
+          mappedType = "image";
+        } else if (["software", "mobile-app", "web-code", "web-game", "algorithm", "code-solution", "breakthrough", "scripts", "web-ui", "backend", "robotics", "arduino", "neural-net", "data-vis", "cli-tool"].includes(rawType)) {
+          mappedType = "software_code";
+        } else if (["3d-model", "3d-animation", "3d-print", "cad-model", "topology"].includes(rawType)) {
+          mappedType = "3d_model";
+        } else if (["club-posters", "presentation", "posters", "flyer", "brochure"].includes(rawType)) {
+          mappedType = "poster";
+        }
+
         const submitPayload = {
           title,
           subtitle,
           abstract,
-          type,
-          license: localStorage.getItem("publish_artifact_license") || "ORP_BEAVER",
+          type: mappedType,
+          license: mappedLicense,
           division: "artifacts",
           publisherId,
           tags: JSON.stringify(hashtags),
