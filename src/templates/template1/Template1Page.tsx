@@ -310,11 +310,9 @@ export function Template1Page({ data }: { data?: any }) {
             textAlign: 'center',
             fontFamily: 'Ubuntu, sans-serif',
             fontWeight: 'bold',
-            fontSize: '14px',
-            textTransform: 'uppercase',
-            letterSpacing: '1px'
+            fontSize: '14px'
           }}>
-            Preview Mode: This artifact is currently {data?.status}
+            Document is in admin preview mode.
           </div>
         )}
       </div>
@@ -331,40 +329,38 @@ export function Template1Page({ data }: { data?: any }) {
           
           {/* Metadata Section */}
           <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <h1 style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '2.5rem', fontWeight: 500, color: '#000000', lineHeight: 1.2, margin: 0 }}>
-              {title}
-            </h1>
-            <p style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1.25rem', fontWeight: 400, color: '#4b5563', margin: 0 }}>
-              {subtitle}
-            </p>
 
-            {/* Repository Section */}
-            {data?.githubRepoUrl && (
+            {/* Repository Section (Category Hashtags) */}
+            {mainTags.length > 0 && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '8px' }}>
                 <h2 style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1.1rem', fontWeight: 600, margin: 0, color: '#111' }}>
                   Repository
                 </h2>
-                <a href={data.githubRepoUrl} target="_blank" rel="noopener noreferrer" style={{
-                  color: '#0066cc', 
-                  textDecoration: 'none',
-                  fontFamily: '"Noto Sans", sans-serif', 
-                  fontSize: '0.95rem',
-                  fontWeight: 500
-                }}>
-                  {data.githubRepoUrl.toLowerCase()}
-                </a>
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                  {mainTags.map((tag, idx) => (
+                    <a key={`main-${idx}`} href={`/tags/${tag.name.toLowerCase().replace(/\s+/g, '-')}`} style={{
+                      color: '#0066cc', 
+                      textDecoration: 'none',
+                      fontFamily: '"Noto Sans", sans-serif', 
+                      fontSize: '0.95rem',
+                      fontWeight: 500
+                    }}>
+                      {tag.name.replace(/^#/, '')}
+                    </a>
+                  ))}
+                </div>
               </div>
             )}
 
-            {/* Related Section */}
-            {(mainTags.length > 0 || generalTags.length > 0) && (
+            {/* Related Section (General Hashtags) */}
+            {generalTags.length > 0 && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '4px' }}>
                 <h2 style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1.1rem', fontWeight: 600, margin: 0, color: '#111' }}>
                   Related
                 </h2>
                 <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                  {[...mainTags, ...generalTags].map((tag, idx) => (
-                    <a key={`tag-${idx}`} href={`/tags/${tag.id}`} style={{
+                  {generalTags.map((tag, idx) => (
+                    <a key={`gen-${idx}`} href={`/tags/${tag.name.toLowerCase().replace(/\s+/g, '-')}`} style={{
                       color: '#0066cc', 
                       textDecoration: 'none',
                       fontFamily: '"Noto Sans", sans-serif', 
@@ -389,6 +385,13 @@ export function Template1Page({ data }: { data?: any }) {
                 By {authorName} <span style={{ color: '#000000', marginLeft: '6px' }}>• {publishDate}</span>
               </span>
             </div>
+
+            <h1 style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '2.5rem', fontWeight: 500, color: '#000000', lineHeight: 1.2, margin: 0, marginTop: '12px' }}>
+              {title}
+            </h1>
+            <p style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1.25rem', fontWeight: 400, color: '#4b5563', margin: 0 }}>
+              {subtitle}
+            </p>
           </div>
 
           {/* ============ VIEWER CONTAINERS ============ */}
@@ -686,7 +689,7 @@ export function Template1Page({ data }: { data?: any }) {
             <div translate="no" className="notranslate" style={{ 
               marginTop: '16px', 
               display: 'flex', 
-              flexDirection: 'column', 
+              flexWrap: 'wrap', 
               gap: '16px',
               width: '100%'
             }}>
@@ -694,7 +697,7 @@ export function Template1Page({ data }: { data?: any }) {
                 const labelInfo = labelsData.find(l => l.id === badgeId);
                 if (labelInfo && labelInfo.image) {
                   return (
-                    <div key={`badge-${idx}`} style={{ display: 'flex', width: '100%' }}>
+                    <div key={`badge-${idx}`} style={{ display: 'flex' }}>
                       <img 
                         src={labelInfo.image} 
                         alt={labelInfo.name} 
