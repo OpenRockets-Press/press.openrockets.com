@@ -61,5 +61,8 @@ jobs:
             BUN_PATH=$(which bun || echo "$HOME/.bun/bin/bun")
             PM2_PATH=$(which pm2 || echo "pm2")
             
-            $PM2_PATH delete openrockets-press || true
+            # Force kill everything to avoid port conflicts or stale processes
+            $PM2_PATH kill || true
+            killall bun node || true
+            
             $PM2_PATH start server/index.ts --name openrockets-press --interpreter $BUN_PATH --cwd ~/press.openrockets.com
