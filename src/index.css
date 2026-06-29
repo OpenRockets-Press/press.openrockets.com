@@ -5594,3 +5594,5 @@ button.ad-attribution-why:hover {
 .pdf-nav-chevron { color: #000; transition: color 0.2s ease-in-out; }
 .pdf-nav-chevron:hover:not(:disabled) { color: #0066cc; }
 .pdf-nav-chevron:disabled { opacity: 0.2; cursor: default; }
+
+@media print { @page { margin: 0; size: auto; } body { margin: 0cm; } }

@@ -196,12 +196,14 @@ export function Template1Page({ data }: { data?: any }) {
   const [modelLeftHovered, setModelLeftHovered] = useState(false);
   const [modelRightHovered, setModelRightHovered] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const handlePrint = () => {
     window.print();
   };
 
   const handleDownloadAll = async () => {
+    setIsDownloading(true);
     try {
       const JSZipModule = await import("jszip");
       const JSZip = JSZipModule.default || JSZipModule;
@@ -211,7 +213,14 @@ export function Template1Page({ data }: { data?: any }) {
       // Add nested zip containing the files
       for (let i = 0; i < fileUrls.length; i++) {
         const url = fileUrls[i];
-        let filename = url.split('/').pop() || `file-${i}`;
+        let filename = `file-${i}`;
+        
+        if (url.includes('fileKey=')) {
+          const key = decodeURIComponent(url.split('fileKey=')[1]);
+          filename = key.split('/').pop() || filename;
+        } else {
+          filename = url.split('/').pop() || filename;
+        }
         
         // Exclude specific files from raw data if needed
         if (filename.includes('worker-bundle')) continue;
@@ -238,7 +247,7 @@ export function Template1Page({ data }: { data?: any }) {
           margin:       0.5,
           filename:     'document.pdf',
           image:        { type: 'jpeg', quality: 0.98 },
-          html2canvas:  { scale: 2, useCORS: true },
+          html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
           jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
         };
         
@@ -252,12 +261,15 @@ export function Template1Page({ data }: { data?: any }) {
       // Trigger download
       const a = document.createElement("a");
       a.href = URL.createObjectURL(content);
-      a.download = "contents.zip";
+      document.body.appendChild(a);
       a.click();
+      a.remove();
       URL.revokeObjectURL(a.href);
-    } catch (err) {
-      console.error("Failed to generate zip", err);
+    } catch (error) {
+      console.error("Failed to generate zip", error);
       setAlertState({ isOpen: true, message: "Failed to download files.", title: "Warning" });
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -579,10 +591,15 @@ export function Template1Page({ data }: { data?: any }) {
             </button>
             <button 
               onClick={handleDownloadAll}
-              style={{ padding: '8px 24px', backgroundColor: '#000', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '0.95rem', fontWeight: 500, cursor: 'pointer', fontFamily: '"Noto Sans", sans-serif', display: 'flex', alignItems: 'center', gap: '8px' }}
+              disabled={isDownloading}
+              style={{ padding: '8px 24px', backgroundColor: '#000', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '0.95rem', fontWeight: 500, cursor: isDownloading ? 'not-allowed' : 'pointer', fontFamily: '"Noto Sans", sans-serif', display: 'flex', alignItems: 'center', gap: '8px', opacity: isDownloading ? 0.7 : 1 }}
             >
-              <img src="/paper_clip_3d.png" alt="Download all" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
-              Download all
+              {isDownloading ? (
+                <div style={{ width: '20px', height: '20px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', animation: 'spin 1s linear infinite' }} />
+              ) : (
+                <img src="/paper_clip_3d.png" alt="Download all" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
+              )}
+              {isDownloading ? "Processing..." : "Download all"}
             </button>
             <button 
               onClick={handlePrint}
