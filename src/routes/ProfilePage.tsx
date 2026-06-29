@@ -39,8 +39,10 @@ export function ProfilePage() {
   
   const displayBirthday = formatBirthday(user?.dateOfBirth);
 
-  const executeSignOut = () => {
-    window.location.href = "/api/auth/logout";
+  const handleSignOut = () => {
+    window.localStorage.removeItem("orp.session.token");
+    window.localStorage.removeItem("orp.session.v1");
+    window.location.href = "/";
   };
 
   return (
@@ -189,7 +191,7 @@ export function ProfilePage() {
             </p>
             <div style={{ borderTop: '1px solid var(--border)', margin: '8px 0' }}></div>
             <button
-              onClick={executeSignOut}
+              onClick={handleSignOut}
               className="ads-modal-close-btn"
               style={{
                 fontFamily: "Ubuntu, sans-serif",

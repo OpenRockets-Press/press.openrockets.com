@@ -345,7 +345,17 @@ export function HomeHeader({ onOpenInfo }: HomeHeaderProps) {
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
                         Publishing Guidelines
                       </a>
-                      <a href="/api/auth/logout" className="dropdown-item" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <a 
+                        href="/" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          window.localStorage.removeItem("orp.session.token");
+                          window.localStorage.removeItem("orp.session.v1");
+                          window.location.href = "/";
+                        }}
+                        className="dropdown-item" 
+                        style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                      >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
                         Sign Out
                       </a>
