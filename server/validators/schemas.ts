@@ -3,22 +3,27 @@ import { z } from 'zod';
 // Reusable parts
 const divisionEnum = z.enum(['artifacts', '3d', 'code']);
 const licenseEnum = z.enum(['ORP_BEAVER', 'ORP_EAGLE', 'ORP_KANGAROO']);
-const typeEnum = z.enum(['book', 'research_paper', 'magazine', 'poster', 'other', '3d_artifact', 'code_gist']);
+const typeEnum = z.enum(['book', 'research_paper', 'magazine', 'poster', 'other', '3d_artifact', 'code_gist', '3d_model', 'software_code', 'image']);
 const priorityEnum = z.enum(['low', 'normal', 'high', 'urgent']);
 
 // Publications
 export const createPublicationSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255, 'Title is too long'),
-  abstract: z.string().min(50, 'Abstract must be at least 50 characters').optional(),
+  subtitle: z.string().max(512).optional(),
+  abstract: z.string().optional(),
   type: typeEnum,
   license: licenseEnum,
-  division: divisionEnum,
-  fileStorageKey: z.string().min(1, 'File is required'),
+  division: divisionEnum.default('artifacts'),
+  publisherId: z.string().optional(),
+  fileStorageKey: z.string().optional(),
+  extraFiles: z.string().optional(), // JSON array string
   coverStorageKey: z.string().optional(),
   customThumbnailStorageKey: z.string().optional(),
   githubRepoUrl: z.string().url().optional().or(z.literal('')),
   threejsModelKey: z.string().optional(),
   tags: z.string().optional(),
+  communities: z.string().optional(),
+  links: z.string().optional(),
 });
 
 export const updatePublicationSchema = z.object({

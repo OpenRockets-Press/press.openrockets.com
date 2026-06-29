@@ -15,17 +15,22 @@ export const publications = mysqlTable('publications', {
   pubId: varchar('pub_id', { length: 50 }).unique().notNull(), // e.g. ORP-1234
   authorId: varchar('author_id', { length: 255 }).references(() => users.id),
   title: varchar('title', { length: 255 }).notNull(),
+  subtitle: varchar('subtitle', { length: 512 }),
   abstract: text('abstract'),
-  type: mysqlEnum('type', ['book', 'research_paper', 'magazine', 'poster', 'other', '3d_artifact', 'code_gist']).notNull(),
+  type: mysqlEnum('type', ['book', 'research_paper', 'magazine', 'poster', 'other', '3d_artifact', 'code_gist', '3d_model', 'software_code', 'image']).notNull(),
   license: mysqlEnum('license', ['ORP_BEAVER', 'ORP_EAGLE', 'ORP_KANGAROO']).notNull(), // V4 Custom Licenses
   status: mysqlEnum('status', ['pending_review', 'published', 'rejected']).default('pending_review'),
   division: mysqlEnum('division', ['artifacts', '3d', 'code']).notNull().default('artifacts'),
-  fileStorageKey: varchar('file_storage_key', { length: 512 }).notNull(), // S3 Key in Oracle Cloud
+  publisherId: varchar('publisher_id', { length: 255 }),
+  fileStorageKey: varchar('file_storage_key', { length: 512 }), // Kept for backwards compat, nullable now
+  extraFiles: text('extra_files'), // JSON array of additional file keys
   coverStorageKey: varchar('cover_storage_key', { length: 512 }),
   customThumbnailStorageKey: varchar('custom_thumbnail_storage_key', { length: 512 }),
   githubRepoUrl: varchar('github_repo_url', { length: 255 }),
   threejsModelKey: varchar('threejs_model_key', { length: 512 }),
   tags: text('tags'), // JSON string of tags
+  communities: text('communities'), // JSON string of community IDs
+  links: text('links'), // JSON string of links array
   viewCount: int('view_count').default(0),
   downloadCount: int('download_count').default(0),
   submittedAt: timestamp('submitted_at').defaultNow(),

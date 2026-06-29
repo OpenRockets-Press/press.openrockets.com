@@ -117,6 +117,34 @@ publicationsRouter.get('/contributor', async (c) => {
   return c.json(pubs);
 });
 
+publicationsRouter.post('/pre-upload', authMiddleware, async (c) => {
+  const user = c.get('user');
+  const body = await c.req.json();
+  const files = body.files as { name: string; type: string }[];
+  
+  if (!files || !Array.isArray(files) || files.length === 0 || files.length > 5) {
+    return c.json({ success: false, error: 'Must provide 1 to 5 files for pre-upload' }, 400);
+  }
+
+  const { getPresignedUploadUrl } = await import('../storage/s3');
+  
+  try {
+    const uploadUrls = await Promise.all(
+      files.map(async (f) => {
+        const fileExt = f.name.split('.').pop();
+        const key = `uploads/${user.id}/${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const url = await getPresignedUploadUrl(key, f.type || 'application/octet-stream');
+        return { originalName: f.name, key, url };
+      })
+    );
+    
+    return c.json({ success: true, data: uploadUrls });
+  } catch (error) {
+    console.error('Pre-upload error:', error);
+    return c.json({ success: false, error: 'Failed to generate upload URLs' }, 500);
+  }
+});
+
 publicationsRouter.post('/', authMiddleware, zValidator('json', createPublicationSchema), async (c) => {
   const user = c.get('user');
   const body = c.req.valid('json');
@@ -129,17 +157,22 @@ publicationsRouter.post('/', authMiddleware, zValidator('json', createPublicatio
       pubId,
       authorId: user.id, // Authenticated user ID
       title: body.title,
+      subtitle: body.subtitle || null,
       abstract: body.abstract || null,
       type: body.type,
       license: body.license,
       division: body.division,
+      publisherId: body.publisherId || null,
       status: 'pending_review',
-      fileStorageKey: body.fileStorageKey,
+      fileStorageKey: body.fileStorageKey || null,
+      extraFiles: body.extraFiles || null,
       coverStorageKey: body.coverStorageKey || null,
       customThumbnailStorageKey: body.customThumbnailStorageKey || null,
       githubRepoUrl: body.githubRepoUrl || null,
       threejsModelKey: body.threejsModelKey || null,
       tags: body.tags || null,
+      communities: body.communities || null,
+      links: body.links || null,
     });
 
     // Trigger Discord Webhook Notification
@@ -152,6 +185,46 @@ publicationsRouter.post('/', authMiddleware, zValidator('json', createPublicatio
   } catch (error) {
     console.error("Publication creation failed:", error);
     return c.json({ success: false, error: { code: 'DATABASE_ERROR', message: 'Failed to create publication' } }, 500);
+  }
+});
+
+publicationsRouter.get('/by-slug/:slug', async (c) => {
+  const slug = c.req.param('slug');
+  try {
+    const allPubs = await db
+      .select({
+        pub: publications,
+        author: {
+          displayName: users.displayName,
+          email: users.email,
+          avatarUrl: users.avatarUrl
+        }
+      })
+      .from(publications)
+      .leftJoin(users, eq(publications.authorId, users.id));
+
+    const matched = allPubs.find((p) => {
+      const generatedSlug = p.pub.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      return generatedSlug === slug;
+    });
+
+    if (!matched) {
+      c.header('X-Robots-Tag', 'noindex, nofollow');
+      return c.json({ success: false, error: { message: "Artifact not found" } }, 404);
+    }
+
+    // Merge author info into pub
+    const responseData = {
+      ...matched.pub,
+      authorName: matched.author?.displayName || matched.author?.email || "Unknown Author",
+      authorAvatar: matched.author?.avatarUrl
+    };
+
+    c.header('X-Robots-Tag', 'noindex, nofollow');
+    return c.json({ success: true, data: responseData });
+  } catch (err: any) {
+    c.header('X-Robots-Tag', 'noindex, nofollow');
+    return c.json({ success: false, error: { message: err.message } }, 500);
   }
 });
 

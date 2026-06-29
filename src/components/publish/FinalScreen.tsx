@@ -38,67 +38,105 @@ export function FinalScreen() {
 
   const canSubmit = certify1 && certify2;
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleSubmit = async () => {
-    if (canSubmit) {
-      setHasSubmitted(true);
+    if (canSubmit && !isSubmitting) {
+      setIsSubmitting(true);
       
       try {
-        // Gather data
         const title = await localforage.getItem<string>("openRockets_title") || "Untitled Artifact";
         const subtitle = await localforage.getItem<string>("openRockets_tagline") || "";
         const type = localStorage.getItem("publish_artifact_type") || "unknown";
         
-        // Count non-empty slots
         const slots = await localforage.getItem<any[]>("openRockets_uploadSlots");
-        let fileCount = 0;
-        if (slots) {
-          fileCount = slots.filter(s => s.file !== null).length;
+        const activeFiles = slots ? slots.filter(s => s.file !== null).map(s => s.file) : [];
+
+        if (activeFiles.length === 0) {
+          alert("No files to upload.");
+          setIsSubmitting(false);
+          return;
         }
 
-        // Fetch publisher domain
-        const publisherId = localStorage.getItem("publish_artifact_publisher");
-        const linkId = localStorage.getItem("publish_artifact_link_id") || "unknown";
-        let publisherDomain = "Unknown Publisher";
-        if (publisherId) {
-          const res = await fetch("/config/publishers.json");
-          if (res.ok) {
-            const data = await res.json();
-            const matched = data.publishers?.find((p: any) => p.id === publisherId);
-            if (matched) {
-              publisherDomain = matched.domain;
-            }
-          }
+        const fileMetaList = activeFiles.map(f => ({ name: f.name, type: f.type || 'application/octet-stream' }));
+
+        // 1. Get pre-signed upload URLs
+        const preUploadRes = await fetch('/api/publications/pre-upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ files: fileMetaList })
+        });
+        const preUploadData = await preUploadRes.json();
+        
+        if (!preUploadRes.ok || !preUploadData.success) {
+          throw new Error(preUploadData.error || "Failed to get upload URLs");
         }
 
+        const uploadUrls = preUploadData.data;
+        const uploadedKeys: string[] = [];
+
+        // 2. Upload files directly to S3
+        for (let i = 0; i < uploadUrls.length; i++) {
+          const { url, key } = uploadUrls[i];
+          const fileToUpload = activeFiles[i];
+          const s3Res = await fetch(url, {
+            method: 'PUT',
+            body: fileToUpload,
+            headers: { 'Content-Type': fileToUpload.type || 'application/octet-stream' }
+          });
+          
+          if (!s3Res.ok) throw new Error(`Failed to upload ${fileToUpload.name} to Object Storage`);
+          uploadedKeys.push(key);
+        }
+
+        // 3. Collect metadata
+        const abstract = await localforage.getItem<string>("openRockets_desc") || "";
+        const publisherId = localStorage.getItem("publish_artifact_publisher") || "";
         const storedHashtags = localStorage.getItem("publish_artifact_hashtags");
-        let hashtags = [];
-        if (storedHashtags) {
-          try {
-            hashtags = JSON.parse(storedHashtags);
-          } catch (e) {}
-        }
+        const hashtags = storedHashtags ? JSON.parse(storedHashtags) : [];
+        const communities = await localforage.getItem<string[]>("openRockets_labels") || [];
+        const links = await localforage.getItem<any[]>("openRockets_links") || [];
 
-        const submission = {
-          id: Date.now().toString(),
-          type,
+        // 4. Submit to backend
+        const submitPayload = {
           title,
           subtitle,
-          fileCount,
-          publisherDomain,
-          linkId,
-          hashtags,
-          author: "OpenRockets User",
-          status: "pending"
+          abstract,
+          type,
+          license: localStorage.getItem("publish_artifact_license") || "ORP_BEAVER",
+          division: "artifacts",
+          publisherId,
+          tags: JSON.stringify(hashtags),
+          communities: JSON.stringify(communities),
+          links: JSON.stringify(links),
+          fileStorageKey: uploadedKeys[0],
+          extraFiles: JSON.stringify(uploadedKeys)
         };
 
-        const existing = await localforage.getItem<any[]>("openRockets_submissions") || [];
-        existing.push(submission);
-        await localforage.setItem("openRockets_submissions", existing);
+        const submitRes = await fetch('/api/publications', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(submitPayload)
+        });
+
+        const submitData = await submitRes.json();
+        if (!submitRes.ok || !submitData.success) {
+          throw new Error(submitData.error?.message || "Failed to finalize submission");
+        }
+
+        setHasSubmitted(true);
+        // Clear caches
+        await localforage.removeItem("openRockets_title");
+        await localforage.removeItem("openRockets_tagline");
+        await localforage.removeItem("openRockets_uploadSlots");
         
-        alert("Submission complete!");
-      } catch (err) {
-        console.error("Failed to compile submission:", err);
-        alert("Submission complete, but failed to track it internally.");
+        // Redirect to new artifact route
+        const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        window.location.href = `/artifacts/${slug}`;
+      } catch (err: any) {
+        console.error("Submission error:", err);
+        alert(`Error during submission: ${err.message}`);
+        setIsSubmitting(false);
       }
     }
   };
@@ -135,6 +173,9 @@ export function FinalScreen() {
           50% { clip-path: polygon(50% 0%, 0% 100%, 100% 100%); transform: rotate(180deg) scale(0.9); }
           75% { clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%); transform: rotate(270deg) scale(1.2); }
           100% { clip-path: circle(50% at 50% 50%); transform: rotate(360deg) scale(1); }
+        }
+        @keyframes spinner-spin {
+          to { transform: rotate(360deg); }
         }
       `}</style>
 
@@ -207,21 +248,29 @@ export function FinalScreen() {
         <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginTop: "3rem" }}>
           <button
             onClick={handleSubmit}
-            disabled={!canSubmit}
+            disabled={!canSubmit || isSubmitting}
             style={{
               padding: "8px 24px",
-              backgroundColor: !canSubmit ? "#ccc" : "#000",
+              backgroundColor: (!canSubmit || isSubmitting) ? "#ccc" : "#000",
               color: "#fff",
               border: "none",
               borderRadius: "6px",
               fontSize: "0.95rem",
               fontWeight: "bold",
-              cursor: !canSubmit ? "not-allowed" : "pointer",
+              cursor: (!canSubmit || isSubmitting) ? "not-allowed" : "pointer",
               fontFamily: "Ubuntu, sans-serif",
-              opacity: !canSubmit ? 0.5 : 1
+              opacity: (!canSubmit || isSubmitting) ? 0.5 : 1,
+              display: "flex",
+              alignItems: "center",
+              gap: "8px"
             }}
           >
-            Submit
+            {isSubmitting ? (
+              <>
+                <div style={{ animation: "spinner-spin 1s linear infinite", width: "16px", height: "16px", border: "2px solid #fff", borderTop: "2px solid transparent", borderRadius: "50%" }}></div>
+                Submitting...
+              </>
+            ) : "Submit"}
           </button>
           <button
             onClick={handleGoBack}

@@ -24,6 +24,15 @@ jobs:
       - name: Build Application
         run: bunx --bun vite build
 
+      - name: Copy dist folder via SCP
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "dist/*"
+          target: "~/press.openrockets.com"
+
       - name: Pull Code and Restart Backend
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -36,12 +45,3 @@ jobs:
             bun install --production
             bunx drizzle-kit push
             pm2 restart openrockets-press
-
-      - name: Copy dist folder via SCP
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USERNAME }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          source: "dist/*"
-          target: "~/press.openrockets.com"

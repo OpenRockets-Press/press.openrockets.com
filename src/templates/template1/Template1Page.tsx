@@ -14,7 +14,7 @@ import { AdsInfoModal } from "@/components/ui/AdsInfoModal";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 
-export function Template1Page() {
+export function Template1Page({ data }: { data?: any }) {
   const [infoModalOpen, setInfoModalOpen] = useState<HomeInfoModalKind | null>(null);
 
   // Fetch Current User for Author Block
@@ -25,6 +25,7 @@ export function Template1Page() {
   });
 
   const getAvatarUrl = () => {
+    if (data?.authorAvatar) return data.authorAvatar;
     if ((user as any)?.avatarUrl) return (user as any).avatarUrl;
     if ((user as any)?.photoURL) return (user as any).photoURL;
     if (user?.displayName) {
@@ -36,18 +37,36 @@ export function Template1Page() {
     return `https://ui-avatars.com/api/?name=Author&background=0D8A50&color=fff`;
   };
 
-  const authorName = user?.displayName || user?.email || "Unknown Author";
-  const publishDate = "2 Mar. 2025";
+  const authorName = data?.authorName || user?.displayName || user?.email || "Unknown Author";
+  const publishDate = data?.createdAt 
+    ? new Date(data.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) 
+    : "2 Mar. 2025";
 
   // Hashtag engine - loads from hashtags.json
   const [mainTags, setMainTags] = useState<{ id: string, name: string }[]>([]);
   const [generalTags, setGeneralTags] = useState<{ id: string, name: string }[]>([]);
 
   useEffect(() => {
+    if (data?.tags) {
+      try {
+        const tagIds = Array.isArray(data.tags) ? data.tags : JSON.parse(data.tags);
+        fetch('/config/hashtags.json')
+          .then(res => res.json())
+          .then(config => {
+             const all = config.hashtags || config;
+             const matched = all.filter((t: any) => tagIds.includes(t.id));
+             setMainTags(matched.filter((t: any) => t.type === 'main'));
+             setGeneralTags(matched.filter((t: any) => t.type === 'general'));
+          }).catch(console.error);
+        return;
+      } catch (e) {}
+    }
+
+    // Fallback for mock preview
     fetch('/config/hashtags.json')
       .then(res => res.json())
-      .then(data => {
-         const all = data.hashtags || data;
+      .then(config => {
+         const all = config.hashtags || config;
          const main = all.filter((t: any) => t.type === 'main');
          const gen = all.filter((t: any) => t.type === 'general');
          
@@ -57,10 +76,11 @@ export function Template1Page() {
          setMainTags(shuffledMain);
          setGeneralTags(shuffledGen);
       }).catch(console.error);
-  }, []);
+  }, [data?.tags]);
 
   // Link preview engine
-  const mockLinkUrls = [
+  const parsedLinks = data?.links ? (typeof data.links === 'string' ? JSON.parse(data.links) : data.links) : null;
+  const mockLinkUrls = parsedLinks || [
     { url: "https://apple.com", customName: "" },
     { url: "https://microsoft.com", customName: "" }
   ];
@@ -71,7 +91,7 @@ export function Template1Page() {
     async function fetchLinks() {
       try {
         const results = await Promise.all(
-          mockLinkUrls.map(async (l) => {
+          mockLinkUrls.map(async (l: any) => {
             const res = await fetch(`https://api.microlink.io?url=${encodeURIComponent(l.url)}`);
             const data = await res.json();
             return {
@@ -95,31 +115,45 @@ export function Template1Page() {
   }, []);
 
   // MOCK DATA FOR TEMPLATE PREVIEW
-  const artifactType = "software_code"; // Changed for testing CodeViewerBox
-  const title = "Sample Code Artifact";
-  const subtitle = "A comprehensive analysis of biological accumulation in urban environments and structural health impacts.";
-  const description = "Microorganisms are ubiquitous in the built environment, yet their community dynamics within building materials remain poorly understood. This study analyzes samples collected from commercial building facades to identify the dominant microbial taxa and their potential metabolic pathways. Using high-throughput 16S rRNA sequencing, we observed significant variations in microbial diversity correlated with the material's porosity and ambient humidity levels. These findings offer preliminary insights into how structural materials might be engineered to selectively resist pathogenic colonization while supporting benign biofilms.";
+  const artifactType = data?.type || "software_code";
+  const title = data?.title || "Sample Code Artifact";
+  const subtitle = data?.subtitle || "A comprehensive analysis of biological accumulation in urban environments and structural health impacts.";
+  const abstract = data?.abstract || "This study investigates the prevalence of biofilms and fungal growth on high-rise structures... (Mock abstract)";
+  const fileStorageKey = data?.fileStorageKey;
+  const extraFiles = data?.extraFiles ? (typeof data.extraFiles === 'string' ? JSON.parse(data.extraFiles) : data.extraFiles) : [];
   
-  const pubDomain = "scienteen.com";
-  const pubId = "A8F29X";
+  const pubDomain = "press.openrockets.com";
+  const pubId = data?.id || "A8F29X";
+  const pubYear = data?.createdAt ? new Date(data.createdAt).getFullYear() : new Date().getFullYear();
   
-  const bibtex = `@article{${authorName.replace(/\s+/g, "_").toLowerCase()}_2026,
+  const bibtex = `@article{${authorName.replace(/\s+/g, "_").toLowerCase()}_${pubYear},
   title={${title}},
   author={${authorName}},
   journal={${pubDomain}},
-  year={2026},
+  year={${pubYear}},
   url={https://${pubDomain}/${pubId}}
 }`;
 
+  const isCode = artifactType === "software_code" || artifactType === "code_gist";
+  const is3DModel = artifactType === "3d_model" || artifactType === "3d_artifact";
+  const isImage = artifactType === "image" || artifactType === "poster";
+  const isPDF = artifactType === "book" || artifactType === "research_paper" || artifactType === "magazine";
   const isResearch = artifactType === "research_paper";
-  const isSoftware = artifactType === "software_code";
-  const is3DModel = artifactType === "3d_model";
 
   const downloadText = isResearch ? "Download abstract only" : "Download basic only";
   const contentHeading = isResearch ? "Abstract" : "Description";
 
+  const allFileKeys: string[] = [];
+  if (fileStorageKey) allFileKeys.push(fileStorageKey);
+  if (extraFiles && Array.isArray(extraFiles)) allFileKeys.push(...extraFiles);
+  const uniqueFileKeys = Array.from(new Set(allFileKeys)).filter(Boolean);
+  
+  const fileUrls = uniqueFileKeys.length > 0 
+    ? uniqueFileKeys.map(k => k.startsWith('http') ? k : `/storage/${k}`)
+    : []; // fallback used later if empty
+
   // 3D Model state
-  const modelList = ['/brand/FinalBaseMesh.obj', '/brand/FinalBaseMesh.obj', '/brand/FinalBaseMesh.obj'];
+  const modelList = fileUrls.length > 0 ? fileUrls : ['/brand/FinalBaseMesh.obj', '/brand/FinalBaseMesh.obj', '/brand/FinalBaseMesh.obj'];
   const [activeModelIndex, setActiveModelIndex] = useState(0);
   const [isModelHovered, setIsModelHovered] = useState(false);
   const [isModelInteracting, setIsModelInteracting] = useState(false);
@@ -209,145 +243,153 @@ export function Template1Page() {
 
           {/* ============ VIEWER CONTAINERS ============ */}
           {/* PDF VIEWER */}
-          <div className="no-print" style={{ width: '100%', marginBottom: '2rem' }}>
-            <PDFViewerBox files={['/sample1.pdf', '/sample2.pdf', '/sample3.pdf']} />
-          </div>
+          {isPDF && (
+            <div className="no-print" style={{ width: '100%', marginBottom: '2rem' }}>
+              <PDFViewerBox files={fileUrls.length > 0 ? fileUrls : ['/sample1.pdf']} />
+            </div>
+          )}
 
           {/* 3D MODEL VIEWER */}
-          <div className="no-print" style={{ display: 'flex', width: '100%', alignItems: 'flex-start', gap: '0', marginBottom: '2rem' }}>
-            {/* Left Chevron */}
-            <div style={{ position: 'sticky', top: '7rem', height: 'fit-content', zIndex: 10 }}>
-              <button
-                disabled={activeModelIndex === 0}
-                onClick={() => setActiveModelIndex(Math.max(0, activeModelIndex - 1))}
-                onMouseEnter={() => setModelLeftHovered(true)}
-                onMouseLeave={() => setModelLeftHovered(false)}
-                style={chevronStyle(activeModelIndex === 0, modelLeftHovered)}
-                title="Previous Model"
-              >
-                <FontAwesomeIcon icon={faChevronLeft} />
-              </button>
-            </div>
+          {is3DModel && (
+            <div className="no-print" style={{ display: 'flex', width: '100%', alignItems: 'flex-start', gap: '0', marginBottom: '2rem' }}>
+              {/* Left Chevron */}
+              <div style={{ position: 'sticky', top: '7rem', height: 'fit-content', zIndex: 10 }}>
+                <button
+                  disabled={activeModelIndex === 0}
+                  onClick={() => setActiveModelIndex(Math.max(0, activeModelIndex - 1))}
+                  onMouseEnter={() => setModelLeftHovered(true)}
+                  onMouseLeave={() => setModelLeftHovered(false)}
+                  style={chevronStyle(activeModelIndex === 0, modelLeftHovered)}
+                  title="Previous Model"
+                >
+                  <FontAwesomeIcon icon={faChevronLeft} />
+                </button>
+              </div>
 
-            {/* Main 3D Area */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-              {/* 3D Viewport */}
-              <div
-                style={{
-                  width: '100%',
-                  height: '500px',
-                  backgroundColor: '#ffffff',
-                  position: 'relative',
-                  cursor: isModelHovered ? 'grab' : 'default',
-                }}
-                onMouseEnter={() => setIsModelHovered(true)}
-                onMouseLeave={() => { setIsModelHovered(false); setIsModelInteracting(false); }}
-                onMouseDown={() => setIsModelInteracting(true)}
-                onMouseUp={() => setIsModelInteracting(false)}
-                onTouchStart={() => setIsModelInteracting(true)}
-                onTouchEnd={() => setIsModelInteracting(false)}
-              >
-                <ModelViewerBox
-                  url={modelList[activeModelIndex]}
-                  isThumbnail={false}
-                  isHovered={isModelHovered}
-                  onError={(err) => setModelError(err?.message || "Unknown error")}
-                />
-                {/* Hover overlay: Drag, Zoom, Move - shows when OUTSIDE container */}
+              {/* Main 3D Area */}
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                {/* 3D Viewport */}
                 <div
                   style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    pointerEvents: 'none',
-                    opacity: (!isModelHovered) ? 1 : 0,
-                    transition: 'opacity 0.3s ease',
+                    width: '100%',
+                    height: '500px',
                     backgroundColor: '#ffffff',
-                    border: '2px solid #000000',
-                    borderRadius: '4px',
-                    padding: '8px 16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                    zIndex: 5
+                    position: 'relative',
+                    cursor: isModelHovered ? 'grab' : 'default',
                   }}
+                  onMouseEnter={() => setIsModelHovered(true)}
+                  onMouseLeave={() => { setIsModelHovered(false); setIsModelInteracting(false); }}
+                  onMouseDown={() => setIsModelInteracting(true)}
+                  onMouseUp={() => setIsModelInteracting(false)}
+                  onTouchStart={() => setIsModelInteracting(true)}
+                  onTouchEnd={() => setIsModelInteracting(false)}
                 >
-                  <video
-                    src="/728472842748274.mp4"
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    style={{ width: '40px', height: '40px', objectFit: 'contain' }}
+                  <ModelViewerBox
+                    url={modelList[activeModelIndex]}
+                    isThumbnail={false}
+                    isHovered={isModelHovered}
+                    onError={(err) => setModelError(err?.message || "Unknown error")}
                   />
-                  <span style={{ fontSize: '1rem', fontWeight: 600, color: 'black', fontFamily: '"Noto Sans", sans-serif' }}>Drag, Zoom, Move</span>
+                  {/* Hover overlay: Drag, Zoom, Move - shows when OUTSIDE container */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      pointerEvents: 'none',
+                      opacity: (!isModelHovered) ? 1 : 0,
+                      transition: 'opacity 0.3s ease',
+                      backgroundColor: '#ffffff',
+                      border: '2px solid #000000',
+                      borderRadius: '4px',
+                      padding: '8px 16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                      zIndex: 5
+                    }}
+                  >
+                    <video
+                      src="/728472842748274.mp4"
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      style={{ width: '40px', height: '40px', objectFit: 'contain' }}
+                    />
+                    <span style={{ fontSize: '1rem', fontWeight: 600, color: 'black', fontFamily: '"Noto Sans", sans-serif' }}>Drag, Zoom, Move</span>
+                  </div>
+                </div>
+
+                {/* Model Switcher Thumbnails */}
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', padding: '16px 0' }}>
+                  {modelList.map((file, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setActiveModelIndex(idx)}
+                      style={{
+                        background: '#fff',
+                        border: activeModelIndex === idx ? '2px solid #000' : '1px solid #ccc',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        overflow: 'hidden',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '80px',
+                        height: '80px'
+                      }}
+                      title={`Preview Model ${idx + 1}`}
+                    >
+                      <div style={{ width: '100%', height: '100%', pointerEvents: 'none' }}>
+                        <ModelViewerBox url={file} isThumbnail={true} />
+                      </div>
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              {/* Model Switcher Thumbnails */}
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', padding: '16px 0' }}>
-                {modelList.map((file, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setActiveModelIndex(idx)}
-                    style={{
-                      background: '#fff',
-                      border: activeModelIndex === idx ? '2px solid #000' : '1px solid #ccc',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      padding: '4px',
-                      overflow: 'hidden',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: '80px',
-                      height: '80px'
-                    }}
-                    title={`Preview Model ${idx + 1}`}
-                  >
-                    <div style={{ width: '100%', height: '100%', pointerEvents: 'none' }}>
-                      <ModelViewerBox url={file} isThumbnail={true} />
-                    </div>
-                  </button>
-                ))}
+              {/* Right Chevron */}
+              <div style={{ position: 'sticky', top: '7rem', height: 'fit-content', zIndex: 10 }}>
+                <button
+                  disabled={activeModelIndex === modelList.length - 1}
+                  onClick={() => setActiveModelIndex(Math.min(modelList.length - 1, activeModelIndex + 1))}
+                  onMouseEnter={() => setModelRightHovered(true)}
+                  onMouseLeave={() => setModelRightHovered(false)}
+                  style={chevronStyle(activeModelIndex === modelList.length - 1, modelRightHovered)}
+                  title="Next Model"
+                >
+                  <FontAwesomeIcon icon={faChevronRight} />
+                </button>
               </div>
             </div>
-
-            {/* Right Chevron */}
-            <div style={{ position: 'sticky', top: '7rem', height: 'fit-content', zIndex: 10 }}>
-              <button
-                disabled={activeModelIndex === modelList.length - 1}
-                onClick={() => setActiveModelIndex(Math.min(modelList.length - 1, activeModelIndex + 1))}
-                onMouseEnter={() => setModelRightHovered(true)}
-                onMouseLeave={() => setModelRightHovered(false)}
-                style={chevronStyle(activeModelIndex === modelList.length - 1, modelRightHovered)}
-                title="Next Model"
-              >
-                <FontAwesomeIcon icon={faChevronRight} />
-              </button>
-            </div>
-          </div>
+          )}
 
           {/* CODE VIEWER */}
-          <div className="no-print" style={{ width: '100%', marginBottom: '2rem' }}>
-            <CodeViewerBox 
-              initialFiles={[
-                { url: "/brand/18-basemodel.rar", name: "18-basemodel.rar" },
-                { url: "/brand/index.html", name: "index.html" },
-                { url: "/brand/vite.config.ts", name: "vite.config.ts" }
-              ]}
-              licenseName="OpenRockets® Beaver" 
-              licenseIcon="/brand/licences/beaver,png.png"
-              licenseLink="https://press.openrockets.com/licenses/beaver"
-            />
-          </div>
+          {isCode && (
+            <div className="no-print" style={{ width: '100%', marginBottom: '2rem' }}>
+              <CodeViewerBox 
+                initialFiles={fileUrls.length > 0 ? fileUrls.map(u => ({ url: u, name: u.split('/').pop() || 'code' })) : [
+                  { url: "/brand/18-basemodel.rar", name: "18-basemodel.rar" },
+                  { url: "/brand/index.html", name: "index.html" },
+                  { url: "/brand/vite.config.ts", name: "vite.config.ts" }
+                ]}
+                licenseName="OpenRockets® Beaver" 
+                licenseIcon="/brand/licences/beaver,png.png"
+                licenseLink="https://press.openrockets.com/licenses/beaver"
+              />
+            </div>
+          )}
 
           {/* IMAGE VIEWER */}
-          <div className="no-print image-container image-content" style={{ width: '100%', marginBottom: '2rem' }}>
-            <ImageViewerBox files={['/brand/welcomepage2.png', '/brand/DARKMODEFAVICON.png', '/brand/271742354.png', '/brand/9283527.png', '/brand/987935879357.png']} />
-          </div>
+          {isImage && (
+            <div className="no-print image-container image-content" style={{ width: '100%', marginBottom: '2rem' }}>
+              <ImageViewerBox files={fileUrls.length > 0 ? fileUrls : ['/brand/welcomepage2.png', '/brand/DARKMODEFAVICON.png']} />
+            </div>
+          )}
 
           {/* Abstract / Description */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -355,7 +397,7 @@ export function Template1Page() {
               {contentHeading}
             </h2>
             <p style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1.1rem', lineHeight: 1.8, color: '#111827', textAlign: 'justify', margin: 0, fontWeight: 400 }}>
-              {description}
+              {abstract}
             </p>
           </div>
 
@@ -473,6 +515,29 @@ export function Template1Page() {
               </button>
             </div>
           </div>
+
+          {/* Communities Section */}
+          {mainTags.length > 0 && (
+            <div translate="no" className="notranslate no-print" style={{ 
+              marginTop: '32px', 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'flex-start',
+              gap: '1rem'
+            }}>
+              <h3 style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1.25rem', fontWeight: 500, color: '#111', margin: 0 }}>
+                Communities
+              </h3>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+                {mainTags.map(tag => (
+                  <div key={tag.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', backgroundColor: '#000', borderRadius: '10px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+                    <img src="/brand/983473984834.png" alt={tag.name} style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
+                    <span style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1rem', fontWeight: 600, color: '#fff' }}>{tag.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
         </div>
       </main>

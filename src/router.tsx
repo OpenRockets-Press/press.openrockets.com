@@ -44,6 +44,7 @@ const SuspendedPage = lazy(() =>
   import("@/routes/SuspendedPage").then((module) => ({ default: module.SuspendedPage })),
 );
 const NotFoundPage = lazy(() => import("@/routes/NotFoundPage").then((module) => ({ default: module.NotFoundPage })));
+const ArtifactViewPage = lazy(() => import("@/routes/ArtifactViewPage").then((module) => ({ default: module.ArtifactViewPage })));
 
 // ── Skeleton components ──────────────────────────────────────────────────────
 
@@ -196,6 +197,12 @@ const privacyPolicyRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/legal/privacy-policy",
   component: () => withRouteSuspense(<PrivacyPolicyPage />),
+});
+
+const artifactViewRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/artifacts/$titleSlug",
+  component: () => withRouteSuspense(<ArtifactViewPage />),
 });
 
 const parentalConsentRoute = createRoute({
@@ -450,6 +457,7 @@ const routeTree = rootRoute.addChildren([
   ssoCallbackRoute,
   logoutRoute,
   template1Route,
+  artifactViewRoute,
 ]);
 
 export const router = createRouter({
