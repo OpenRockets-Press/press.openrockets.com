@@ -196,8 +196,7 @@ publicationsRouter.get('/by-slug/:slug', async (c) => {
         pub: publications,
         author: {
           displayName: users.displayName,
-          email: users.email,
-          avatarUrl: users.avatarUrl
+          email: users.email
         }
       })
       .from(publications)
