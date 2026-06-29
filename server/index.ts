@@ -125,6 +125,18 @@ app.get('/api/health', (c) => {
   return c.json({ status: 'ok', message: 'Open Rockets Press API is running' });
 });
 
+import { execSync } from 'child_process';
+app.get('/api/debug', (c) => {
+  try {
+    const lsDist = execSync('ls -la dist').toString();
+    const lsAssets = execSync('ls -la dist/assets').toString();
+    const cwd = process.cwd();
+    return c.json({ cwd, lsDist, lsAssets });
+  } catch (e: any) {
+    return c.json({ error: e.message, cwd: process.cwd() });
+  }
+});
+
 // Global Error Handling Middleware (Phase 26)
 app.onError((err, c) => {
   console.error(`[Global Error] ${c.req.method} ${c.req.url}`, err);
