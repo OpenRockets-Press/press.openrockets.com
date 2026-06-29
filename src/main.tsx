@@ -8,7 +8,7 @@ import "./index.css";
 
 import { TranslationProvider } from "@/lib/TranslationContext";
 
-console.log("App mounted");
+console.log("App mounted v3");
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

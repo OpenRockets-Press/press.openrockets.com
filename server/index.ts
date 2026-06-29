@@ -203,9 +203,51 @@ app.get('/api/auth/sso-callback', async (c) => {
   return c.redirect(`${returnTo}?token=${token}`);
 });
 
-// Serve Frontend Assets
-app.use('/assets/*', serveStatic({ root: './dist' }));
-app.use('/*', serveStatic({ root: './dist' }));
+// Serve Frontend Assets Custom Handler
+import * as fs from 'fs';
+import * as path from 'path';
+import { getMimeType } from 'hono/utils/mime';
+
+app.use('/assets/*', async (c, next) => {
+  try {
+    const filePath = path.join(process.cwd(), 'dist', c.req.path);
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+      const ext = path.extname(filePath);
+      let mimeType = 'text/plain';
+      if (ext === '.js') mimeType = 'text/javascript';
+      else if (ext === '.css') mimeType = 'text/css';
+      else if (ext === '.png') mimeType = 'image/png';
+      else if (ext === '.svg') mimeType = 'image/svg+xml';
+      
+      const file = fs.readFileSync(filePath);
+      return c.body(file, 200, {
+        'Content-Type': mimeType,
+        'Cache-Control': 'public, max-age=31536000, immutable'
+      });
+    }
+  } catch (e) {
+    console.error("Asset serving error:", e);
+  }
+  return c.text('Not Found', 404);
+});
+
+app.use('/*', async (c, next) => {
+  try {
+    const filePath = path.join(process.cwd(), 'dist', c.req.path);
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+      const ext = path.extname(filePath);
+      let mimeType = 'text/plain';
+      if (ext === '.js') mimeType = 'text/javascript';
+      else if (ext === '.css') mimeType = 'text/css';
+      
+      const file = fs.readFileSync(filePath);
+      return c.body(file, 200, { 'Content-Type': mimeType });
+    }
+  } catch (e) {
+    // Ignore and pass to fallback
+  }
+  await next();
+});
 
 // Client-side Routing Fallback (React Router)
 app.get('*', async (c) => {
