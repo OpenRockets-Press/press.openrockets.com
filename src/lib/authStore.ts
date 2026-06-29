@@ -50,7 +50,7 @@ export async function fetchSessionUser(forceRefresh = false): Promise<SessionUse
         accountStatus: "active",
         consentTier: "general",
         avatarUrl: userData.avatarUrl || userData.avatar_url || userData.profile?.avatarUrl || null,
-        dateOfBirth: userData.profile?.dateOfBirth || null,
+        dateOfBirth: userData.profile?.date_of_birth || userData.profile?.dateOfBirth || null,
       };
       window.localStorage.setItem("orp.session.v1", JSON.stringify(user));
       cachedSession = user;
