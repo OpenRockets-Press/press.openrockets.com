@@ -49,6 +49,9 @@ export function Template1Page({ data }: { data?: any }) {
   };
 
   const authorName = data?.authorName || user?.displayName || user?.email || "Unknown Author";
+
+  const fileStorageKey = data?.fileStorageKey;
+  const extraFiles = data?.extraFiles ? (typeof data.extraFiles === 'string' ? JSON.parse(data.extraFiles) : data.extraFiles) : [];
   const publishDate = data?.createdAt 
     ? new Date(data.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) 
     : "2 Mar. 2025";
@@ -147,8 +150,6 @@ export function Template1Page({ data }: { data?: any }) {
   const title = data?.title || "Sample Code Artifact";
   const subtitle = data?.subtitle || "A comprehensive analysis of biological accumulation in urban environments and structural health impacts.";
   const abstract = data?.abstract || "This study investigates the prevalence of biofilms and fungal growth on high-rise structures... (Mock abstract)";
-  const fileStorageKey = data?.fileStorageKey;
-  const extraFiles = data?.extraFiles ? (typeof data.extraFiles === 'string' ? JSON.parse(data.extraFiles) : data.extraFiles) : [];
   const communities: string[] = data?.communities ? (typeof data.communities === 'string' ? JSON.parse(data.communities) : data.communities) : [];
   
   const pubDomain = "press.openrockets.com";
