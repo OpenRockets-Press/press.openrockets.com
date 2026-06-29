@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+
 import JSZip from "jszip";
 import { Template1Header } from "./Template1Header";
 import { Template1Footer } from "./Template1Footer";
