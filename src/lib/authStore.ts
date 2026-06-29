@@ -25,69 +25,49 @@ export async function fetchSessionUser(forceRefresh = false): Promise<SessionUse
   const params = new URLSearchParams(window.location.search);
   const urlToken = params.get("token");
   if (urlToken) {
-    try {
-      const payloadBase64 = urlToken.split('.')[1];
-      if (payloadBase64) {
-        const base64 = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
-        const pad = base64.length % 4;
-        const padded = pad ? base64 + '='.repeat(4 - pad) : base64;
-        const payload = JSON.parse(atob(padded));
-        
-        window.localStorage.setItem("orp.session.token", urlToken);
-        
-        const user: SessionUser = {
-          userId: String(payload.sub || payload.id || "mock-user-id"),
-          email: payload.email || "user@example.com",
-          displayName: payload.name || "Contributor",
-          role: "contributor",
-          accountStatus: "active",
-          consentTier: "general",
-          avatarUrl: payload.avatar_url || payload.profile?.avatar_url || null,
-          dateOfBirth: payload.profile?.date_of_birth || null,
-        };
-        window.localStorage.setItem("orp.session.v1", JSON.stringify(user));
-        cachedSession = user;
-        
-        // Strip token from URL without reloading
-        params.delete("token");
-        const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
-        window.history.replaceState({}, '', newUrl);
-        
-        return user;
-      }
-    } catch (e) {
-      console.error("Failed to parse SSO token from URL", e);
-    }
+    window.localStorage.setItem("orp.session.token", urlToken);
+    params.delete("token");
+    const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+    window.history.replaceState({}, '', newUrl);
   }
+
+  const currentToken = window.localStorage.getItem("orp.session.token");
 
   if (sessionPromise && !forceRefresh) return sessionPromise;
 
-  sessionPromise = fetch("/api/auth/session")
-    .then((res) => {
-      const contentType = res.headers.get("content-type");
-      if ((res.status === 404 || (contentType && contentType.includes("text/html"))) && hasWindow()) {
-        const raw = window.localStorage.getItem("orp.session.v1");
-        if (raw) return { authenticated: true, user: JSON.parse(raw) };
-        return { authenticated: false, user: null };
-      }
-      if (!res.ok) throw new Error("Network response was not ok");
-      return res.json();
+  if (currentToken) {
+    sessionPromise = fetch("https://openrocketsauth.alwaysdata.net/api/auth/me", {
+      headers: { Authorization: `Bearer ${currentToken}` }
     })
-    .then((data) => {
-      if (data.authenticated && data.user) {
-        cachedSession = data.user;
-        return data.user;
-      }
-      cachedSession = null;
-      return null;
+    .then(async res => {
+      if (!res.ok) throw new Error("Invalid token");
+      const userData = await res.json();
+      const user: SessionUser = {
+        userId: String(userData.id || "mock-user-id"),
+        email: userData.email || "user@example.com",
+        displayName: userData.name || userData.displayName || "Contributor",
+        role: "contributor",
+        accountStatus: "active",
+        consentTier: "general",
+        avatarUrl: userData.avatarUrl || userData.avatar_url || userData.profile?.avatarUrl || null,
+        dateOfBirth: userData.profile?.dateOfBirth || null,
+      };
+      window.localStorage.setItem("orp.session.v1", JSON.stringify(user));
+      cachedSession = user;
+      return user;
     })
     .catch((err) => {
-      console.error("Failed to fetch session", err);
-      cachedSession = null;
+      console.error("Failed to fetch session from auth server", err);
+      // Fallback to local storage if network fails but token exists
+      const raw = window.localStorage.getItem("orp.session.v1");
+      if (raw) return JSON.parse(raw);
       return null;
     });
+    
+    return sessionPromise;
+  }
 
-  return sessionPromise;
+  return Promise.resolve(null);
 }
 
 export function getSessionUser(): SessionUser | null {
