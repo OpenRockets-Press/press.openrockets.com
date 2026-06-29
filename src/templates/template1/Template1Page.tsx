@@ -338,7 +338,7 @@ export function Template1Page({ data }: { data?: any }) {
                 </h2>
                 <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                   {mainTags.map((tag, idx) => (
-                    <a key={`main-${idx}`} href={`/tags/${tag.name.toLowerCase().replace(/\s+/g, '-')}`} style={{
+                    <a key={`main-${idx}`} href={`/hashtag/${encodeURIComponent(tag.name)}`} style={{
                       color: '#0066cc', 
                       textDecoration: 'none',
                       fontFamily: '"Noto Sans", sans-serif', 
@@ -360,7 +360,7 @@ export function Template1Page({ data }: { data?: any }) {
                 </h2>
                 <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                   {generalTags.map((tag, idx) => (
-                    <a key={`gen-${idx}`} href={`/tags/${tag.name.toLowerCase().replace(/\s+/g, '-')}`} style={{
+                    <a key={`gen-${idx}`} href={`/hashtag/${encodeURIComponent(tag.name)}`} style={{
                       color: '#0066cc', 
                       textDecoration: 'none',
                       fontFamily: '"Noto Sans", sans-serif', 
