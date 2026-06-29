@@ -1,10 +1,10 @@
-import { Resend } from 'resend';
 import * as fs from 'fs';
 import * as path from 'path';
 
 // API Key provided by user
-const resend = new Resend('re_eSe2b8bP_GnwHcJPKR3gVM41fEGtnx1mb');
+const RESEND_API_KEY = 're_eSe2b8bP_GnwHcJPKR3gVM41fEGtnx1mb';
 const SENDER_EMAIL = 'press@mail.openrockets.com';
+
 
 export async function sendReviewEmail(
   authorEmail: string,
@@ -86,12 +86,26 @@ export async function sendReviewEmail(
   `;
 
   try {
-    const data = await resend.emails.send({
-      from: SENDER_EMAIL,
-      to: authorEmail,
-      subject: subject,
-      html: html,
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: SENDER_EMAIL,
+        to: authorEmail,
+        subject: subject,
+        html: html
+      })
     });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Resend API error: ${response.status} ${errorText}`);
+    }
+    
+    const data = await response.json();
     console.log("Resend review email dispatched:", data);
   } catch (error) {
     console.error("Failed to send review email via Resend:", error);

@@ -1,4 +1,3 @@
-
 import { Template1Header } from "./Template1Header";
 import { Template1Footer } from "./Template1Footer";
 import type { HomeInfoModalKind } from "@/components/home/HomeInfoModal";
@@ -6,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getCurrentUser } from "@/lib/api";
 import { getSessionUser } from "@/lib/authStore";
 import { queryKeys } from "@/lib/queryKeys";
+import { Spinner } from "@/components/ui/Spinner";
 import React, { useState, useEffect, Suspense, lazy } from "react";
 const ModelViewerBox = lazy(() => import("./ModelViewerBox").then(module => ({ default: module.ModelViewerBox })));
 const PDFViewerBox = lazy(() => import("./PDFViewerBox").then(module => ({ default: module.PDFViewerBox })));
