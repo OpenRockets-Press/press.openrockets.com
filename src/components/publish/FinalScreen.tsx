@@ -60,10 +60,15 @@ export function FinalScreen() {
 
         const fileMetaList = activeFiles.map(f => ({ name: f.name, type: f.type || 'application/octet-stream' }));
 
+        const token = localStorage.getItem("orp.session.token");
+        
         // 1. Get pre-signed upload URLs
         const preUploadRes = await fetch('/api/publications/pre-upload', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
           body: JSON.stringify({ files: fileMetaList })
         });
         const preUploadData = await preUploadRes.json();
@@ -115,7 +120,10 @@ export function FinalScreen() {
 
         const submitRes = await fetch('/api/publications', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
           body: JSON.stringify(submitPayload)
         });
 
