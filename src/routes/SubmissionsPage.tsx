@@ -84,14 +84,12 @@ export function SubmissionsPage() {
             padding: "4rem",
             backgroundColor: "#fff",
             borderRadius: "8px",
-            border: "1px solid #ddd",
             width: "100%"
           }}>
             <div style={{
               width: "40px",
               height: "40px",
-              border: "3px solid #f3f3f3",
-              borderTop: "3px solid #000",
+              borderTop: "3px solid #007bff",
               borderRadius: "50%",
               animation: "spinner-spin 1s linear infinite"
             }} />
@@ -101,7 +99,7 @@ export function SubmissionsPage() {
                 100% { transform: rotate(360deg); }
               }
             `}</style>
-            <p style={{ marginTop: "1rem", color: "#666", fontFamily: "Ubuntu, sans-serif" }}>Refreshing submissions...</p>
+            <p style={{ marginTop: "1rem", color: "#666", fontFamily: "Ubuntu, sans-serif" }}></p>
           </div>
         ) : submissions.length === 0 ? (
           <div style={{ color: "#666", fontSize: "1.1rem" }}>
