@@ -25,7 +25,8 @@ export function Template1Page() {
   });
 
   const getAvatarUrl = () => {
-    if (user?.photoURL) return user.photoURL;
+    if ((user as any)?.avatarUrl) return (user as any).avatarUrl;
+    if ((user as any)?.photoURL) return (user as any).photoURL;
     if (user?.displayName) {
       return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName)}&background=0D8A50&color=fff`;
     }
@@ -484,7 +485,6 @@ export function Template1Page() {
       {/* 3D Model Error Modal */}
       {modelError && (
         <AdsInfoModal 
-          isOpen={true} 
           onClose={() => setModelError(null)}
           title="Error loading 3D model"
         >

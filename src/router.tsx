@@ -6,7 +6,7 @@ import {
   createRouter,
   redirect,
 } from "@tanstack/react-router";
-import { getSessionUser, setSessionUser } from "@/lib/authStore";
+import { getSessionUser, fetchSessionUser } from "@/lib/authStore";
 import { queryClient } from "@/lib/queryClient";
 import { queryKeys } from "@/lib/queryKeys";
 import {
@@ -18,6 +18,7 @@ import {
 // Critical path routes — imported eagerly so there's no chunk-fetch delay on first load
 import { RootLayout } from "@/routes/RootLayout";
 import { HomePage } from "@/routes/HomePage";
+import { Spinner } from "./components/ui/Spinner";
 
 
 const PublishPage = lazy(() => import("@/routes/PublishPage").then((module) => ({ default: module.PublishPage })));
@@ -152,6 +153,7 @@ const rootRoute = createRootRoute({
 const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
+  beforeLoad: async () => { await fetchSessionUser(); },
   component: () => withRouteSuspense(<HomePage />),
 });
 
@@ -168,7 +170,7 @@ const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/login",
   loader: () => {
-    window.location.href = "https://accounts.openrockets.com/login?redirect_uri=" + encodeURIComponent(window.location.origin + "/api/auth/sso-callback?returnTo=/dashboard");
+    window.location.href = "https://accounts.openrockets.com/login?redirect_uri=" + encodeURIComponent(window.location.origin + "/api/auth/sso-callback?returnTo=/dashboard") + "&app=OpenRockets+Press";
   },
   component: () => null,
 });
@@ -176,8 +178,8 @@ const loginRoute = createRoute({
 const publishRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/publish",
-  beforeLoad: () => {
-    const session = getSessionUser();
+  beforeLoad: async () => {
+    const session = await fetchSessionUser();
     if (!session) throw redirect({ to: "/login" });
     if (session.accountStatus === "suspended") throw redirect({ to: "/" });
   },
@@ -211,43 +213,8 @@ const termsOfServiceRoute = createRoute({
 const dashboardRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/dashboard",
-  validateSearch: (search: Record<string, unknown>) => ({
-    token: search.token as string | undefined,
-  }),
-  beforeLoad: ({ search }) => {
-    const searchParams = search as { token?: string };
-    if (searchParams.token) {
-      try {
-        const payloadBase64 = searchParams.token.split('.')[1];
-        if (payloadBase64) {
-          // Robust base64url decode
-          const base64 = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
-          const pad = base64.length % 4;
-          const padded = pad ? base64 + '='.repeat(4 - pad) : base64;
-          const payloadStr = atob(padded);
-          const payload = JSON.parse(payloadStr);
-          
-          window.localStorage.setItem("orp.session.token", searchParams.token);
-          
-          const user = {
-            userId: String(payload.sub || payload.id || "mock-user-id"),
-            email: payload.email || "user@example.com",
-            displayName: payload.name || "Contributor",
-            role: "contributor",
-            accountStatus: "active",
-            consentTier: "general"
-          };
-          window.localStorage.setItem("orp.session.v1", JSON.stringify(user));
-          
-          // Remove token from URL
-          window.history.replaceState({}, document.title, window.location.pathname);
-        }
-      } catch (e) {
-        console.error("Failed to parse SSO token", e);
-      }
-    }
-
-    const session = getSessionUser();
+  beforeLoad: async () => {
+    const session = await fetchSessionUser();
     if (!session) throw redirect({ to: "/login" });
     if (session.accountStatus === "suspended") throw redirect({ to: "/suspended" });
     
@@ -258,8 +225,8 @@ const dashboardRoute = createRoute({
 const submissionsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/submissions",
-  beforeLoad: () => {
-    const session = getSessionUser();
+  beforeLoad: async () => {
+    const session = await fetchSessionUser();
     if (!session) throw redirect({ to: "/login" });
     if (session.accountStatus === "pending_parental") throw redirect({ to: "/publish" });
     if (session.accountStatus === "suspended") throw redirect({ to: "/suspended" });
@@ -280,8 +247,8 @@ const submissionsRoute = createRoute({
 const profileRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/profile",
-  beforeLoad: () => {
-    const session = getSessionUser();
+  beforeLoad: async () => {
+    const session = await fetchSessionUser();
     if (!session) throw redirect({ to: "/login" });
     if (session.accountStatus === "suspended") throw redirect({ to: "/suspended" });
   },
@@ -301,8 +268,8 @@ const profileRoute = createRoute({
 const moderationRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/moderation",
-  beforeLoad: () => {
-    const session = getSessionUser();
+  beforeLoad: async () => {
+    const session = await fetchSessionUser();
     if (!session) throw redirect({ to: "/login" });
     if (session.role !== "moderator" && session.role !== "admin") {
       throw redirect({ to: "/dashboard", search: { token: undefined } });
@@ -324,8 +291,8 @@ const moderationRoute = createRoute({
 const adminRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/admin",
-  beforeLoad: () => {
-    const session = getSessionUser();
+  beforeLoad: async () => {
+    const session = await fetchSessionUser();
     if (!session) throw redirect({ to: "/login" });
     if (session.role !== "admin") throw redirect({ to: "/dashboard", search: { token: undefined } });
   },
@@ -345,6 +312,10 @@ const adminRoute = createRoute({
 const publicationDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/p/$pubId",
+  beforeLoad: async () => {
+    const session = await fetchSessionUser();
+    if (!session) throw redirect({ to: "/login" });
+  },
   component: () => withRouteSuspense(<PublicationDetailPage />),
 });
 
@@ -365,8 +336,19 @@ const Template1Page = lazy(() => import("@/templates/template1/Template1Page").t
 const template1Route = createRoute({
   getParentRoute: () => rootRoute,
   path: "/templates/1",
+  beforeLoad: async () => {
+    const session = await fetchSessionUser();
+    if (!session) throw redirect({ to: "/login" });
+  },
   component: () => withRouteSuspense(<Template1Page />),
 });
+
+
+const FullScreenSpinner = () => (
+  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', width: '100vw' }}>
+    <Spinner color="#1a73e8" />
+  </div>
+);
 
 const ssoCallbackRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -375,15 +357,75 @@ const ssoCallbackRoute = createRoute({
     token: search.token as string | undefined,
     returnTo: search.returnTo as string | undefined,
   }),
-  beforeLoad: ({ search }) => {
+  pendingComponent: FullScreenSpinner,
+  beforeLoad: async ({ search }) => {
     const searchParams = search as { token?: string; returnTo?: string };
     if (searchParams.token) {
+      try {
+        const payloadBase64 = searchParams.token.split('.')[1];
+        if (payloadBase64) {
+          const base64 = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
+          const pad = base64.length % 4;
+          const padded = pad ? base64 + '='.repeat(4 - pad) : base64;
+          const payload = JSON.parse(atob(padded));
+          
+          window.localStorage.setItem("orp.session.token", searchParams.token);
+          
+          let user: any = {
+            userId: String(payload.sub || payload.id || "mock-user-id"),
+            email: payload.email || "user@example.com",
+            displayName: payload.name || "Contributor",
+            role: "contributor",
+            accountStatus: "active",
+            consentTier: "general",
+            avatarUrl: payload.avatar_url || payload.profile?.avatar_url || null,
+            dateOfBirth: payload.profile?.date_of_birth || null,
+          };
+          window.localStorage.setItem("orp.session.v1", JSON.stringify(user));
+
+          // Try to fetch real profile data (proxied via Vite in local dev to avoid CORS)
+          try {
+            const response = await fetch("/proxy/auth/me", {
+              headers: {
+                Authorization: `Bearer ${searchParams.token}`,
+                Accept: "application/json",
+              },
+            });
+            if (response.ok) {
+              const userData = await response.json();
+              user = {
+                ...user,
+                userId: String(userData.id),
+                email: userData.email,
+                displayName: userData.name || user.displayName,
+                avatarUrl: userData.profile?.avatar_url || user.avatarUrl,
+                dateOfBirth: userData.profile?.date_of_birth || user.dateOfBirth,
+              };
+              window.localStorage.setItem("orp.session.v1", JSON.stringify(user));
+            }
+          } catch (fetchErr) {
+            console.warn("Could not fetch real user data (likely CORS in local dev). Using JWT fallback.");
+          }
+        }
+      } catch (e) {
+        console.error("Failed to parse SSO token locally", e);
+      }
       throw redirect({
-        to: "/dashboard",
-        search: { token: searchParams.token },
+        to: searchParams.returnTo || "/dashboard",
       });
     }
     throw redirect({ to: "/login" });
+  },
+  component: () => null,
+});
+
+const logoutRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/api/auth/logout",
+  beforeLoad: () => {
+    window.localStorage.removeItem("orp.session.v1");
+    window.localStorage.removeItem("orp.session.token");
+    throw redirect({ to: "/" });
   },
   component: () => null,
 });
@@ -406,6 +448,7 @@ const routeTree = rootRoute.addChildren([
   publicationDetailRoute,
   suspendedRoute,
   ssoCallbackRoute,
+  logoutRoute,
   template1Route,
 ]);
 

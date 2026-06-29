@@ -1,7 +1,5 @@
 import type { AccountStatus, ConsentTier, Role } from "@shared/types";
 
-const STORAGE_KEY = "orp.session.v1";
-
 export interface SessionUser {
   userId: string;
   displayName: string;
@@ -9,52 +7,72 @@ export interface SessionUser {
   role: Role;
   accountStatus: AccountStatus;
   consentTier: ConsentTier;
+  avatarUrl?: string;
+  dateOfBirth?: string;
 }
+
+let cachedSession: SessionUser | null = null;
+let sessionPromise: Promise<SessionUser | null> | null = null;
 
 function hasWindow(): boolean {
   return typeof window !== "undefined";
 }
 
-export function getSessionUser(): SessionUser | null {
+export async function fetchSessionUser(forceRefresh = false): Promise<SessionUser | null> {
   if (!hasWindow()) return null;
+  if (sessionPromise && !forceRefresh) return sessionPromise;
 
-  const raw = window.localStorage.getItem(STORAGE_KEY);
-  if (!raw) return null;
+  sessionPromise = fetch("/api/auth/session")
+    .then((res) => {
+      const contentType = res.headers.get("content-type");
+      if ((res.status === 404 || (contentType && contentType.includes("text/html"))) && hasWindow()) {
+        const raw = window.localStorage.getItem("orp.session.v1");
+        if (raw) return { authenticated: true, user: JSON.parse(raw) };
+        return { authenticated: false, user: null };
+      }
+      if (!res.ok) throw new Error("Network response was not ok");
+      return res.json();
+    })
+    .then((data) => {
+      if (data.authenticated && data.user) {
+        cachedSession = data.user;
+        return data.user;
+      }
+      cachedSession = null;
+      return null;
+    })
+    .catch((err) => {
+      console.error("Failed to fetch session", err);
+      cachedSession = null;
+      return null;
+    });
 
-  try {
-    const parsed = JSON.parse(raw) as Partial<SessionUser>;
-    if (!parsed.userId || !parsed.email) return null;
-    return {
-      userId: parsed.userId,
-      displayName: parsed.displayName ?? "Contributor",
-      email: parsed.email,
-      role: parsed.role ?? "contributor",
-      accountStatus: parsed.accountStatus ?? "active",
-      consentTier: parsed.consentTier ?? "general",
-    };
-  } catch {
-    return null;
-  }
+  return sessionPromise;
+}
+
+export function getSessionUser(): SessionUser | null {
+  return cachedSession;
 }
 
 export function setSessionUser(user: SessionUser): void {
-  if (!hasWindow()) return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+  cachedSession = user;
 }
 
 export function updateSessionStatus(status: AccountStatus): void {
-  const current = getSessionUser();
-  if (!current) return;
-  setSessionUser({ ...current, accountStatus: status });
+  if (!cachedSession) return;
+  cachedSession = { ...cachedSession, accountStatus: status };
 }
 
 export function updateSessionRole(role: Role): void {
-  const current = getSessionUser();
-  if (!current) return;
-  setSessionUser({ ...current, role });
+  if (!cachedSession) return;
+  cachedSession = { ...cachedSession, role };
 }
 
 export function clearSessionUser(): void {
-  if (!hasWindow()) return;
-  window.localStorage.removeItem(STORAGE_KEY);
+  cachedSession = null;
+  sessionPromise = Promise.resolve(null);
+  if (hasWindow()) {
+    // We could optionally trigger a logout request here if needed
+    // fetch("/api/auth/logout", { method: "POST" });
+  }
 }

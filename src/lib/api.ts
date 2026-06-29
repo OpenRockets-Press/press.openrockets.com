@@ -217,6 +217,8 @@ async function hydrateCurrentUserFromRemote(forceProbe = false) {
       role: Role;
       accountStatus: string;
       consentTier: string;
+      avatarUrl?: string;
+      dateOfBirth?: string;
     }>("users/me", undefined, { method: "GET" });
 
     remoteAuthBackoffUntil = 0;
@@ -232,6 +234,8 @@ async function hydrateCurrentUserFromRemote(forceProbe = false) {
         | "suspended"
         | "deletion_requested",
       consentTier: profile.consentTier as "coppa" | "gdpr_eu" | "gdpr_es" | "general",
+      avatarUrl: profile.avatarUrl,
+      dateOfBirth: profile.dateOfBirth,
     };
 
     setSessionUser(next);

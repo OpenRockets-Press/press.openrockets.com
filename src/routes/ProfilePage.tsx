@@ -3,8 +3,14 @@ import { useQuery } from "@tanstack/react-query";
 import { getCurrentUser } from "@/lib/api";
 import { getSessionUser } from "@/lib/authStore";
 import { queryKeys } from "@/lib/queryKeys";
+import { useState } from "react";
+import { AdsInfoModal } from "@/components/ui/AdsInfoModal";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
 
 export function ProfilePage() {
+  const [showSignOutModal, setShowSignOutModal] = useState(false);
+  
   const { data: user } = useQuery({
     queryKey: queryKeys.auth.currentUser(),
     queryFn: () => getCurrentUser(),
@@ -12,6 +18,7 @@ export function ProfilePage() {
   });
 
   const getAvatarUrl = () => {
+    if ((user as any)?.avatarUrl) return (user as any).avatarUrl;
     if (user?.displayName) {
       return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName)}&background=0D8A50&color=fff&size=256`;
     }
@@ -20,7 +27,21 @@ export function ProfilePage() {
 
   const displayName = user?.displayName || "OpenRockets User";
   const displayEmail = user?.email || "user@openrockets.com";
-  const displayBirthday = "11th of March"; // Natural language fallback
+  // Use a simple formatter for the birthday if it exists, otherwise use fallback
+  const formatBirthday = (dateString?: string) => {
+    if (!dateString) return "11th of March"; // Fallback if no birthday
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "11th of March";
+    const day = date.getDate();
+    const suffix = ["th", "st", "nd", "rd"][(day % 10 > 3 ? 0 : (day % 100 - day % 10 != 10) ? day % 10 : 0)];
+    return `${day}${suffix} of ${date.toLocaleString('default', { month: 'long' })}`;
+  };
+  
+  const displayBirthday = formatBirthday(user?.dateOfBirth);
+
+  const executeSignOut = () => {
+    window.location.href = "/api/auth/logout";
+  };
 
   return (
     <PublishLayout>
@@ -58,6 +79,7 @@ export function ProfilePage() {
             <button 
               className="ads-modal-close-btn"
               style={{ fontFamily: "Ubuntu, sans-serif" }}
+              onClick={() => setShowSignOutModal(true)}
             >
               Sign out
             </button>
@@ -153,6 +175,36 @@ export function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {showSignOutModal && (
+        <AdsInfoModal 
+          onClose={() => setShowSignOutModal(false)}
+          title="Confirm Sign Out"
+          noLoading={true}
+          icon={<FontAwesomeIcon icon={faSignOutAlt} style={{ marginRight: 8, color: "var(--text)" }} />}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <p style={{ fontSize: '1rem', lineHeight: '1.5', margin: 0 }}>
+              Are you sure you want to sign out? This will sign you out from OpenRockets Press but will not sign you out from OpenRockets Network.
+            </p>
+            <div style={{ borderTop: '1px solid var(--border)', margin: '8px 0' }}></div>
+            <button
+              onClick={executeSignOut}
+              className="ads-modal-close-btn"
+              style={{
+                fontFamily: "Ubuntu, sans-serif",
+                alignSelf: "flex-end",
+                backgroundColor: "#e03131",
+                color: "white",
+                border: "none",
+                padding: "8px 16px"
+              }}
+            >
+              Sign out
+            </button>
+          </div>
+        </AdsInfoModal>
+      )}
     </PublishLayout>
   );
 }

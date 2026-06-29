@@ -95,6 +95,7 @@ export function PublishLayout({ children }: PublishLayoutProps) {
   });
 
   const getAvatarUrl = () => {
+    if ((user as any)?.avatarUrl) return (user as any).avatarUrl;
     if (user?.displayName) {
       return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName)}&background=0D8A50&color=fff`;
     }

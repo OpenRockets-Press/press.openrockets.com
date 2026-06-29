@@ -15,6 +15,25 @@ export default defineConfig({
       '@shared': path.resolve(__dirname, 'shared'),
     },
   },
+  server: {
+    proxy: {
+      '/proxy/auth/me': {
+        target: 'https://openrocketsauth.alwaysdata.net',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/proxy\/auth\/me/, '/api/auth/me'),
+        configure: (proxy, options) => {
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            proxyReq.removeHeader('Origin');
+            proxyReq.removeHeader('Referer');
+            // Ensure Authorization header is passed
+            if (req.headers.authorization) {
+              proxyReq.setHeader('Authorization', req.headers.authorization);
+            }
+          });
+        }
+      }
+    }
+  },
   build: {
     rollupOptions: {
       output: {

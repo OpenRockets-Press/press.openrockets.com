@@ -8,10 +8,11 @@ interface AdsInfoModalProps {
   title?: string;
   icon?: React.ReactNode;
   children?: React.ReactNode;
+  noLoading?: boolean;
 }
 
-export function AdsInfoModal({ onClose, title, icon, children }: AdsInfoModalProps) {
-  const [isLoading, setIsLoading] = useState(true);
+export function AdsInfoModal({ onClose, title, icon, children, noLoading }: AdsInfoModalProps) {
+  const [isLoading, setIsLoading] = useState(!noLoading);
 
   useEffect(() => {
     // Escape key listener for better UX
