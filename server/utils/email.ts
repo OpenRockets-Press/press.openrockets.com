@@ -81,7 +81,7 @@ export async function sendReviewEmail(
           
           <div style="display: flex; gap: 15px; align-items: center;">
             <a href="https://openrockets.com" style="color: #0066cc; text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 6px;">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Globe_icon.svg/200px-Globe_icon.svg.png" style="width: 18px; height: 18px; object-fit: contain;" />
+              <img src="https://upload.wikimedia.org/wikipedia/commons/8/8e/Globe_icon_4.svg" style="width: 18px; height: 18px; object-fit: contain;" />
               OpenRockets.com
             </a>
             <a href="https://linkedin.com/company/openrocketsinc" style="color: #0066cc; text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 6px;">
