@@ -24,14 +24,25 @@ jobs:
       - name: Build Application
         run: bunx --bun vite build
 
+      - name: Clean Remote Dist Folder
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            rm -rf ~/press.openrockets.com/dist
+            mkdir -p ~/press.openrockets.com/dist
+
       - name: Copy dist folder via SCP
         uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "dist"
-          target: "~/press.openrockets.com"
+          source: "dist/*"
+          target: "~/press.openrockets.com/dist"
+          strip_components: 1
 
       - name: Pull Code and Restart Backend
         uses: appleboy/ssh-action@v1.0.3
