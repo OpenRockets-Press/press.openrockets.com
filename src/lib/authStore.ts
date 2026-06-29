@@ -20,6 +20,46 @@ function hasWindow(): boolean {
 
 export async function fetchSessionUser(forceRefresh = false): Promise<SessionUser | null> {
   if (!hasWindow()) return null;
+  
+  // Globally intercept SSO token from URL
+  const params = new URLSearchParams(window.location.search);
+  const urlToken = params.get("token");
+  if (urlToken) {
+    try {
+      const payloadBase64 = urlToken.split('.')[1];
+      if (payloadBase64) {
+        const base64 = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
+        const pad = base64.length % 4;
+        const padded = pad ? base64 + '='.repeat(4 - pad) : base64;
+        const payload = JSON.parse(atob(padded));
+        
+        window.localStorage.setItem("orp.session.token", urlToken);
+        
+        const user: SessionUser = {
+          userId: String(payload.sub || payload.id || "mock-user-id"),
+          email: payload.email || "user@example.com",
+          displayName: payload.name || "Contributor",
+          role: "contributor",
+          accountStatus: "active",
+          consentTier: "general",
+          avatarUrl: payload.avatar_url || payload.profile?.avatar_url || null,
+          dateOfBirth: payload.profile?.date_of_birth || null,
+        };
+        window.localStorage.setItem("orp.session.v1", JSON.stringify(user));
+        cachedSession = user;
+        
+        // Strip token from URL without reloading
+        params.delete("token");
+        const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+        window.history.replaceState({}, '', newUrl);
+        
+        return user;
+      }
+    } catch (e) {
+      console.error("Failed to parse SSO token from URL", e);
+    }
+  }
+
   if (sessionPromise && !forceRefresh) return sessionPromise;
 
   sessionPromise = fetch("/api/auth/session")

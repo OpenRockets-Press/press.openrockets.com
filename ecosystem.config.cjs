@@ -2,8 +2,8 @@ module.exports = {
   apps: [
     {
       name: "orp-api",
-      script: "server/index.ts",
-      interpreter: "bun",
+      script: "/home/ubuntu/.bun/bin/bun",
+      args: "run server/index.ts",
       instances: 1, // Start with 1 instance on the VPS
       autorestart: true,
       watch: false,
