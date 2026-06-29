@@ -40,7 +40,7 @@ jobs:
             cd ~/press.openrockets.com
             git fetch origin main
             git reset --hard origin/main
-            git clean -fd
+            git clean -fd || true
           "
           
           echo "Cleaning remote dist folder..."
