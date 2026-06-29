@@ -34,7 +34,7 @@ jobs:
             rm -rf ~/press.openrockets.com/dist
 
       - name: Copy dist folder via SCP
-        uses: appleboy/scp-action@master
+        uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
