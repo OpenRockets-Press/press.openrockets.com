@@ -37,6 +37,7 @@ const SubmissionsPage = lazy(() => import("@/routes/SubmissionsPage").then((modu
 const ProfilePage = lazy(() => import("@/routes/ProfilePage").then((module) => ({ default: module.ProfilePage })));
 const ModerationPage = lazy(() => import("@/routes/ModerationPage").then((module) => ({ default: module.ModerationPage })));
 const AdminPanelPage = lazy(() => import("@/routes/AdminPanelPage").then((module) => ({ default: module.AdminPanelPage })));
+const ArtifactShortlinkPage = lazy(() => import("@/routes/ArtifactShortlinkPage").then((module) => ({ default: module.ArtifactShortlinkPage })));
 const PublicationDetailPage = lazy(() =>
   import("@/routes/PublicationDetailPage").then((module) => ({ default: module.PublicationDetailPage })),
 );
@@ -203,6 +204,12 @@ const artifactViewRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/artifacts/$titleSlug",
   component: () => withRouteSuspense(<ArtifactViewPage />),
+});
+
+const shortLinkRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/$shortId",
+  component: () => withRouteSuspense(<ArtifactShortlinkPage />),
 });
 
 const parentalConsentRoute = createRoute({
@@ -458,6 +465,7 @@ const routeTree = rootRoute.addChildren([
   logoutRoute,
   template1Route,
   artifactViewRoute,
+  shortLinkRoute,
 ]);
 
 export const router = createRouter({

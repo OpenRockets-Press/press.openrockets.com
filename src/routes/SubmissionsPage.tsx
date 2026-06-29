@@ -22,6 +22,7 @@ interface Submission {
   fileCount: number;
   publisherDomain: string;
   linkId?: string;
+  shortId?: string;
   hashtags?: Hashtag[];
   author: string;
   status: string;
@@ -34,6 +35,7 @@ export function SubmissionsPage() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const { data: user, isFetched } = useQuery({
     queryKey: queryKeys.auth.currentUser(),
@@ -70,6 +72,7 @@ export function SubmissionsPage() {
               fileCount,
               publisherDomain: "press.openrockets.com",
               linkId: `artifacts/${(p.title || "").toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}-${p.pubId || p.id}`,
+              shortId: p.shortId,
               hashtags: p.tags?.map ? p.tags.map((t: string) => ({ id: t, name: t, type: "general" as const })) : [],
               author: p.authorName || "Unknown Author",
               status: p.status,
@@ -320,22 +323,64 @@ export function SubmissionsPage() {
                       </span>
                     </div>
 
-                    <div style={{ marginTop: "4px" }}>
-                      <a 
-                        href={`https://${sub.publisherDomain}/${sub.linkId || sub.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          fontSize: "1.1rem",
-                          color: "#2563eb",
-                          fontWeight: "bold",
-                          textDecoration: "underline",
-                          wordBreak: "break-all",
-                          fontFamily: "Ubuntu, sans-serif"
-                        }}
-                      >
-                        {sub.publisherDomain}/{sub.linkId || sub.id}
-                      </a>
+                    <div style={{ marginTop: "4px", display: "flex", alignItems: "center", gap: "8px" }}>
+                      {(() => {
+                        const displayUrl = isAdmin 
+                          ? `https://press.openrockets.com/${sub.linkId || sub.id}`
+                          : `https://scienteen.com/${sub.shortId || "pending"}`;
+                        const displayLabel = isAdmin
+                          ? `press.openrockets.com/${sub.linkId || sub.id}`
+                          : `scienteen.com/${sub.shortId || "pending"}`;
+                        
+                        return (
+                          <>
+                            <a 
+                              href={displayUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                fontSize: "1.1rem",
+                                color: "#2563eb",
+                                fontWeight: "bold",
+                                textDecoration: "underline",
+                                wordBreak: "break-all",
+                                fontFamily: "Ubuntu, sans-serif"
+                              }}
+                            >
+                              {displayLabel}
+                            </a>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(displayUrl);
+                                setCopiedId(sub.id);
+                                setTimeout(() => setCopiedId(null), 2500);
+                              }}
+                              title="Copy Link"
+                              style={{
+                                background: "none",
+                                border: "none",
+                                cursor: "pointer",
+                                color: "#2563eb",
+                                padding: "4px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                transition: "all 0.2s ease"
+                              }}
+                            >
+                              {copiedId === sub.id ? (
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                                  <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                                </svg>
+                              ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                  <path fillRule="evenodd" d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1z"/>
+                                </svg>
+                              )}
+                            </button>
+                          </>
+                        );
+                      })()}
                     </div>
 
                     {sub.hashtags && sub.hashtags.length > 0 && (

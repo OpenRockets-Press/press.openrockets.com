@@ -153,10 +153,14 @@ publicationsRouter.post('/', authMiddleware, zValidator('json', createPublicatio
 
   // Generate a unique 16-character alphanumeric publication ID
   const pubId = crypto.randomBytes(8).toString('hex');
+  
+  // Generate a 7-character short link identifier (e.g. 845s73v)
+  const shortId = crypto.randomBytes(4).toString('hex').substring(0, 7);
 
   try {
     await db.insert(publications).values({
       pubId,
+      shortId,
       authorId: user.id, // Authenticated user ID
       title: body.title,
       subtitle: body.subtitle || null,
@@ -183,7 +187,7 @@ publicationsRouter.post('/', authMiddleware, zValidator('json', createPublicatio
       console.error("Discord Webhook Background Error:", err);
     });
 
-    return c.json({ success: true, data: { pubId } }, 201);
+    return c.json({ success: true, data: { pubId, shortId } }, 201);
   } catch (error) {
     console.error("Publication creation failed:", error);
     return c.json({ success: false, error: { code: 'DATABASE_ERROR', message: 'Failed to create publication' } }, 500);
@@ -256,6 +260,40 @@ publicationsRouter.get('/admin-all', authMiddleware, async (c) => {
   } catch (err: any) {
     return c.json({ success: false, error: { message: err.message } }, 500);
   }
+});
+
+// Short URL Resolver Endpoint
+publicationsRouter.get('/short/:shortId', async (c) => {
+  const shortId = c.req.param('shortId');
+  
+  const [data] = await db
+    .select({
+      pub: publications,
+      authorName: users.displayName,
+      authorAvatar: users.email // Or however you get avatar
+    })
+    .from(publications)
+    .leftJoin(users, eq(publications.authorId, users.id))
+    .where(eq(publications.shortId, shortId))
+    .limit(1);
+
+  if (!data) {
+    return c.json({ success: false, error: { code: 'NOT_FOUND', message: 'Publication not found' } }, 404);
+  }
+
+  // Same view increment logic as standard view
+  db.update(publications)
+    .set({ viewCount: sql`${publications.viewCount} + 1` })
+    .where(eq(publications.id, data.pub.id))
+    .execute()
+    .catch(err => console.error("Failed to increment view count on short URL", err));
+
+  const formattedData = {
+    ...data.pub,
+    authorName: data.authorName || 'Unknown Author',
+  };
+
+  return c.json({ success: true, data: formattedData });
 });
 
 publicationsRouter.get('/:pubId', async (c) => {

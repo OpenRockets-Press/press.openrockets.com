@@ -173,6 +173,7 @@ export function FinalScreen() {
         const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
         const newSub = {
           id: submitData.data.pubId,
+          shortId: submitData.data.shortId,
           type: mappedType,
           title,
           subtitle,

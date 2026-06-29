@@ -31,6 +31,7 @@ export const publications = mysqlTable('publications', {
   tags: text('tags'), // JSON string of tags
   communities: text('communities'), // JSON string of community IDs
   links: text('links'), // JSON string of links array
+  shortId: varchar('short_id', { length: 7 }).unique(), // e.g. 845s73v
   viewCount: int('view_count').default(0),
   downloadCount: int('download_count').default(0),
   submittedAt: timestamp('submitted_at').defaultNow(),
