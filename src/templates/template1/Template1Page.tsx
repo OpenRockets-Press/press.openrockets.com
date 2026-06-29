@@ -292,6 +292,13 @@ export function Template1Page({ data }: { data?: any }) {
         <Template1Header onOpenInfo={setInfoModalOpen} />
       </div>
       
+      {data?.status !== 'published' ? (
+        <main style={{ flex: 1, padding: '2rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+          <h2 style={{ fontFamily: '"Noto Sans", sans-serif', color: '#111', fontSize: '1.5rem', fontWeight: 500, textAlign: 'center' }}>
+            Sorry, this artifact is not found or is currently in review.
+          </h2>
+        </main>
+      ) : (
       <main id="printable-area" style={{ flex: 1, padding: '2rem 1rem' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
           
@@ -686,6 +693,7 @@ export function Template1Page({ data }: { data?: any }) {
 
         </div>
       </main>
+      )}
 
       {/* Footer - NOT translatable */}
       <div translate="no" className="notranslate no-print">

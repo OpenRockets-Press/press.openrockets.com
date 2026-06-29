@@ -39,12 +39,12 @@ jobs:
           ssh $USER@$HOST "
             cd ~/press.openrockets.com
             git fetch origin main
-            git reset --hard origin/main
+            git reset --hard origin/main || true
             git clean -fd || true
           "
           
           echo "Cleaning remote dist folder..."
-          ssh $USER@$HOST "rm -rf ~/press.openrockets.com/dist"
+          ssh $USER@$HOST "rm -rf ~/press.openrockets.com/dist || true"
           
           echo "Uploading new dist folder..."
           scp -r dist $USER@$HOST:~/press.openrockets.com/

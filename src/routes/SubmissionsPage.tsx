@@ -21,6 +21,7 @@ interface Submission {
   hashtags?: Hashtag[];
   author: string;
   status: string;
+  createdAt?: number;
 }
 
 export function SubmissionsPage() {
@@ -30,15 +31,22 @@ export function SubmissionsPage() {
 
   useEffect(() => {
     const loadSubmissions = async () => {
+      setIsLoaded(false); // start loading overlay
       try {
         const data = await localforage.getItem<Submission[]>("openRockets_submissions");
         if (data && Array.isArray(data)) {
-          setSubmissions(data);
+          // Sort chronologically (latest first)
+          const sorted = data.sort((a, b) => {
+            const timeA = a.createdAt || 0;
+            const timeB = b.createdAt || 0;
+            return timeB - timeA;
+          });
+          setSubmissions(sorted);
         }
       } catch (err) {
         console.error("Failed to load submissions", err);
       } finally {
-        setIsLoaded(true);
+        setTimeout(() => setIsLoaded(true), 600); // small delay for the spinner visual
       }
     };
     loadSubmissions();
@@ -68,7 +76,33 @@ export function SubmissionsPage() {
         </h1>
 
         {!isLoaded ? (
-          <div style={{ color: "#666" }}>Loading submissions...</div>
+          <div style={{ 
+            display: "flex", 
+            flexDirection: "column", 
+            alignItems: "center", 
+            justifyContent: "center", 
+            padding: "4rem",
+            backgroundColor: "#fff",
+            borderRadius: "8px",
+            border: "1px solid #ddd",
+            width: "100%"
+          }}>
+            <div style={{
+              width: "40px",
+              height: "40px",
+              border: "3px solid #f3f3f3",
+              borderTop: "3px solid #000",
+              borderRadius: "50%",
+              animation: "spinner-spin 1s linear infinite"
+            }} />
+            <style>{`
+              @keyframes spinner-spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+            `}</style>
+            <p style={{ marginTop: "1rem", color: "#666", fontFamily: "Ubuntu, sans-serif" }}>Refreshing submissions...</p>
+          </div>
         ) : submissions.length === 0 ? (
           <div style={{ color: "#666", fontSize: "1.1rem" }}>
             The submission section is currently empty. Head over to Publish to submit your first artifact!

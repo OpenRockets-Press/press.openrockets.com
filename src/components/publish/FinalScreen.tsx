@@ -168,9 +168,26 @@ export function FinalScreen() {
         localStorage.removeItem("publish_artifact_publisher");
         localStorage.removeItem("publish_artifact_link_id");
         
-        // Redirect to new artifact route
+        // Append to local submissions log
+        const prevSubmissions = await localforage.getItem<any[]>("openRockets_submissions") || [];
         const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-        window.location.href = `/artifacts/${slug}-${submitData.data.pubId}`;
+        const newSub = {
+          id: submitData.data.pubId,
+          type: mappedType,
+          title,
+          subtitle,
+          fileCount: activeFiles.length,
+          publisherDomain: "press.openrockets.com",
+          linkId: `artifacts/${slug}-${submitData.data.pubId}`,
+          hashtags,
+          author: "You",
+          status: "pending",
+          createdAt: Date.now()
+        };
+        await localforage.setItem("openRockets_submissions", [newSub, ...prevSubmissions]);
+        
+        // Redirect to submissions section instead of the artifact
+        window.location.href = `/submissions`;
       } catch (err: any) {
         console.error("Submission error:", err);
         setAlertState({ isOpen: true, message: `Error during submission: ${err.message}` });
