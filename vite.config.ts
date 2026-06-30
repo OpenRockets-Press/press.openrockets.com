@@ -7,8 +7,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 // https://vite.dev/config/
-export default defineConfig(({ command }) => ({
-  base: command === 'build' ? 'https://press.openrockets.com/' : '/',
+export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
@@ -58,4 +57,4 @@ export default defineConfig(({ command }) => ({
       reporter: ['text', 'html'],
     },
   },
-}))
+})

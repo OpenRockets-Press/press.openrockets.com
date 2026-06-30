@@ -2,7 +2,7 @@ import { Template1Header } from "./Template1Header";
 import { Template1Footer } from "./Template1Footer";
 import type { HomeInfoModalKind } from "@/components/home/HomeInfoModal";
 import { useQuery } from "@tanstack/react-query";
-import { getCurrentUser, API_BASE } from "@/lib/api";
+import { getCurrentUser } from "@/lib/api";
 import { getSessionUser } from "@/lib/authStore";
 import { queryKeys } from "@/lib/queryKeys";
 import { Spinner } from "@/components/ui/Spinner";
@@ -76,7 +76,7 @@ export function Template1Page({ data }: { data?: any }) {
             setGeneralTags(parsedTags.filter((t: any) => t.type === 'general'));
           } else {
             // If they are just IDs, fallback to fetching
-            fetch(`${API_BASE}/config/hashtags.json`)
+            fetch('/config/hashtags.json')
               .then(res => res.json())
               .then(config => {
                  const all = config.hashtags || config;
@@ -93,7 +93,7 @@ export function Template1Page({ data }: { data?: any }) {
     }
 
     // Fallback for mock preview
-    fetch(`${API_BASE}/config/hashtags.json`)
+    fetch('/config/hashtags.json')
       .then(res => res.json())
       .then(config => {
          const all = config.hashtags || config;
@@ -147,7 +147,7 @@ export function Template1Page({ data }: { data?: any }) {
   useEffect(() => {
     if (data && !isPreviewMode && data.pubId) {
       // Fire and forget view increment
-      fetch(`${API_BASE}/api/publications/${data.pubId}/view`, { method: 'POST' }).catch(() => {});
+      fetch(`/api/publications/${data.pubId}/view`, { method: 'POST' }).catch(() => {});
     }
   }, [data?.pubId, isPreviewMode]);
 

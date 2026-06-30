@@ -1,0 +1,1 @@
+const fs = require('fs'); const content = fs.readFileSync('dist/assets/index-CZo3edgw.js', 'utf8'); const match = content.match(/typeof window!==.undefined.[^;]+;/); console.log(match ? match[0] : 'API_BASE not found!');
