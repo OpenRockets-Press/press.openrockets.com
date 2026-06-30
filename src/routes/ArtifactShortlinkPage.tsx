@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "@tanstack/react-router";
 import { Template1Page } from "@/templates/template1/Template1Page";
 import { Spinner } from "@/components/ui/Spinner";
+import { API_BASE } from "@/lib/api";
 
 export function ArtifactShortlinkPage() {
   const { shortId } = useParams({ strict: false }) as any;
@@ -24,7 +25,7 @@ export function ArtifactShortlinkPage() {
       try {
         if (!shortId) throw new Error("Invalid short ID");
         
-        const res = await fetch(`/api/publications/short/${shortId}`);
+        const res = await fetch(`${API_BASE}/api/publications/short/${shortId}`);
         const result = await res.json();
         
         if (!result.success) {

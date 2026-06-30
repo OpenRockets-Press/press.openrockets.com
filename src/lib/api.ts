@@ -18,6 +18,9 @@ import type {
 import { REQUIRES_GUARDIAN } from "@/lib/consent";
 import { clearSessionUser, getSessionUser, setSessionUser } from "@/lib/authStore";
 import type { SessionUser } from "@/lib/authStore";
+
+export const API_BASE = (typeof window !== "undefined" && window.location.hostname !== "press.openrockets.com" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") ? "https://press.openrockets.com" : "";
+
 import {
   account,
   appwriteConfig,
@@ -100,7 +103,7 @@ async function callApi<T>(
     if (token) headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`/api/${path}`, {
+  const res = await fetch(`${API_BASE}/api/${path}`, {
     method,
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -614,17 +617,19 @@ export async function getPublicationByPubId(pubId: string): Promise<Publication>
   return mapPublication(doc as unknown as AppwriteDocument);
 }
 
-export async function downloadPublication(pubId: string): Promise<void> {
-  const res = await fetch(`/api/serve-pdf?pub_id=${encodeURIComponent(pubId)}`);
-
+export async function fetchPdfBuffer(pubId: string): Promise<ArrayBuffer> {
+  const res = await fetch(`${API_BASE}/api/serve-pdf?pub_id=${encodeURIComponent(pubId)}`);
   if (!res.ok) {
     const data = await res.json().catch(() => ({ error: "PDF could not be retrieved." }));
     throw new Error(
       (data as { error?: string }).error || "PDF could not be retrieved.",
     );
   }
+  return res.arrayBuffer();
+}
 
-  const blob = await res.blob();
+export async function downloadPublication(pubId: string): Promise<void> {
+  const blob = new Blob([await fetchPdfBuffer(pubId)], { type: "application/pdf" });
   const url = URL.createObjectURL(blob);
 
   const anchor = document.createElement("a");

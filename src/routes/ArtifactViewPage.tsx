@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "@tanstack/react-router";
 import { Template1Page } from "@/templates/template1/Template1Page";
 import { Spinner } from "@/components/ui/Spinner";
+import { API_BASE } from "@/lib/api";
 
 export function ArtifactViewPage() {
   const { titleSlug } = useParams({ strict: false });
@@ -25,7 +26,8 @@ export function ArtifactViewPage() {
       try {
         // Extract the pubId (the 16-character code) from the end of the URL slug
         const pubId = titleSlug ? titleSlug.split('-').pop() : '';
-        const res = await fetch(`/api/publications/${pubId}`);
+        if (!pubId) throw new Error("Invalid publication ID");
+        const res = await fetch(`${API_BASE}/api/publications/${pubId}`);
         const result = await res.json();
         
         if (res.ok && result.success) {
