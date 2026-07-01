@@ -5841,3 +5841,40 @@ button.ad-attribution-why:hover {
     margin-left: 0 !important;
   }
 }
+
+/* Welcome Screen Logos Responsive Fix */
+.welcome-logo-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.welcome-logo-image {
+  grid-area: 1 / 1;
+  width: auto;
+  height: calc(3rem * var(--scale, 1));
+  max-width: 100%;
+  object-fit: contain;
+  justify-self: start;
+  transition: opacity 1s ease-in-out;
+}
+
+@media (min-width: 916px) {
+  .welcome-logo-container {
+    height: 9rem;
+  }
+  .welcome-logo-image {
+    height: calc(5rem * var(--scale, 1));
+    max-height: 9rem;
+  }
+}
+
+@media (max-width: 915px) {
+  .welcome-logo-container {
+    height: auto;
+  }
+  .welcome-logo-image {
+    width: 100%;
+    height: auto;
+  }
+}

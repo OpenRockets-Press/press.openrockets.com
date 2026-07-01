@@ -188,7 +188,7 @@ export function WelcomeScreen() {
           zIndex: 10
         }}
       >
-        <div style={{ height: "4.5rem", marginBottom: "1rem", position: "relative", width: "100%" }}>
+        <div className="welcome-logo-container" style={{ position: "relative", width: "100%" }}>
           {LOGOS.map((logo, idx) => {
             const scale = scales[logo] || 1;
             return (
@@ -197,16 +197,11 @@ export function WelcomeScreen() {
                 src={logo} 
                 alt="Journal Logo" 
                 onLoad={(e) => handleImageLoad(logo, e)}
+                className="welcome-logo-image"
                 style={{ 
-                  height: `${3 * scale}rem`, 
-                  width: "auto",
-                  position: "absolute",
-                  top: "50%",
-                  left: 0,
-                  transform: "translateY(-50%)",
+                  '--scale': scale,
                   opacity: logoIndex === idx ? 1 : 0,
-                  transition: "opacity 1s ease-in-out"
-                }} 
+                } as React.CSSProperties}
               />
             );
           })}
