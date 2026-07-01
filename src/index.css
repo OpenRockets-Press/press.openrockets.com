@@ -5773,3 +5773,71 @@ button.ad-attribution-why:hover {
     max-width: 100% !important;
   }
 }
+
+/* Artifact Metadata Responsive Fix */
+.artifact-meta-section {
+  display: flex;
+  flex-direction: column;
+}
+.artifact-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 8px;
+}
+.artifact-meta-divider {
+  display: none;
+  border: 0;
+  border-top: 1px solid #e5e7eb;
+  margin: 12px 0 4px 0;
+}
+
+.artifact-author-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+.artifact-author-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.artifact-author-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.artifact-views {
+  margin-left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 915px) {
+  .artifact-meta-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+  .artifact-meta-divider {
+    display: block !important;
+  }
+  .artifact-author-block {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+  .artifact-author-meta {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+  .artifact-date-bullet {
+    display: none !important;
+  }
+  .artifact-views {
+    margin-left: 0 !important;
+  }
+}

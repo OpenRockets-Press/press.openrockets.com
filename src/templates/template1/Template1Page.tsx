@@ -359,66 +359,80 @@ export function Template1Page({ data }: { data?: any }) {
           
           {/* Metadata Section */}
           <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-
-            {/* Repository Section (Category Hashtags) */}
             {mainTags.length > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '8px' }}>
-                <h2 style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1.1rem', fontWeight: 600, margin: 0, color: '#111' }}>
-                  Repository
-                </h2>
-                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                  {mainTags.map((tag, idx) => (
-                    <a key={`main-${idx}`} href={`/hashtag/${encodeURIComponent(tag.name)}`} style={{
-                      color: '#0066cc', 
-                      textDecoration: 'none',
-                      fontFamily: '"Noto Sans", sans-serif', 
-                      fontSize: '0.95rem',
-                      fontWeight: 500
-                    }}>
-                      {tag.name.replace(/^#/, '')}
-                    </a>
-                  ))}
+              <div className="artifact-meta-section">
+                <div className="artifact-meta-row">
+                  <h2 style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1.1rem', fontWeight: 600, margin: 0, color: '#111' }}>
+                    Repository
+                  </h2>
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                    {mainTags.map((tag, idx) => (
+                      <a key={`main-${idx}`} href={`/hashtag/${encodeURIComponent(tag.name)}`} style={{
+                        color: '#0066cc', 
+                        textDecoration: 'none',
+                        fontFamily: '"Noto Sans", sans-serif', 
+                        fontSize: '0.95rem',
+                        fontWeight: 500
+                      }}>
+                        {tag.name.replace(/^#/, '')}
+                      </a>
+                    ))}
+                  </div>
                 </div>
+                <hr className="artifact-meta-divider" />
               </div>
             )}
 
             {/* Related Section (General Hashtags) */}
             {generalTags.length > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '4px' }}>
-                <h2 style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1.1rem', fontWeight: 600, margin: 0, color: '#111' }}>
-                  Related
-                </h2>
-                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                  {generalTags.map((tag, idx) => (
-                    <a key={`gen-${idx}`} href={`/hashtag/${encodeURIComponent(tag.name)}`} style={{
-                      color: '#0066cc', 
-                      textDecoration: 'none',
-                      fontFamily: '"Noto Sans", sans-serif', 
-                      fontSize: '0.95rem',
-                      fontWeight: 500
-                    }}>
-                      {tag.name.replace(/^#/, '')}
-                    </a>
-                  ))}
+              <div className="artifact-meta-section">
+                <div className="artifact-meta-row">
+                  <h2 style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1.1rem', fontWeight: 600, margin: 0, color: '#111' }}>
+                    Related
+                  </h2>
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                    {generalTags.map((tag, idx) => (
+                      <a key={`gen-${idx}`} href={`/hashtag/${encodeURIComponent(tag.name)}`} style={{
+                        color: '#0066cc', 
+                        textDecoration: 'none',
+                        fontFamily: '"Noto Sans", sans-serif', 
+                        fontSize: '0.95rem',
+                        fontWeight: 500
+                      }}>
+                        {tag.name.replace(/^#/, '')}
+                      </a>
+                    ))}
+                  </div>
                 </div>
+                <hr className="artifact-meta-divider" />
               </div>
             )}
 
             {/* Contributor name/date - NOT translatable */}
-            <div translate="no" className="notranslate" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '8px' }}>
-              <img 
-                src={getAvatarUrl()} 
-                alt="Profile" 
-                style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} 
-              />
-              <span style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1.1rem', color: '#111827', fontWeight: 500 }}>
-                By {authorName} <span style={{ color: '#000000', marginLeft: '6px' }}>• {publishDate}</span>
-              </span>
-              <div style={{ marginLeft: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <img src="/brand/views_icon.png" alt="Views" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
-                <span style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1rem', color: '#6b7280', fontWeight: 500 }}>
-                  {data?.viewCount || 0}
+            <div translate="no" className="notranslate artifact-author-block">
+              <div className="artifact-author-profile">
+                <img 
+                  src={getAvatarUrl()} 
+                  alt="Profile" 
+                  style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} 
+                />
+                <span style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1.1rem', color: '#111827', fontWeight: 500 }}>
+                  By {authorName}
                 </span>
+              </div>
+              
+              <div className="artifact-author-meta">
+                <span className="artifact-date">
+                  <span className="artifact-date-bullet">• </span>
+                  {publishDate}
+                </span>
+                
+                <div className="artifact-views">
+                  <img src="/brand/views_icon.png" alt="Views" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
+                  <span style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1rem', color: '#6b7280', fontWeight: 500 }}>
+                    {data?.viewCount || 0}
+                  </span>
+                </div>
               </div>
             </div>
 
