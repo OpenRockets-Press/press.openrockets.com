@@ -5878,3 +5878,9 @@ button.ad-attribution-why:hover {
     height: auto;
   }
 }
+
+@media (min-width: 768px) {
+  .menu-button, .mobile-hamburger-btn {
+    display: none !important;
+  }
+}
