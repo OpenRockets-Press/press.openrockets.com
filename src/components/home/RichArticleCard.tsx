@@ -1,13 +1,12 @@
-import { memo, useState } from "react";
+import { memo } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faFileAlt, faCode, faCube, faEye } from '@fortawesome/free-solid-svg-icons';
-import { faPython, faJs, faRust, faGolang } from '@fortawesome/free-brands-svg-icons';
+import { faFileAlt, faCode, faCube, faEye, faC } from '@fortawesome/free-solid-svg-icons';
+import { faPython, faJs, faRust } from '@fortawesome/free-brands-svg-icons';
 import { PDFCover } from "./PDFCover";
-import { Modal } from "@/components/ui/Modal";
 
 export interface RichArticleCardProps {
-  article: any; 
+  article: any;
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -16,107 +15,140 @@ const TYPE_LABELS: Record<string, string> = {
   'code_gist': "Code Gist",
   '3d_artifact': "3D Artifact",
   '3d_model': "3D Model",
-  'dataset': "Dataset",
-  'video': "Video",
-  'audio': "Audio",
-  'presentation': "Presentation",
+  'book': "Book",
   'magazine': "Magazine",
+  'poster': "Poster",
   'other': "Other",
-  'image': "Image"
+  'image': "Image",
+  'Scienteen': "Scienteen Library of Science",
+  'Software': "Software and Code",
+  'Artifact3D': "3D Artifact",
+  'ResearchPaper': "Research Paper"
 };
 
 const TYPE_IMAGE_PATHS: Record<string, string> = {
   'software_code': "/brand/software_icon.png",
+  'Software': "/brand/software_icon.png",
   'code_gist': "/brand/software_icon.png",
   '3d_artifact': "/brand/3d artifcat.png.png",
+  'Artifact3D': "/brand/3d artifcat.png.png",
   '3d_model': "/brand/3d artifcat.png.png",
+  'Scienteen': "/brand/imagifact.png"
 };
 
-const LICENSE_ICONS: Record<string, string> = {
-  'ORP_KANGAROO': "/brand/licences/kangarooo.png",
-  'ORP_BEAVER': "/brand/licences/beaver,png.png",
-  'ORP_EAGLE': "/brand/licences/hummingbird.png",
+const CODE_BGS: Record<string, string> = {
+  'Light Crimson': '#FFE4E8',
+  'Light Pink': '#FFB6C1',
+  'Pure White': '#FFFFFF',
+  'Marble': '#F0EAD6',
+  'Gray': '#E0E0E0'
 };
 
 const LANGUAGE_COLORS: Record<string, string> = {
   'python': "#3776AB",
   'javascript': "#F7DF1E",
-  'typescript': "#3178C6",
+  'js': "#F7DF1E",
   'rust': "#CE412B",
   'c': "#00599C",
   'cpp': "#00599C",
-  'zip': "#F6B26B"
+  'c++': "#00599C"
 };
 
 const LANGUAGE_ICONS: Record<string, any> = {
   'python': faPython,
   'javascript': faJs,
-  'typescript': faJs,
+  'js': faJs,
   'rust': faRust,
-  'go': faGolang,
+  'c': faC,
+  'cpp': faC,
+  'c++': faC
 };
+
+const LICENSE_ICONS: Record<string, string> = {
+  'Kangaroo': "/brand/licences/kangarooo.png",
+  'Beaver': "/brand/licences/beaver,png.png",
+  'Hummingbird': "/brand/licences/hummingbird.png",
+  'CC': "/brand/licences/creativecommons_usethisforall.png",
+};
+
+function generateSlug(title: string, pubId: string) {
+  const slug = (title || 'untitled').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  return `/artifacts/${slug}-${pubId}`;
+}
 
 function RichArticleCardComponent({ article }: RichArticleCardProps) {
   const navigate = useNavigate();
-  const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
-  const type = article.type || 'other';
+  const type = article.type || 'research_paper';
 
   let parsedTags: any[] = [];
   try {
-    if (typeof article.tags === 'string') parsedTags = JSON.parse(article.tags);
-    else if (Array.isArray(article.tags)) parsedTags = article.tags;
-  } catch (e) {
-    // Ignore parse error
-  }
+    if (typeof article.tags === 'string') {
+      parsedTags = JSON.parse(article.tags);
+    } else if (Array.isArray(article.tags)) {
+      parsedTags = article.tags;
+    }
+  } catch (e) {}
 
-  const generateSlug = (title: string, pubId: string) => {
-    const slug = (title || 'untitled').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    return `/artifacts/${slug}-${pubId}`;
-  };
+  const isCode = type === 'software_code' || type === 'code_gist' || type === 'Software';
+  const is3D = type === '3d_artifact' || type === '3d_model' || type === 'Artifact3D';
 
   const renderPreview = () => {
-    const isCode = type === 'software_code' || type === 'code_gist';
-    const is3D = type === '3d_artifact' || type === '3d_model';
-    
-    if (isCode && article.codeSnippet) {
-      const snippetLines = article.codeSnippet.split('\n');
-      const isTruncated = snippetLines.length > 5;
-      const snippet = isTruncated 
-        ? snippetLines.slice(0, 5).join('\n') + '\n...' 
-        : article.codeSnippet;
-      const lang = article.primaryLanguage || 'javascript';
-      const langColor = LANGUAGE_COLORS[lang.toLowerCase()] || '#FFF';
-      const IconComponent = LANGUAGE_ICONS[lang.toLowerCase()] || faCode;
+    if (isCode) {
+      const lang = (article.primaryLanguage || article.metadata?.language || 'code').toLowerCase();
+      const IconComponent = LANGUAGE_ICONS[lang] || faCode;
+      const langColor = LANGUAGE_COLORS[lang] || '#569cd6';
       
-      return (
-        <div style={{ height: '220px', display: 'flex', flexDirection: 'column', backgroundColor: '#1e1e1e', overflow: 'hidden', position: 'relative', borderTopLeftRadius: '12px', borderTopRightRadius: '12px' }}>
-          <div style={{ padding: '16px 16px 8px 16px', borderBottom: '1px solid #333', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'Inter, system-ui, sans-serif' }}>
-            <FontAwesomeIcon icon={IconComponent} style={{ color: langColor, fontSize: '16px' }} />
-            <span style={{ color: '#FFF', fontWeight: 'bold', fontSize: '14px', textTransform: 'capitalize' }}>{lang}</span>
+      const bgName = article.metadata?.codeBackground || 'Pure White';
+      const bgColor = CODE_BGS[bgName] || '#FFFFFF';
+
+      const textBase = '#333333';
+      const keyword = '#0000ff';
+      const stringCol = '#a31515';
+      const funcCol = '#795e26';
+      const control = '#af00db';
+
+      const rawSnippet = article.codeSnippet || article.metadata?.codeSnippet;
+
+      if (rawSnippet) {
+        return (
+          <div style={{ height: '220px', display: 'flex', flexDirection: 'column', backgroundColor: '#1e1e1e', overflow: 'hidden', position: 'relative', borderTopLeftRadius: '12px', borderTopRightRadius: '12px' }}>
+            <div style={{ padding: '16px 16px 8px 16px', borderBottom: '1px solid #333', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'Inter, system-ui, sans-serif' }}>
+              <FontAwesomeIcon icon={IconComponent} style={{ color: langColor, fontSize: '16px' }} />
+              <span style={{ color: '#FFF', fontWeight: 'bold', fontSize: '14px', textTransform: 'capitalize' }}>{lang || 'Code'}</span>
+            </div>
+            <div style={{ flex: 1, backgroundColor: bgColor, padding: '16px', color: textBase, fontFamily: 'monospace', fontSize: '24px', lineHeight: '1.4', overflow: 'hidden' }}>
+              <pre style={{ margin: 0, opacity: 0.9 }}>
+                <code style={{ display: 'block' }}>
+                  <span style={{ color: keyword }}>import</span> {'{'} optimize {'}'} <span style={{ color: keyword }}>from</span> <span style={{ color: stringCol }}>'@ffmpeg/core'</span>;<br/>
+                  <br/>
+                  <span style={{ color: keyword }}>async function</span> <span style={{ color: funcCol }}>processStream</span>(input) {'{'}<br/>
+                  &nbsp;&nbsp;<span style={{ color: keyword }}>const</span> buffer = <span style={{ color: control }}>await</span> optimize(input);<br/>
+                  &nbsp;&nbsp;<span style={{ color: control }}>return</span> buffer;<br/>
+                  {'}'}
+                </code>
+              </pre>
+            </div>
           </div>
-          <div 
-            style={{ flex: 1, backgroundColor: '#1e1e1e', padding: '16px', color: '#ccc', fontFamily: 'monospace', fontSize: '12px', lineHeight: '1.4', overflow: 'hidden', cursor: 'pointer', zIndex: 2, position: 'relative' }}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setIsCodeModalOpen(true);
-            }}
-          >
-            <pre style={{ margin: 0, opacity: 0.9, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-              <code>{snippet}</code>
-            </pre>
-            {isTruncated && (
-              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '40px', background: 'linear-gradient(transparent, #1e1e1e)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: '8px', color: '#888', fontSize: '11px', fontWeight: 'bold' }}>
-                Click to expand
-              </div>
-            )}
+        );
+      } else {
+        return (
+          <div style={{ height: '220px', display: 'flex', flexDirection: 'column', backgroundColor: '#1e1e1e', overflow: 'hidden', position: 'relative', borderTopLeftRadius: '12px', borderTopRightRadius: '12px' }}>
+            <div style={{ padding: '16px 16px 8px 16px', borderBottom: '1px solid #333', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'Inter, system-ui, sans-serif' }}>
+              <FontAwesomeIcon icon={IconComponent} style={{ color: langColor, fontSize: '16px' }} />
+              <span style={{ color: '#FFF', fontWeight: 'bold', fontSize: '14px', textTransform: 'capitalize' }}>{lang}</span>
+            </div>
+            <div style={{ flex: 1, backgroundColor: bgColor, padding: '16px', color: textBase, fontFamily: 'monospace', fontSize: '12px', lineHeight: '1.4', overflow: 'hidden' }}>
+              <pre style={{ margin: 0, opacity: 0.9, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                <code>{rawSnippet || '// No preview available for this code artifact.'}</code>
+              </pre>
+            </div>
           </div>
-        </div>
-      );
+        );
+      }
     }
     
     if (is3D) {
-      const previewUrl = article.previewStorageKey ? `https://press.openrockets.com/storage/${article.previewStorageKey}` : '/brand/imagifact.png';
+      const previewUrl = article.previewStorageKey ? `https://press.openrockets.com/storage/${article.previewStorageKey}` : (article.mainImage || '/brand/imagifact.png');
       return (
         <div style={{ height: '220px', position: 'relative', backgroundColor: '#f0f0f0', borderTopLeftRadius: '12px', borderTopRightRadius: '12px', overflow: 'hidden' }}>
           <img src={previewUrl} alt="3D Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -128,7 +160,22 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
       );
     }
 
-    if (type === 'research_paper' && !article.previewStorageKey && article.fileStorageKey && article.fileStorageKey !== 'null' && article.fileStorageKey.trim() !== '') {
+    if (article.mainImage) {
+      // Original Collage Design for mock articles
+      return (
+        <div className="rich-article-collage">
+          <div className="collage-main">
+            <img src={article.mainImage} alt="Main Collage" />
+          </div>
+          <div className="collage-side">
+            <img src={article.sideImage1 || article.mainImage} alt="Top Collage" />
+            <img src={article.sideImage2 || article.mainImage} alt="Bottom Collage" />
+          </div>
+        </div>
+      );
+    }
+
+    if ((type === 'research_paper' || type === 'ResearchPaper') && !article.previewStorageKey && article.fileStorageKey && article.fileStorageKey !== 'null' && article.fileStorageKey.trim() !== '') {
       const pdfUrl = `https://press.openrockets.com/storage/${article.fileStorageKey}`;
       return (
         <div className="rich-article-collage" style={{ height: '220px', position: 'relative', backgroundColor: '#f0f0f0', borderTopLeftRadius: '12px', borderTopRightRadius: '12px', overflow: 'hidden' }}>
@@ -137,14 +184,11 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
       );
     }
 
-    // Default Preview (PDF or Image)
     const previewUrl = article.previewStorageKey 
       ? `https://press.openrockets.com/storage/${article.previewStorageKey}` 
       : article.coverStorageKey 
         ? `https://press.openrockets.com/storage/${article.coverStorageKey}`
-        : (type.includes('image') || type === 'poster') && article.fileStorageKey && article.fileStorageKey !== 'null'
-          ? `https://press.openrockets.com/storage/${article.fileStorageKey}`
-          : '/brand/imagifact.png';
+        : '/brand/imagifact.png';
 
     return (
       <div className="rich-article-collage" style={{ height: '220px', position: 'relative', backgroundColor: '#f0f0f0', borderTopLeftRadius: '12px', borderTopRightRadius: '12px', overflow: 'hidden' }}>
@@ -152,6 +196,17 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
       </div>
     );
   };
+
+  const rawLicense = article.license || article.metadata?.license;
+  let cleanLicense = '';
+  if (rawLicense) {
+    cleanLicense = rawLicense.replace('ORP_', '').trim();
+  }
+  // Title case for matching with LICENSE_ICONS, e.g. "beaver" -> "Beaver"
+  let iconLicense = cleanLicense;
+  if (iconLicense && iconLicense.length > 0) {
+    iconLicense = iconLicense.charAt(0).toUpperCase() + iconLicense.slice(1).toLowerCase();
+  }
 
   return (
     <div className="rich-article-card" data-testid="publication-card" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -176,7 +231,7 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
               e.stopPropagation();
             }}
           >
-            {type === 'research_paper' ? (
+            {type === 'research_paper' || type === 'ResearchPaper' ? (
               <FontAwesomeIcon icon={faFileAlt} />
             ) : TYPE_IMAGE_PATHS[type] ? (
               <img src={TYPE_IMAGE_PATHS[type]} alt={TYPE_LABELS[type]} style={{ width: '14px', height: '14px', objectFit: 'contain' }} />
@@ -186,17 +241,17 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
             {TYPE_LABELS[type] || 'Artifact'}
           </button>
           
-          {article.license && (
+          {cleanLicense && (
             <Link 
-              to={`/licenses/${encodeURIComponent(article.license.toLowerCase().replace('orp_', ''))}` as any}
+              to={`/licenses/${encodeURIComponent(cleanLicense.toLowerCase())}` as any}
               style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#007185', fontWeight: 'bold', textDecoration: 'none', backgroundColor: '#e9ecef', padding: '4px 8px', borderRadius: '6px' }}
             >
               <img 
-                src={LICENSE_ICONS[article.license] || "/brand/licences/creativecommons_usethisforall.png"} 
-                alt={`${article.license} License`}
+                src={LICENSE_ICONS[iconLicense] || "/brand/licences/creativecommons_usethisforall.png"} 
+                alt={`${cleanLicense} License`}
                 style={{ width: '14px', height: '14px', objectFit: 'contain' }}
               />
-              {article.license.replace('ORP_', '')}
+              {cleanLicense}
             </Link>
           )}
         </div>
@@ -205,40 +260,60 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
           {article.title}
         </h3>
         
-        {article.subtitle && (
-          <p className="card-description" style={{ fontSize: "0.8rem", color: "#444", lineHeight: "1.4", marginBottom: "10px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-            {article.subtitle}
-          </p>
-        )}
+        <p className="card-description" style={{ fontSize: "0.8rem", color: "#444", lineHeight: "1.4", marginBottom: "10px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+          {article.subtitle || article.description}
+        </p>
         
-        {/* HASHTAGS */}
-        <div className="rich-tags-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '12px', position: 'relative', zIndex: 2 }}>
+        {/* HASHTAGS (Original Format) */}
+        <div className="rich-tags-container">
           {parsedTags.map((tagObj, idx) => {
             const tagName = typeof tagObj === 'string' ? tagObj : (tagObj.name || String(tagObj));
+            const isMain = typeof tagObj === 'object' && tagObj.isMain;
             return (
-            <span 
-              key={`${tagName}-${idx}`}
-              className="rich-tag tag-normal"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                navigate({ to: `/hashtag/${encodeURIComponent(tagName)}` });
-              }}
-              style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 8px', borderRadius: '12px', fontSize: '10px', backgroundColor: '#e9ecef', color: '#495057' }}
-            >
-              <span style={{ color: '#007185' }}>#</span>
-              {tagName}
-            </span>
+              <span 
+                key={`${tagName}-${idx}`}
+                className={`rich-tag notranslate ${isMain ? 'tag-main' : 'tag-normal'}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  navigate({ to: `/hashtag/${encodeURIComponent(tagName)}` });
+                }}
+                style={{ cursor: 'pointer' }}
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
+                {tagName}
+              </span>
             );
           })}
         </div>
 
         {/* VIEWS SECTION AT THE BOTTOM */}
-        <div className="rich-article-meta" style={{ marginTop: 'auto', display: "flex", alignItems: "center", justifyContent: "flex-end", borderTop: "1px solid var(--border)", paddingTop: "8px" }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#666', fontSize: '12px', fontWeight: 'bold' }}>
-            <FontAwesomeIcon icon={faEye} />
-            <span>{article.viewCount || 0} views</span>
+        <div className="rich-article-meta" style={{ marginTop: 'auto', display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid var(--border)", paddingTop: "8px" }}>
+          
+          <div className="rich-rating" style={{ display: "flex", alignItems: "center", gap: "4px", visibility: article.rating ? 'visible' : 'hidden' }}>
+            <div style={{ display: "flex", color: "#F59E0B" }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            </div>
+            <span style={{ fontSize: "0.75rem", color: "#007185", fontWeight: 500 }}>{article.rating || '4.5'}</span>
           </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {article.comments !== undefined && (
+              <div className="rich-comments" style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                <Link to="/" style={{ fontSize: "0.75rem", color: "#007185", textDecoration: "underline", fontWeight: 500 }}>{article.comments} comments</Link>
+              </div>
+            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#666', fontSize: '12px', fontWeight: 'bold' }}>
+              <FontAwesomeIcon icon={faEye} />
+              <span>{article.viewCount || article.views || 0} views</span>
+            </div>
+          </div>
+
         </div>
 
       </div>
@@ -249,19 +324,6 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
         style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 }}
         aria-label={`View ${article.title}`}
       />
-
-      <Modal 
-        open={isCodeModalOpen} 
-        title={`${article.title} - Code Snippet`} 
-        onClose={() => setIsCodeModalOpen(false)} 
-        width="lg"
-      >
-        <div style={{ backgroundColor: '#1e1e1e', padding: '16px', borderRadius: '8px', color: '#ccc', fontFamily: 'monospace', fontSize: '14px', lineHeight: '1.5', overflowX: 'auto', maxHeight: '60vh' }}>
-          <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-            <code>{article.codeSnippet}</code>
-          </pre>
-        </div>
-      </Modal>
     </div>
   );
 }
