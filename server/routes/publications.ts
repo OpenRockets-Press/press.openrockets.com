@@ -80,6 +80,8 @@ publicationsRouter.get('/', zValidator('query', getListQuerySchema), async (c) =
       codeSnippet: publications.codeSnippet,
       primaryLanguage: publications.primaryLanguage,
       previewStorageKey: publications.previewStorageKey,
+      extraFiles: publications.extraFiles,
+      threejsModelKey: publications.threejsModelKey,
       shortId: publications.shortId,
       tags: publications.tags,
       submittedAt: publications.submittedAt,

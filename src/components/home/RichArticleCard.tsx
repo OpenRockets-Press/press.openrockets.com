@@ -164,7 +164,14 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
       {
         // Build seed from code snippet or title
         const snippetSeed = rawSnippet ? rawSnippet.split('\n').slice(0, 2).join(' ') : (article.title || String(article.id));
-        const trianglesUrl = `https://api.dicebear.com/10.x/triangles/svg?seed=${encodeURIComponent(snippetSeed)}`;
+        const DICEBEAR_STYLES = ['triangles', 'glass', 'disco'];
+        const styleIndex = (() => {
+          const s = String(article.id || article.title || '');
+          let h = 0;
+          for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+          return Math.abs(h) % DICEBEAR_STYLES.length;
+        })();
+        const patternUrl = `https://api.dicebear.com/10.x/${DICEBEAR_STYLES[styleIndex]}/svg?seed=${encodeURIComponent(snippetSeed)}`;
         return (
         <div style={{ height: '220px', display: 'flex', flexDirection: 'column', backgroundColor: '#1e1e1e', overflow: 'hidden', position: 'relative', borderTopLeftRadius: '12px', borderTopRightRadius: '12px' }}>
           <div style={{ padding: '10px 16px', borderBottom: '1px solid #333', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'Inter, system-ui, sans-serif' }}>
@@ -172,7 +179,7 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
             <span style={{ color: '#FFF', fontWeight: 'bold', fontSize: '14px', textTransform: 'capitalize' }}>{headerLang}</span>
           </div>
           <div style={{ flex: 1, overflow: 'hidden' }}>
-            <img src={trianglesUrl} alt="Code Pattern" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <img src={patternUrl} alt="Code Pattern" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
         </div>
       );
@@ -199,28 +206,21 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
       }
     } catch(e) {}
 
-    const hasMultipleImages = (article.mainImage && (article.sideImage1 || article.sideImage2)) || (extraImages && extraImages.length > 1);
+    const getStorageUrl = (key: string) => key && key !== 'null' && key.trim() !== '' ? `/api/storage/fetch/${key}` : null;
 
-    if (hasMultipleImages) {
-      const getStorageUrl = (key: string) => key ? `/api/storage/fetch/${key}` : null;
-      let mainImg = article.mainImage || getStorageUrl(article.coverStorageKey || article.previewStorageKey) || getStorageUrl(extraImages[0]) || '/brand/imagifact.png';
-      let side1 = article.sideImage1 || getStorageUrl(extraImages[1]) || mainImg;
-      let side2 = article.sideImage2 || getStorageUrl(extraImages[2]) || getStorageUrl(extraImages[1]) || mainImg;
+    // Build a deduplicated list of all available image URLs
+    const allImages: string[] = [];
+    const addImg = (url: string | null | undefined) => { if (url && !allImages.includes(url)) allImages.push(url); };
 
-      return (
-        <div className="rich-article-collage">
-          <div className="collage-main">
-            <img src={mainImg as string} alt="Main Collage" />
-          </div>
-          <div className="collage-side">
-            <img src={side1 as string} alt="Top Collage" />
-            <img src={side2 as string} alt="Bottom Collage" />
-          </div>
-        </div>
-      );
+    addImg(getStorageUrl(article.coverStorageKey));
+    addImg(getStorageUrl(article.previewStorageKey));
+    if (extraImages.length > 0) {
+      extraImages.slice(0, 5).forEach((key: string) => addImg(getStorageUrl(key)));
     }
+    addImg(article.mainImage || null);
 
-    if ((type === 'research_paper' || type === 'ResearchPaper') && !article.previewStorageKey && article.fileStorageKey && article.fileStorageKey !== 'null' && article.fileStorageKey.trim() !== '') {
+    // Research papers with PDF but no images → show PDF cover
+    if (allImages.length === 0 && (type === 'research_paper' || type === 'ResearchPaper') && article.fileStorageKey && article.fileStorageKey !== 'null' && article.fileStorageKey.trim() !== '') {
       const pdfUrl = `/api/storage/fetch/${article.fileStorageKey}`;
       return (
         <div className="rich-article-collage" style={{ height: '220px', position: 'relative', backgroundColor: '#f0f0f0', borderTopLeftRadius: '12px', borderTopRightRadius: '12px', overflow: 'hidden' }}>
@@ -229,17 +229,42 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
       );
     }
 
-    const previewUrl = article.previewStorageKey 
-      ? `/api/storage/fetch/${article.previewStorageKey}` 
-      : article.coverStorageKey 
-        ? `/api/storage/fetch/${article.coverStorageKey}`
-        : extraImages && extraImages.length > 0
-          ? `/api/storage/fetch/${extraImages[0]}`
-          : (article.mainImage || '/brand/imagifact.png');
+    // Fallback if absolutely no images
+    if (allImages.length === 0) {
+      allImages.push('/brand/imagifact.png');
+    }
 
+    // Single image
+    if (allImages.length === 1) {
+      return (
+        <div className="rich-article-collage" style={{ height: '220px', position: 'relative', backgroundColor: '#f0f0f0', borderTopLeftRadius: '12px', borderTopRightRadius: '12px', overflow: 'hidden' }}>
+          <img src={allImages[0]} alt="Artifact Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        </div>
+      );
+    }
+
+    // 2 images: side by side
+    if (allImages.length === 2) {
+      return (
+        <div className="rich-article-collage" style={{ height: '220px', display: 'flex', gap: '2px', borderTopLeftRadius: '12px', borderTopRightRadius: '12px', overflow: 'hidden' }}>
+          <img src={allImages[0]} alt="Left" style={{ width: '50%', height: '100%', objectFit: 'cover' }} />
+          <img src={allImages[1]} alt="Right" style={{ width: '50%', height: '100%', objectFit: 'cover' }} />
+        </div>
+      );
+    }
+
+    // 3+ images: main left + side column right (up to 4 side thumbnails)
+    const sideImages = allImages.slice(1, 5);
     return (
-      <div className="rich-article-collage" style={{ height: '220px', position: 'relative', backgroundColor: '#f0f0f0', borderTopLeftRadius: '12px', borderTopRightRadius: '12px', overflow: 'hidden' }}>
-        <img src={previewUrl} alt="Artifact Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+      <div className="rich-article-collage">
+        <div className="collage-main">
+          <img src={allImages[0]} alt="Main" />
+        </div>
+        <div className="collage-side" style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+          {sideImages.map((url, i) => (
+            <img key={i} src={url} alt={`Side ${i+1}`} style={{ flex: 1, objectFit: 'cover', width: '100%', minHeight: 0 }} />
+          ))}
+        </div>
       </div>
     );
   };
