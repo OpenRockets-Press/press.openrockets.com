@@ -316,7 +316,7 @@ publicationsRouter.get('/:pubId', async (c) => {
     })
     .from(publications)
     .leftJoin(users, eq(publications.authorId, users.id))
-    .where(eq(publications.pubId, pubId))
+    .where(or(eq(publications.pubId, pubId), eq(publications.id, parseInt(pubId) || -1)))
     .limit(1);
 
   if (!data) {
@@ -365,7 +365,7 @@ publicationsRouter.put('/:pubId', authMiddleware, zValidator('json', updatePubli
         abstract: body.abstract,
         tags: body.tags,
       })
-      .where(eq(publications.pubId, pubId));
+      .where(or(eq(publications.pubId, pubId), eq(publications.id, parseInt(pubId) || -1)));
 
     return c.json({ success: true, message: 'Publication updated' });
   } catch (error) {
@@ -423,7 +423,7 @@ publicationsRouter.post('/:pubId/review', authMiddleware, async (c) => {
       })
       .from(publications)
       .leftJoin(users, eq(publications.authorId, users.id))
-      .where(eq(publications.pubId, pubId))
+      .where(or(eq(publications.pubId, pubId), eq(publications.id, parseInt(pubId) || -1)))
       .limit(1);
 
     const pubData = pubWithAuthor[0];
@@ -436,7 +436,7 @@ publicationsRouter.post('/:pubId/review', authMiddleware, async (c) => {
         status: newStatus,
         publishedAt: newStatus === 'published' ? new Date() : null,
       })
-      .where(eq(publications.pubId, pubId));
+      .where(or(eq(publications.pubId, pubId), eq(publications.id, parseInt(pubId) || -1)));
 
     // Audit Log (Phase 21 related, doing it now for deep implementation)
     await db.insert(auditLogs).values({
@@ -482,7 +482,7 @@ publicationsRouter.post('/:pubId/retract', authMiddleware, async (c) => {
   }
 
   try {
-    await db.delete(publications).where(eq(publications.pubId, pubId));
+    await db.delete(publications).where(or(eq(publications.pubId, pubId), eq(publications.id, parseInt(pubId) || -1)));
 
     // Audit Log
     await db.insert(auditLogs).values({
@@ -505,7 +505,7 @@ publicationsRouter.post('/:pubId/view', async (c) => {
   try {
     await db.update(publications)
       .set({ viewCount: sql`view_count + 1` })
-      .where(eq(publications.pubId, pubId));
+      .where(or(eq(publications.pubId, pubId), eq(publications.id, parseInt(pubId) || -1)));
     return c.json({ success: true });
   } catch (err) {
     console.error('Failed to increment view', err);

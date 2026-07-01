@@ -147,7 +147,7 @@ export function Template1Page({ data }: { data?: any }) {
   useEffect(() => {
     if (data && !isPreviewMode && data.pubId) {
       // Fire and forget view increment
-      fetch(`/api/publications/${data.pubId}/view`, { method: 'POST' }).catch(() => {});
+      fetch(`/api/publications/${data.pubId}/view`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => {});
     }
   }, [data?.pubId, isPreviewMode]);
 

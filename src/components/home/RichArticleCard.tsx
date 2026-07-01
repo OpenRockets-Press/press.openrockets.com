@@ -110,7 +110,7 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
       );
     }
 
-    if (type === 'research_paper' && !article.previewStorageKey && article.fileStorageKey) {
+    if (type === 'research_paper' && !article.previewStorageKey && article.fileStorageKey && article.fileStorageKey !== 'null' && article.fileStorageKey.trim() !== '') {
       const pdfUrl = `https://press.openrockets.com/storage/${article.fileStorageKey}`;
       return (
         <div className="rich-article-collage" style={{ height: '220px', position: 'relative', backgroundColor: '#f0f0f0', borderTopLeftRadius: '12px', borderTopRightRadius: '12px', overflow: 'hidden' }}>
