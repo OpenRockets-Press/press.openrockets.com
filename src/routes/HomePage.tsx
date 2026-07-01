@@ -159,7 +159,7 @@ export function HomePage() {
             <div className="sidebar-header">
               <div className="sidebar-header-left">
                 <img src="/b00k_1c0n_x92a.png" alt="Book Icon" className="sidebar-book-icon" />
-                <h3 className="notranslate">Categories</h3>
+                <h3 className="notranslate">Publish Books</h3>
               </div>
               <button className="sidebar-close-btn" aria-label="Close" onClick={() => setSidebarOpen(false)}>
                 <FontAwesomeIcon icon={faTimes} />
