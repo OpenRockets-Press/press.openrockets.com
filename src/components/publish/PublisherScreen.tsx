@@ -111,7 +111,7 @@ export function PublisherScreen() {
       {/* Exact Search Bar matching HomeHeader */}
       <div style={{ width: "100%", maxWidth: "800px", position: "relative" }}>
         
-        <div className="search-wrap" style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', position: 'relative', width: '100%', zIndex: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', position: 'relative', width: '100%', zIndex: 10 }}>
           <label htmlFor="publisher-search" className="sr-only">
             Search publications
           </label>
@@ -124,7 +124,7 @@ export function PublisherScreen() {
                 onChange={(event) => setSearchQuery(event.target.value)}
                 className="search-input"
                 type="text"
-                placeholder="Search student research and journals..."
+                placeholder="Search for publishers..."
                 aria-label="Search publications"
                 autoComplete="off"
                 style={{ width: '100%' }}
@@ -229,11 +229,11 @@ export function PublisherScreen() {
                       <div className="fade-in" style={{ padding: "16px 24px 24px 24px", backgroundColor: isSelected ? "rgba(199, 81, 31, 0.04)" : "#fafafa", borderBottom: "1px solid #eee" }}>
                         
                         <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "16px" }}>
-                          <div style={{ width: "120px", height: "120px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <div style={{ width: "100%", maxWidth: "9rem", display: "flex", alignItems: "center", justifyContent: "center" }}>
                             <img 
                               src={pub.logoUrl} 
                               alt={pub.name} 
-                              style={{ width: "100%", height: "100%", objectFit: "contain" }} 
+                              style={{ width: "100%", height: "auto", objectFit: "contain" }} 
                             />
                           </div>
                         </div>
@@ -328,22 +328,6 @@ export function PublisherScreen() {
               )}
             </div>
           </div>
-
-          <button 
-            type="button" 
-            className="search-btn" 
-            aria-label="Submit search"
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px',
-              borderRadius: '50%', backgroundColor: 'var(--panel)', border: '1px solid var(--border)',
-              color: 'var(--text)', cursor: 'pointer', flexShrink: 0
-            }}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-          </button>
         </div>
       </div>
 

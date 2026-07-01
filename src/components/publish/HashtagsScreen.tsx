@@ -156,7 +156,7 @@ export function HashtagsScreen() {
       {/* Exact Search Bar matching PublisherScreen */}
       <div style={{ width: "100%", maxWidth: "800px", position: "relative" }}>
         
-        <div className="search-wrap" style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', position: 'relative', width: '100%', zIndex: 10, marginInline: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', position: 'relative', width: '100%', zIndex: 10, marginInline: 0 }}>
           <label htmlFor="hashtag-search" className="sr-only">
             Search hashtags
           </label>

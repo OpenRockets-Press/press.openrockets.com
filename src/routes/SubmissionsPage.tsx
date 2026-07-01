@@ -193,7 +193,7 @@ export function SubmissionsPage() {
                 onBlur={(e) => e.target.style.borderColor = "#ddd"}
               />
               <svg 
-                style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#888" }}
+                style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#888", pointerEvents: "none" }}
                 width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
               >
                 <circle cx="11" cy="11" r="8"></circle>
