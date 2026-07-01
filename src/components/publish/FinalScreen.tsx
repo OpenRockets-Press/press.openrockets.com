@@ -388,6 +388,32 @@ export function FinalScreen() {
           borderRadius: "8px"
         }}>
           <img 
+            src="/brand/email_icon.png" 
+            alt="Email Notification" 
+            style={{ height: "4rem", width: "auto", objectFit: "contain", flexShrink: 0 }} 
+          />
+          <div style={{ fontFamily: "Ubuntu, sans-serif", color: "#111", lineHeight: "1.5", fontSize: "0.95rem" }}>
+            <p style={{ margin: "0 0 0.5rem 0" }}>
+              <span style={{ fontSize: "1.4rem", fontWeight: "bold" }}>E</span><span style={{ fontWeight: "bold", fontSize: "1.1rem" }}>mail Notifications</span>
+            </p>
+            <p style={{ margin: 0 }}>
+              Once your submission gets accepted to the relevant publisher you have chosen, we will send you an email from the publisher regarding the final decision on your submission.
+            </p>
+          </div>
+        </div>
+
+        <div style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-start",
+          gap: "1rem",
+          marginTop: "4rem",
+          padding: "1.5rem",
+          backgroundColor: "#faf8f0",
+          border: "1px solid #111",
+          borderRadius: "8px"
+        }}>
+          <img 
             src="/brand/85974.png" 
             alt="Breakfast" 
             style={{ height: "5rem", width: "auto", objectFit: "contain", flexShrink: 0 }} 
