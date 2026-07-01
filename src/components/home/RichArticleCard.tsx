@@ -162,21 +162,24 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
         
         {/* HASHTAGS (Categories vs General) */}
         <div className="rich-tags-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '12px', position: 'relative', zIndex: 2 }}>
-          {parsedTags.map((tag, idx) => (
+          {parsedTags.map((tagObj, idx) => {
+            const tagName = typeof tagObj === 'string' ? tagObj : (tagObj.name || String(tagObj));
+            return (
             <span 
-              key={`${tag}-${idx}`}
+              key={`${tagName}-${idx}`}
               className="rich-tag tag-normal"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                navigate({ to: `/hashtag/${encodeURIComponent(tag)}` });
+                navigate({ to: `/hashtag/${encodeURIComponent(tagName)}` });
               }}
               style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 8px', borderRadius: '12px', fontSize: '10px', backgroundColor: '#e9ecef', color: '#495057' }}
             >
               <span style={{ color: '#007185' }}>#</span>
-              {tag}
+              {tagName}
             </span>
-          ))}
+            );
+          })}
         </div>
 
         <div style={{ marginTop: 'auto', marginBottom: '8px', position: 'relative', zIndex: 2 }}>
