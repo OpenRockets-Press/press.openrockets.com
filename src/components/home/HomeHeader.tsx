@@ -165,17 +165,19 @@ export function HomeHeader({ onOpenInfo }: HomeHeaderProps) {
       <div className="home-shell">
         <div className="top-row">
           <div style={{ display: 'flex', alignItems: 'center' }}>
-            <button 
-              className="mobile-hamburger-btn"
-              onClick={() => setSidebarOpen(!isSidebarOpen)}
-              aria-label="Toggle Menu"
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="3" y1="12" x2="21" y2="12"></line>
-                <line x1="3" y1="6" x2="21" y2="6"></line>
-                <line x1="3" y1="18" x2="21" y2="18"></line>
-              </svg>
-            </button>
+            {(pathname === '/' || pathname.startsWith('/hashtag/')) && (
+              <button 
+                className="mobile-hamburger-btn"
+                onClick={() => setSidebarOpen(!isSidebarOpen)}
+                aria-label="Toggle Menu"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="3" y1="12" x2="21" y2="12"></line>
+                  <line x1="3" y1="6" x2="21" y2="6"></line>
+                  <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+              </button>
+            )}
             <Link to="/" className="brand-lockup" aria-label="Open Rockets Press home">
               <img className="brand-main" style={{ visibility: "hidden", display: "none" }} src="/brand/271742354.png" alt="Open Rockets" />
               <img className="brand-mark" src="/brand/9283527.png" alt="Open Rockets mark" />
@@ -302,8 +304,12 @@ export function HomeHeader({ onOpenInfo }: HomeHeaderProps) {
             aria-expanded={menuOpen}
             aria-controls="mobile-nav"
             onClick={() => setMenuOpen((value) => !value)}
+            style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
           >
             Menu
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: menuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
           </button>
 
           <nav className="desktop-nav" aria-label="Primary" style={{ alignItems: 'center' }}>
@@ -387,24 +393,26 @@ export function HomeHeader({ onOpenInfo }: HomeHeaderProps) {
 
         <nav id="mobile-nav" className={menuOpen ? "mobile-nav open" : "mobile-nav"} aria-label="Mobile">
           <a
-            href="https://press.openrockets.com/docs/get-started"
+            href="https://about.openrockets.com/docs/press/get-started"
             className="mobile-nav-link"
             onClick={() => setMenuOpen(false)}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#000' }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
             Get started
           </a>
-          <Link preload={false} to="/publish" className="mobile-nav-link" onClick={() => setMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path><circle cx="11" cy="11" r="2"></circle></svg>
+          <Link preload={false} to="/publish" className="mobile-nav-link" onClick={() => setMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#000' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path><circle cx="11" cy="11" r="2"></circle></svg>
             Publish
           </Link>
           {session ? (
-            <Link to="/dashboard" search={{ token: undefined }} className="mobile-nav-link" onClick={() => setMenuOpen(false)}>
+            <Link to="/dashboard" search={{ token: undefined }} className="mobile-nav-link" onClick={() => setMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#000' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
               Dashboard
             </Link>
           ) : (
-            <Link preload={false} to="/login" className="mobile-nav-link" onClick={() => setMenuOpen(false)}>
+            <Link preload={false} to="/login" className="mobile-nav-link" onClick={() => setMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#000' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
               Sign In
             </Link>
           )}
