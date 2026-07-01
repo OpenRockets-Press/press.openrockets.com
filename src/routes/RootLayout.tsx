@@ -25,6 +25,14 @@ export const SearchContext = createContext<{
   setSelectedHashtags: () => {},
 });
 
+export const SidebarContext = createContext<{
+  isSidebarOpen: boolean;
+  setSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
+}>({
+  isSidebarOpen: false,
+  setSidebarOpen: () => {},
+});
+
 export function RootLayout() {
   useAutoTranslate();
   const { isTranslating, isContentLoading } = useTranslationContext();
@@ -45,6 +53,7 @@ export function RootLayout() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedHashtags, setSelectedHashtags] = useState<string[]>([]);
   const [infoModal, setInfoModal] = useState<HomeInfoModalKind | null>(null);
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const routeTitleMap: Record<string, string> = {
@@ -62,7 +71,9 @@ export function RootLayout() {
       "/legal/parental-consent-form": "Parental Consent · OpenRockets Press",
     };
 
-    document.title = routeTitleMap[pathname] ?? "OpenRockets Press";
+    if (routeTitleMap[pathname]) {
+      document.title = routeTitleMap[pathname];
+    }
   }, [pathname]);
 
   const modalTitleMap: Record<HomeInfoModalKind, string> = {
@@ -87,24 +98,26 @@ export function RootLayout() {
           <div className="anim-dot dot5" />
         </div>
       )}
-      <SearchContext.Provider value={{ search, setSearch, selectedCategory, setSelectedCategory, selectedHashtags, setSelectedHashtags }}>
-        {!isTemplateRoute && <HomeHeader onOpenInfo={setInfoModal} />}
-        <div id="translate-root">
-          <Outlet />
-        </div>
-        {!isTemplateRoute && <HomeFooter onOpenInfo={setInfoModal} />}
+      <SidebarContext.Provider value={{ isSidebarOpen, setSidebarOpen }}>
+        <SearchContext.Provider value={{ search, setSearch, selectedCategory, setSelectedCategory, selectedHashtags, setSelectedHashtags }}>
+          {!isTemplateRoute && <HomeHeader onOpenInfo={setInfoModal} />}
+          <div id="translate-root">
+            <Outlet />
+          </div>
+          {!isTemplateRoute && <HomeFooter onOpenInfo={setInfoModal} />}
 
-        <Modal
-          open={infoModal !== null}
-          title={modalTitle}
-          onClose={() => setInfoModal(null)}
-          width="md"
-        >
-          {infoModal ? <HomeInfoModalContent kind={infoModal} /> : null}
-        </Modal>
+          <Modal
+            open={infoModal !== null}
+            title={modalTitle}
+            onClose={() => setInfoModal(null)}
+            width="md"
+          >
+            {infoModal ? <HomeInfoModalContent kind={infoModal} /> : null}
+          </Modal>
 
-        <LanguageSuccessModal />
-      </SearchContext.Provider>
+          <LanguageSuccessModal />
+        </SearchContext.Provider>
+      </SidebarContext.Provider>
     </>
   );
 }

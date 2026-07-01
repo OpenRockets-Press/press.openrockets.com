@@ -5596,3 +5596,114 @@ button.ad-attribution-why:hover {
 .pdf-nav-chevron:disabled { opacity: 0.2; cursor: default; }
 
 @media print { @page { margin: 0; size: auto; } body { margin: 0cm; } }
+
+/* ==========================================================================
+   MOBILE RESPONSIVENESS OVERRIDES
+   ========================================================================== */
+
+/* Hamburger menu button in header */
+.mobile-hamburger-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  padding: 8px;
+  cursor: pointer;
+  margin-right: 8px;
+}
+
+.mobile-drag-ribbon {
+  display: none;
+}
+.mobile-sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: 915px) {
+  /* Header */
+  .mobile-hamburger-btn {
+    display: block;
+  }
+  
+  .home-header .top-row {
+    flex-wrap: nowrap;
+    justify-content: space-between;
+  }
+  
+  .desktop-nav .nav-link {
+    font-size: 13px;
+    padding: 6px 10px;
+  }
+  
+  /* Hide text labels on small screens in header, keep icons */
+  @media (max-width: 600px) {
+    .desktop-nav .nav-link {
+      padding: 6px;
+    }
+  }
+
+  /* Sidebar Drawer */
+  .amazon-sidebar {
+    position: fixed;
+    top: 0;
+    left: -100%;
+    bottom: 0;
+    width: 280px !important;
+    max-width: 85vw;
+    z-index: 1000;
+    background: var(--panel, #fff);
+    transition: left 0.3s ease;
+    overflow-y: auto;
+    padding: 20px;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+  }
+  
+  .amazon-sidebar.mobile-sidebar-open {
+    left: 0;
+  }
+  
+  .mobile-sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    backdrop-filter: blur(2px);
+  }
+  
+  .mobile-drag-ribbon {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 15px;
+    z-index: 998;
+    background: transparent;
+    cursor: e-resize;
+  }
+  
+  .mobile-hide {
+    display: none !important;
+  }
+  
+  /* Main feed expands to 100% */
+  .amazon-layout {
+    display: block !important;
+  }
+  
+  .amazon-main-content {
+    width: 100% !important;
+    margin-left: 0 !important;
+  }
+
+  /* Article cards single line view count */
+  .stat-views, .meta-left {
+    white-space: nowrap !important;
+  }
+  
+  /* Footer hide huge text */
+  .big-text, .background-text {
+    display: none !important;
+  }
+}

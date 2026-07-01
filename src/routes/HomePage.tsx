@@ -8,7 +8,7 @@ import { AdsInfoModal } from "@/components/ui/AdsInfoModal";
 import { getHomeFeed } from "@/lib/api";
 import { queryKeys } from "@/lib/queryKeys";
 import { useDebouncedValue } from "@/lib/useDebouncedValue";
-import { SearchContext } from "@/routes/RootLayout";
+import { SearchContext, SidebarContext } from "@/routes/RootLayout";
 import { CATEGORIES } from "@/lib/categories";
 import { generateMockArticles, CATEGORY_HASHTAGS } from "@/lib/mockArticles";
 import clsx from "clsx";
@@ -17,7 +17,7 @@ import { faStar, faDesktop, faFlask, faDna, faUsers, faPalette, faMicrochip, faC
 
 function AdSlot({ id, onOpenAdsInfo }: { id: string; onOpenAdsInfo: () => void }) {
   return (
-    <div key={id} className="ad-shimmer-slot">
+    <div key={id} className="ad-shimmer-slot mobile-hide">
       <div className="ad-attribution">
         <a href="https://ads.openrockets.com" target="_blank" rel="noopener noreferrer" className="ad-attribution-logo-link">
           <img src="https://ads.openrockets.com/assets/images/logo-45px.png" alt="OpenRockets Ads" className="ad-attribution-logo" />
@@ -83,7 +83,7 @@ function DynamicAdLoader({ onOpenAdsInfo }: { onOpenAdsInfo: () => void }) {
   }, []);
 
   return (
-    <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
+    <div ref={containerRef} className="mobile-hide" style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
       {Array.from({ length: adCount }).map((_, i) => (
         <AdSlot key={`dyn-ad-${i}`} id={`dyn-ad-${i}`} onOpenAdsInfo={onOpenAdsInfo} />
       ))}
@@ -94,6 +94,7 @@ function DynamicAdLoader({ onOpenAdsInfo }: { onOpenAdsInfo: () => void }) {
 export function HomePage() {
   const navigate = useNavigate();
   const { search, setSearch, selectedHashtags, setSelectedHashtags } = useContext(SearchContext);
+  const { isSidebarOpen, setSidebarOpen } = useContext(SidebarContext);
   const [activeType, setActiveType] = useState<string>("all");
   const [expandedCats, setExpandedCats] = useState<Record<string, boolean>>({});
   const [adsModalOpen, setAdsModalOpen] = useState(false);
@@ -149,15 +150,18 @@ export function HomePage() {
 
   return (
     <div className="home-page">
+      <div className="mobile-drag-ribbon" onClick={() => setSidebarOpen(true)} aria-label="Open Sidebar" />
+      {isSidebarOpen && <div className="mobile-sidebar-backdrop" onClick={() => setSidebarOpen(false)} />}
+      
       <div className="home-shell amazon-layout">
-        <aside className="amazon-sidebar">
+        <aside className={clsx("amazon-sidebar", isSidebarOpen && "mobile-sidebar-open")}>
           <div className="sidebar-section">
             <div className="sidebar-header">
               <div className="sidebar-header-left">
                 <img src="/b00k_1c0n_x92a.png" alt="Book Icon" className="sidebar-book-icon" />
-                <h3>Published Books</h3>
+                <h3 className="notranslate">Categories</h3>
               </div>
-              <button className="sidebar-close-btn" aria-label="Close">
+              <button className="sidebar-close-btn" aria-label="Close" onClick={() => setSidebarOpen(false)}>
                 <FontAwesomeIcon icon={faTimes} />
               </button>
             </div>

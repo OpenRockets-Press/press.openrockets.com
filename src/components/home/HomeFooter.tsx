@@ -14,7 +14,7 @@ export function HomeFooter({ onOpenInfo }: HomeFooterProps) {
         <div style={{ display: 'flex', flexDirection: 'column', width: '100%', marginBottom: '10px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
             <img src="/brand/DARKMODEFAVICON.png?v=999" alt="OpenRockets Mode Logo" style={{ width: '8rem', maxWidth: '100%', flexShrink: 0 }} />
-            <div className="notranslate" style={{ 
+            <div className="notranslate background-text" style={{ 
               flexGrow: 1, 
               textAlign: 'right', 
               fontSize: 'clamp(60px, 11vw, 200px)', 

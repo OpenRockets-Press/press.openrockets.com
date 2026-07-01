@@ -3,7 +3,7 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import type { HomeInfoModalKind } from "@/components/home/HomeInfoModal";
 import { getSessionUser } from "@/lib/authStore";
 import { LanguagePicker } from "@/components/home/LanguagePicker";
-import { SearchContext } from "@/routes/RootLayout";
+import { SearchContext, SidebarContext } from "@/routes/RootLayout";
 import { CATEGORY_HASHTAGS, NORMAL_HASHTAGS } from "@/lib/mockArticles";
 
 interface HomeHeaderProps {
@@ -14,6 +14,7 @@ export function HomeHeader({ onOpenInfo }: HomeHeaderProps) {
   if (typeof window !== "undefined" && window.location.href.toLowerCase().includes("/template")) return null;
 
   const { search, setSearch, selectedCategory, setSelectedCategory, selectedHashtags, setSelectedHashtags } = useContext(SearchContext);
+  const { isSidebarOpen, setSidebarOpen } = useContext(SidebarContext);
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [isCompactSearch, setIsCompactSearch] = useState(false);
@@ -163,11 +164,24 @@ export function HomeHeader({ onOpenInfo }: HomeHeaderProps) {
     <header className="home-header" data-testid="home-header">
       <div className="home-shell">
         <div className="top-row">
-          <Link to="/" className="brand-lockup" aria-label="Open Rockets Press home">
-            <img className="brand-main" style={{ visibility: "hidden", display: "none" }} src="/brand/271742354.png" alt="Open Rockets" />
-            <img className="brand-mark" src="/brand/9283527.png" alt="Open Rockets mark" />
-            <img className="brand-mark" style={{ width: "6rem" }} src="/brand/987935879357.png" alt="Open Rockets mark" />
-          </Link>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <button 
+              className="mobile-hamburger-btn"
+              onClick={() => setSidebarOpen(!isSidebarOpen)}
+              aria-label="Toggle Menu"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+            </button>
+            <Link to="/" className="brand-lockup" aria-label="Open Rockets Press home">
+              <img className="brand-main" style={{ visibility: "hidden", display: "none" }} src="/brand/271742354.png" alt="Open Rockets" />
+              <img className="brand-mark" src="/brand/9283527.png" alt="Open Rockets mark" />
+              <img className="brand-mark" style={{ width: "6rem" }} src="/brand/987935879357.png" alt="Open Rockets mark" />
+            </Link>
+          </div>
 
           <div className="search-wrap" style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }} ref={searchWrapRef}>
             <label htmlFor="home-search" className="sr-only">
