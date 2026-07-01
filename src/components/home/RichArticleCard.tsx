@@ -1,9 +1,10 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFileAlt, faCode, faCube, faEye } from '@fortawesome/free-solid-svg-icons';
 import { faPython, faJs, faRust, faGolang } from '@fortawesome/free-brands-svg-icons';
 import { PDFCover } from "./PDFCover";
+import { Modal } from "@/components/ui/Modal";
 
 export interface RichArticleCardProps {
   article: any; 
@@ -57,6 +58,7 @@ const LANGUAGE_ICONS: Record<string, any> = {
 
 function RichArticleCardComponent({ article }: RichArticleCardProps) {
   const navigate = useNavigate();
+  const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
   const type = article.type || 'other';
 
   let parsedTags: any[] = [];
@@ -77,7 +79,11 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
     const is3D = type === '3d_artifact' || type === '3d_model';
     
     if (isCode && article.codeSnippet) {
-      const snippet = article.codeSnippet.length > 200 ? article.codeSnippet.substring(0, 200) + '...' : article.codeSnippet;
+      const snippetLines = article.codeSnippet.split('\n');
+      const isTruncated = snippetLines.length > 5;
+      const snippet = isTruncated 
+        ? snippetLines.slice(0, 5).join('\n') + '\n...' 
+        : article.codeSnippet;
       const lang = article.primaryLanguage || 'javascript';
       const langColor = LANGUAGE_COLORS[lang.toLowerCase()] || '#FFF';
       const IconComponent = LANGUAGE_ICONS[lang.toLowerCase()] || faCode;
@@ -88,10 +94,22 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
             <FontAwesomeIcon icon={IconComponent} style={{ color: langColor, fontSize: '16px' }} />
             <span style={{ color: '#FFF', fontWeight: 'bold', fontSize: '14px', textTransform: 'capitalize' }}>{lang}</span>
           </div>
-          <div style={{ flex: 1, backgroundColor: '#1e1e1e', padding: '16px', color: '#ccc', fontFamily: 'monospace', fontSize: '12px', lineHeight: '1.4', overflow: 'hidden' }}>
+          <div 
+            style={{ flex: 1, backgroundColor: '#1e1e1e', padding: '16px', color: '#ccc', fontFamily: 'monospace', fontSize: '12px', lineHeight: '1.4', overflow: 'hidden', cursor: 'pointer', zIndex: 2, position: 'relative' }}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsCodeModalOpen(true);
+            }}
+          >
             <pre style={{ margin: 0, opacity: 0.9, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
               <code>{snippet}</code>
             </pre>
+            {isTruncated && (
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '40px', background: 'linear-gradient(transparent, #1e1e1e)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: '8px', color: '#888', fontSize: '11px', fontWeight: 'bold' }}>
+                Click to expand
+              </div>
+            )}
           </div>
         </div>
       );
@@ -124,7 +142,9 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
       ? `https://press.openrockets.com/storage/${article.previewStorageKey}` 
       : article.coverStorageKey 
         ? `https://press.openrockets.com/storage/${article.coverStorageKey}`
-        : '/brand/imagifact.png';
+        : (type.includes('image') || type === 'poster') && article.fileStorageKey && article.fileStorageKey !== 'null'
+          ? `https://press.openrockets.com/storage/${article.fileStorageKey}`
+          : '/brand/imagifact.png';
 
     return (
       <div className="rich-article-collage" style={{ height: '220px', position: 'relative', backgroundColor: '#f0f0f0', borderTopLeftRadius: '12px', borderTopRightRadius: '12px', overflow: 'hidden' }}>
@@ -229,6 +249,19 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
         style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 }}
         aria-label={`View ${article.title}`}
       />
+
+      <Modal 
+        open={isCodeModalOpen} 
+        title={`${article.title} - Code Snippet`} 
+        onClose={() => setIsCodeModalOpen(false)} 
+        width="lg"
+      >
+        <div style={{ backgroundColor: '#1e1e1e', padding: '16px', borderRadius: '8px', color: '#ccc', fontFamily: 'monospace', fontSize: '14px', lineHeight: '1.5', overflowX: 'auto', maxHeight: '60vh' }}>
+          <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+            <code>{article.codeSnippet}</code>
+          </pre>
+        </div>
+      </Modal>
     </div>
   );
 }
