@@ -1,12 +1,12 @@
 import { memo } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faFileAlt, faCode, faCube, faPaw, faScaleBalanced, faEye } from '@fortawesome/free-solid-svg-icons';
-import { faPython, faJs, faRust, faCreativeCommons, faGolang } from '@fortawesome/free-brands-svg-icons';
-import { clsx } from "clsx";
+import { faFileAlt, faCode, faCube, faEye } from '@fortawesome/free-solid-svg-icons';
+import { faPython, faJs, faRust, faGolang } from '@fortawesome/free-brands-svg-icons';
+import { PDFCover } from "./PDFCover";
 
 export interface RichArticleCardProps {
-  article: any; // We'll type this properly later when we map it
+  article: any; 
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -15,9 +15,11 @@ const TYPE_LABELS: Record<string, string> = {
   'code_gist': "Code Gist",
   '3d_artifact': "3D Artifact",
   '3d_model': "3D Model",
-  'book': "Book",
+  'dataset': "Dataset",
+  'video': "Video",
+  'audio': "Audio",
+  'presentation': "Presentation",
   'magazine': "Magazine",
-  'poster': "Poster",
   'other': "Other",
   'image': "Image"
 };
@@ -25,8 +27,8 @@ const TYPE_LABELS: Record<string, string> = {
 const TYPE_IMAGE_PATHS: Record<string, string> = {
   'software_code': "/brand/software_icon.png",
   'code_gist': "/brand/software_icon.png",
-  '3d_artifact': "/brand/3d_icon.png",
-  '3d_model': "/brand/3d_icon.png",
+  '3d_artifact': "/brand/3d artifcat.png.png",
+  '3d_model': "/brand/3d artifcat.png.png",
 };
 
 const LICENSE_ICONS: Record<string, string> = {
@@ -48,43 +50,45 @@ const LANGUAGE_COLORS: Record<string, string> = {
 const LANGUAGE_ICONS: Record<string, any> = {
   'python': faPython,
   'javascript': faJs,
-  'typescript': faJs, // no TS icon in free brands sometimes, use JS
+  'typescript': faJs,
   'rust': faRust,
-  'c': faCode,
-  'cpp': faCode,
-  'zip': faFileAlt
+  'go': faGolang,
 };
 
 function RichArticleCardComponent({ article }: RichArticleCardProps) {
   const navigate = useNavigate();
-  const type = article.type || 'research_paper';
+  const type = article.type || 'other';
 
-  // Parse tags
-  let parsedTags: string[] = [];
+  let parsedTags: any[] = [];
   try {
     if (typeof article.tags === 'string') parsedTags = JSON.parse(article.tags);
     else if (Array.isArray(article.tags)) parsedTags = article.tags;
-  } catch (e) {}
+  } catch (e) {
+    // Ignore parse error
+  }
 
-  const isCode = type === 'software_code' || type === 'code_gist';
-  const is3D = type === '3d_artifact' || type === '3d_model';
-  
+  const generateSlug = (title: string, pubId: string) => {
+    const slug = (title || 'untitled').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    return `/artifacts/${slug}-${pubId}`;
+  };
+
   const renderPreview = () => {
-    if (isCode) {
-      const lang = article.primaryLanguage?.toLowerCase() || 'code';
-      const IconComponent = LANGUAGE_ICONS[lang] || faCode;
-      const langColor = LANGUAGE_COLORS[lang] || '#569cd6';
-      const bgColor = '#FFFFFF';
-
-      const snippet = article.codeSnippet || `// No preview available for this code artifact.`;
-
+    const isCode = type === 'software_code' || type === 'code_gist';
+    const is3D = type === '3d_artifact' || type === '3d_model';
+    
+    if (isCode && article.codeSnippet) {
+      const snippet = article.codeSnippet.length > 200 ? article.codeSnippet.substring(0, 200) + '...' : article.codeSnippet;
+      const lang = article.primaryLanguage || 'javascript';
+      const langColor = LANGUAGE_COLORS[lang.toLowerCase()] || '#FFF';
+      const IconComponent = LANGUAGE_ICONS[lang.toLowerCase()] || faCode;
+      
       return (
         <div style={{ height: '220px', display: 'flex', flexDirection: 'column', backgroundColor: '#1e1e1e', overflow: 'hidden', position: 'relative', borderTopLeftRadius: '12px', borderTopRightRadius: '12px' }}>
           <div style={{ padding: '16px 16px 8px 16px', borderBottom: '1px solid #333', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'Inter, system-ui, sans-serif' }}>
             <FontAwesomeIcon icon={IconComponent} style={{ color: langColor, fontSize: '16px' }} />
             <span style={{ color: '#FFF', fontWeight: 'bold', fontSize: '14px', textTransform: 'capitalize' }}>{lang}</span>
           </div>
-          <div style={{ flex: 1, backgroundColor: bgColor, padding: '16px', color: '#333', fontFamily: 'monospace', fontSize: '12px', lineHeight: '1.4', overflow: 'hidden' }}>
+          <div style={{ flex: 1, backgroundColor: '#1e1e1e', padding: '16px', color: '#ccc', fontFamily: 'monospace', fontSize: '12px', lineHeight: '1.4', overflow: 'hidden' }}>
             <pre style={{ margin: 0, opacity: 0.9, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
               <code>{snippet}</code>
             </pre>
@@ -102,6 +106,15 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
             <img src="/brand/3d artifcat.png.png" alt="3D Indicator" className="threed-icon-image" style={{ width: '40px', height: '40px', objectFit: 'contain' }} />
             <span className="threed-hover-text">3D</span>
           </div>
+        </div>
+      );
+    }
+
+    if (type === 'research_paper' && !article.previewStorageKey && article.fileStorageKey) {
+      const pdfUrl = `https://press.openrockets.com/storage/${article.fileStorageKey}`;
+      return (
+        <div className="rich-article-collage" style={{ height: '220px', position: 'relative', backgroundColor: '#f0f0f0', borderTopLeftRadius: '12px', borderTopRightRadius: '12px', overflow: 'hidden' }}>
+          <PDFCover url={pdfUrl} />
         </div>
       );
     }
@@ -126,29 +139,47 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
       
       <div className="rich-article-content" style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '16px' }}>
         
-        {/* AUTHOR & CATEGORY TOP ROW */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-          <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${article.authorName || 'User'}`} alt="Author" style={{ width: '24px', height: '24px', borderRadius: '50%' }} />
-          <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#555' }}>{article.authorName || 'Unknown Author'}</span>
-          <span style={{ fontSize: '12px', color: '#999', margin: '0 4px' }}>&bull;</span>
-          <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#007185', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            {article.division || 'Artifacts'}
-          </span>
+        {/* AUTHOR TOP ROW */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', minWidth: 0 }}>
+          <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${article.authorName || 'User'}`} alt="Author" style={{ width: '24px', height: '24px', borderRadius: '50%', flexShrink: 0 }} />
+          <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#555', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>{article.authorName || 'Unknown Author'}</span>
         </div>
 
-        {isCode && article.license && (
-          <Link 
-            to={`/licenses/${encodeURIComponent(article.license.toLowerCase())}` as any}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#007185', fontWeight: 'bold', textDecoration: 'none', marginBottom: '8px', position: 'relative', zIndex: 2 }}
+        {/* ARTIFACT TYPE & LICENSE BADGES */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', flexWrap: 'wrap', position: 'relative', zIndex: 2 }}>
+          <button 
+            type="button"
+            className="artifact-type-badge"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 8px', backgroundColor: 'var(--panel)', borderRadius: '6px', fontSize: '11px', color: 'var(--text)', border: '1px solid var(--border)', cursor: 'pointer', fontWeight: 'bold' }}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
           >
-            <img 
-              src={LICENSE_ICONS[article.license] || "/brand/licences/creativecommons_usethisforall.png"} 
-              alt={`${article.license} License`}
-              style={{ width: '16px', height: '16px', objectFit: 'contain' }}
-            />
-            {article.license.replace('ORP_', '')} License
-          </Link>
-        )}
+            {type === 'research_paper' ? (
+              <FontAwesomeIcon icon={faFileAlt} />
+            ) : TYPE_IMAGE_PATHS[type] ? (
+              <img src={TYPE_IMAGE_PATHS[type]} alt={TYPE_LABELS[type]} style={{ width: '14px', height: '14px', objectFit: 'contain' }} />
+            ) : (
+              <FontAwesomeIcon icon={faCube} />
+            )}
+            {TYPE_LABELS[type] || 'Artifact'}
+          </button>
+          
+          {article.license && (
+            <Link 
+              to={`/licenses/${encodeURIComponent(article.license.toLowerCase().replace('orp_', ''))}` as any}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#007185', fontWeight: 'bold', textDecoration: 'none', backgroundColor: '#e9ecef', padding: '4px 8px', borderRadius: '6px' }}
+            >
+              <img 
+                src={LICENSE_ICONS[article.license] || "/brand/licences/creativecommons_usethisforall.png"} 
+                alt={`${article.license} License`}
+                style={{ width: '14px', height: '14px', objectFit: 'contain' }}
+              />
+              {article.license.replace('ORP_', '')}
+            </Link>
+          )}
+        </div>
 
         <h3 className="card-title" style={{ fontSize: "1rem", marginBottom: "4px", lineHeight: "1.2" }}>
           {article.title}
@@ -160,7 +191,7 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
           </p>
         )}
         
-        {/* HASHTAGS (Categories vs General) */}
+        {/* HASHTAGS */}
         <div className="rich-tags-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '12px', position: 'relative', zIndex: 2 }}>
           {parsedTags.map((tagObj, idx) => {
             const tagName = typeof tagObj === 'string' ? tagObj : (tagObj.name || String(tagObj));
@@ -182,29 +213,8 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
           })}
         </div>
 
-        <div style={{ marginTop: 'auto', marginBottom: '8px', position: 'relative', zIndex: 2 }}>
-          <button 
-            type="button"
-            className="artifact-type-badge"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 8px', backgroundColor: 'var(--panel)', borderRadius: '6px', fontSize: '11px', color: 'var(--text)', border: '1px solid var(--border)', cursor: 'pointer', fontWeight: 'bold' }}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-          >
-            {type === 'research_paper' ? (
-              <FontAwesomeIcon icon={faFileAlt} />
-            ) : TYPE_IMAGE_PATHS[type] ? (
-              <img src={TYPE_IMAGE_PATHS[type]} alt={TYPE_LABELS[type]} style={{ width: '14px', height: '14px', objectFit: 'contain' }} />
-            ) : (
-              <FontAwesomeIcon icon={faCube} />
-            )}
-            {TYPE_LABELS[type] || 'Artifact'}
-          </button>
-        </div>
-
         {/* VIEWS SECTION AT THE BOTTOM */}
-        <div className="rich-article-meta" style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", borderTop: "1px solid var(--border)", paddingTop: "8px" }}>
+        <div className="rich-article-meta" style={{ marginTop: 'auto', display: "flex", alignItems: "center", justifyContent: "flex-end", borderTop: "1px solid var(--border)", paddingTop: "8px" }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#666', fontSize: '12px', fontWeight: 'bold' }}>
             <FontAwesomeIcon icon={faEye} />
             <span>{article.viewCount || 0} views</span>
@@ -215,7 +225,7 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
       
       {/* Click Overlay */}
       <Link 
-        to={`/artifact/${article.pubId || article.id}` as any}
+        to={generateSlug(article.title, article.pubId || article.id) as any}
         style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 }}
         aria-label={`View ${article.title}`}
       />

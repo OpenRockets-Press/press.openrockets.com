@@ -121,10 +121,30 @@ export function HomePage() {
     return feed.filter(a => {
       try {
         const tags = typeof a.tags === 'string' ? JSON.parse(a.tags) : (a.tags || []);
-        return tags.includes(cat);
+        return tags.some((t: any) => {
+          const name = typeof t === 'string' ? t : (t.name || String(t));
+          return name === cat;
+        });
       } catch (e) { return false; }
     }).slice(0, 15);
   };
+
+  const popularHashtags = useMemo(() => {
+    const counts: Record<string, number> = {};
+    feed.forEach((a: any) => {
+      try {
+        const tags = typeof a.tags === 'string' ? JSON.parse(a.tags) : (a.tags || []);
+        tags.forEach((t: any) => {
+          const name = typeof t === 'string' ? t : (t.name || String(t));
+          counts[name] = (counts[name] || 0) + 1;
+        });
+      } catch (e) {}
+    });
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(e => e[0]);
+  }, [feed]);
 
   return (
     <div className="home-page">
@@ -260,7 +280,7 @@ export function HomePage() {
             items={featured}
           />
 
-          {CATEGORY_HASHTAGS.map((cat) => (
+          {popularHashtags.map((cat) => (
             <div key={cat}>
               <hr className="section-divider" />
               <RichHomeShelf

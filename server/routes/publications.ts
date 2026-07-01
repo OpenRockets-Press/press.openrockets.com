@@ -74,6 +74,7 @@ publicationsRouter.get('/', zValidator('query', getListQuerySchema), async (c) =
       viewCount: publications.viewCount,
       downloadCount: publications.downloadCount,
       abstract: publications.abstract,
+      fileStorageKey: publications.fileStorageKey,
       coverStorageKey: publications.coverStorageKey,
       customThumbnailStorageKey: publications.customThumbnailStorageKey,
       codeSnippet: publications.codeSnippet,
