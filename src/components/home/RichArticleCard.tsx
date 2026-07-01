@@ -84,7 +84,7 @@ function DynamicCodePreview({ fileKey, fallbackSnippet, bgColor, textBase }: any
       fetch(`/api/storage/fetch/${fileKey}`)
         .then(res => res.text())
         .then(text => {
-          const lines = text.split('\n').slice(0, 3).join('\n');
+          const lines = text.split('\n').slice(0, 2).join('\n');
           setCodeLines(lines);
         })
         .catch(() => setCodeLines(fallbackSnippet));
@@ -93,10 +93,11 @@ function DynamicCodePreview({ fileKey, fallbackSnippet, bgColor, textBase }: any
     }
   }, [fileKey, fallbackSnippet]);
 
-  const displayCode = codeLines || fallbackSnippet || '// No preview available for this code artifact.';
+  const fallbackSliced = fallbackSnippet ? fallbackSnippet.split('\n').slice(0, 2).join('\n') : null;
+  const displayCode = codeLines || fallbackSliced || '// No preview available for this code artifact.';
 
   return (
-    <div style={{ flex: 1, backgroundColor: bgColor, padding: '16px', color: textBase, fontFamily: 'monospace', fontSize: '16px', lineHeight: '1.4', overflow: 'hidden' }}>
+    <div style={{ flex: 1, backgroundColor: bgColor, padding: '16px', color: textBase, fontFamily: 'monospace', fontSize: '32px', lineHeight: '1.4', overflow: 'hidden' }}>
       <pre style={{ margin: 0, opacity: 0.9, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
         <code>{displayCode}</code>
       </pre>
@@ -135,14 +136,23 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
   const renderPreview = () => {
     if (isCode) {
       const lang = (article.primaryLanguage || article.metadata?.language || 'code').toLowerCase();
-      const fileExt = article.fileStorageKey ? article.fileStorageKey.split('.').pop() : '';
-      let headerLang = lang && lang !== 'code' ? lang : (fileExt ? `.${fileExt}` : 'Code');
+      const fileExt = article.fileStorageKey ? article.fileStorageKey.split('.').pop()?.toLowerCase() : '';
       
-      const IconComponent = LANGUAGE_ICONS[lang] || faCode;
-      const langColor = LANGUAGE_COLORS[lang] || '#569cd6';
+      let cleanExt = fileExt || lang;
+      let headerLang = 'Code';
+      if (cleanExt === 'rar') headerLang = 'RAR Archive';
+      else if (cleanExt === 'zip') headerLang = 'ZIP Archive';
+      else if (cleanExt === 'tar' || cleanExt === 'gz') headerLang = 'Archive';
+      else if (cleanExt === 'pub') headerLang = 'PUB';
+      else if (cleanExt && cleanExt !== 'code') headerLang = cleanExt;
+
+      const IconComponent = LANGUAGE_ICONS[cleanExt] || LANGUAGE_ICONS[lang] || faCode;
+      const langColor = LANGUAGE_COLORS[cleanExt] || LANGUAGE_COLORS[lang] || '#569cd6';
       
-      const bgName = article.metadata?.codeBackground || 'Pure White';
-      const bgColor = CODE_BGS[bgName] || '#FFFFFF';
+      // Generate a consistent random pastel background based on article ID
+      const PASTEL_COLORS = ['#e0f7fa', '#ffebee', '#f3e5f5', '#ffffff', '#f5f5f5'];
+      const bgIndex = (article.id ? article.id.charCodeAt(0) + (article.id.charCodeAt(article.id.length - 1) || 0) : 0) % PASTEL_COLORS.length;
+      const bgColor = PASTEL_COLORS[bgIndex];
       const textBase = '#333333';
 
       const rawSnippet = article.codeSnippet || article.metadata?.codeSnippet;
@@ -183,21 +193,22 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
       }
     } catch(e) {}
 
-    const hasMultipleImages = (article.mainImage && (article.sideImage1 || article.sideImage2)) || (extraImages && extraImages.length > 0);
+    const hasMultipleImages = (article.mainImage && (article.sideImage1 || article.sideImage2)) || (extraImages && extraImages.length > 1);
 
     if (hasMultipleImages) {
-      const mainImg = article.mainImage || `/api/storage/fetch/${article.coverStorageKey || article.previewStorageKey}`;
-      const side1 = article.sideImage1 || (extraImages[0] ? `/api/storage/fetch/${extraImages[0]}` : mainImg);
-      const side2 = article.sideImage2 || (extraImages[1] ? `/api/storage/fetch/${extraImages[1]}` : mainImg);
+      const getStorageUrl = (key: string) => key ? `/api/storage/fetch/${key}` : null;
+      let mainImg = article.mainImage || getStorageUrl(article.coverStorageKey || article.previewStorageKey) || getStorageUrl(extraImages[0]) || '/brand/imagifact.png';
+      let side1 = article.sideImage1 || getStorageUrl(extraImages[1]) || mainImg;
+      let side2 = article.sideImage2 || getStorageUrl(extraImages[2]) || getStorageUrl(extraImages[1]) || mainImg;
 
       return (
         <div className="rich-article-collage">
           <div className="collage-main">
-            <img src={mainImg} alt="Main Collage" />
+            <img src={mainImg as string} alt="Main Collage" />
           </div>
           <div className="collage-side">
-            <img src={side1} alt="Top Collage" />
-            <img src={side2} alt="Bottom Collage" />
+            <img src={side1 as string} alt="Top Collage" />
+            <img src={side2 as string} alt="Bottom Collage" />
           </div>
         </div>
       );
@@ -216,7 +227,9 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
       ? `/api/storage/fetch/${article.previewStorageKey}` 
       : article.coverStorageKey 
         ? `/api/storage/fetch/${article.coverStorageKey}`
-        : (article.mainImage || '/brand/imagifact.png');
+        : extraImages && extraImages.length > 0
+          ? `/api/storage/fetch/${extraImages[0]}`
+          : (article.mainImage || '/brand/imagifact.png');
 
     return (
       <div className="rich-article-collage" style={{ height: '220px', position: 'relative', backgroundColor: '#f0f0f0', borderTopLeftRadius: '12px', borderTopRightRadius: '12px', overflow: 'hidden' }}>

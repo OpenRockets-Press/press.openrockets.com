@@ -113,13 +113,11 @@ publicationsRouter.get('/', zValidator('query', getListQuerySchema), async (c) =
   });
 });
 
-publicationsRouter.get('/contributor', async (c) => {
-  // We'd extract the user from the JWT token here
-  // Mocking userId for now since SSO validation is pending
-  const userId = "mock_user";
+publicationsRouter.get('/contributor', authMiddleware, async (c) => {
+  const user = c.get('user');
   
   const pubs = await db.query.publications.findMany({
-    where: eq(publications.authorId, userId),
+    where: eq(publications.authorId, user.id),
     orderBy: [desc(publications.submittedAt)],
   });
 

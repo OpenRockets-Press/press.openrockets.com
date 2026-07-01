@@ -4,7 +4,7 @@ import localforage from "localforage";
 import { useNavigate } from "@tanstack/react-router";
 import { clsx } from "clsx";
 import { useQuery } from "@tanstack/react-query";
-import { getCurrentUser, getAllAdminPublications, reviewPublication } from "@/lib/api";
+import { getCurrentUser, getAllAdminPublications, reviewPublication, getContributorPublications } from "@/lib/api";
 import { getSessionUser } from "@/lib/authStore";
 import { queryKeys } from "@/lib/queryKeys";
 
@@ -78,15 +78,31 @@ export function SubmissionsPage() {
           });
           setSubmissions(mapped);
         } else {
-          const data = await localforage.getItem<Submission[]>("openRockets_submissions");
-          if (data && Array.isArray(data)) {
-            const sorted = data.sort((a, b) => {
-              const timeA = a.createdAt || 0;
-              const timeB = b.createdAt || 0;
-              return timeB - timeA;
-            });
-            setSubmissions(sorted);
-          }
+          const pubs = await getContributorPublications();
+          const mapped = pubs.map((p: any) => {
+            let fileCount = p.fileStorageKey || p.fileStorageId ? 1 : 0;
+            if (p.extraFiles) {
+              try {
+                const extra = JSON.parse(p.extraFiles);
+                if (Array.isArray(extra)) fileCount += extra.length;
+              } catch (e) {}
+            }
+            if (p.threejsModelKey) fileCount += 1;
+            return {
+              id: p.pubId || p.id,
+              type: p.type,
+              title: p.title,
+              subtitle: p.subtitle || "",
+              fileCount,
+              publisherDomain: "press.openrockets.com",
+              linkId: `artifacts/${(p.title || "").toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}-${p.pubId || p.id}`,
+              hashtags: p.tags?.map ? p.tags.map((t: string) => ({ id: t, name: t, type: "general" as const })) : [],
+              author: p.authorName || "Unknown Author",
+              status: p.status,
+              createdAt: p.submittedAt ? new Date(p.submittedAt).getTime() : Date.now()
+            };
+          });
+          setSubmissions(mapped);
         }
       } catch (err) {
         console.error("Failed to load submissions", err);
