@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useState, useEffect } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFileAlt, faCode, faCube, faEye, faC } from '@fortawesome/free-solid-svg-icons';
@@ -76,6 +76,34 @@ function generateSlug(title: string, pubId: string) {
   return `/artifacts/${slug}-${pubId}`;
 }
 
+function DynamicCodePreview({ fileKey, fallbackSnippet, bgColor, textBase }: any) {
+  const [codeLines, setCodeLines] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (fileKey && fileKey !== 'null' && fileKey.trim() !== '') {
+      fetch(`https://press.openrockets.com/storage/${fileKey}`)
+        .then(res => res.text())
+        .then(text => {
+          const lines = text.split('\n').slice(0, 3).join('\n');
+          setCodeLines(lines);
+        })
+        .catch(() => setCodeLines(fallbackSnippet));
+    } else {
+      setCodeLines(fallbackSnippet);
+    }
+  }, [fileKey, fallbackSnippet]);
+
+  const displayCode = codeLines || fallbackSnippet || '// No preview available for this code artifact.';
+
+  return (
+    <div style={{ flex: 1, backgroundColor: bgColor, padding: '16px', color: textBase, fontFamily: 'monospace', fontSize: '16px', lineHeight: '1.4', overflow: 'hidden' }}>
+      <pre style={{ margin: 0, opacity: 0.9, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+        <code>{displayCode}</code>
+      </pre>
+    </div>
+  );
+}
+
 function RichArticleCardComponent({ article }: RichArticleCardProps) {
   const navigate = useNavigate();
   const type = article.type || 'research_paper';
@@ -89,62 +117,50 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
     }
   } catch (e) {}
 
+  parsedTags.sort((a, b) => {
+    const aIsMain = typeof a === 'object' && a.isMain;
+    const bIsMain = typeof b === 'object' && b.isMain;
+    if (aIsMain && !bIsMain) return -1;
+    if (!aIsMain && bIsMain) return 1;
+    return 0;
+  });
+
+  const totalTags = parsedTags.length;
+  const displayTags = totalTags > 5 ? parsedTags.slice(0, 4) : parsedTags;
+
   const isCode = type === 'software_code' || type === 'code_gist' || type === 'Software';
   const is3D = type === '3d_artifact' || type === '3d_model' || type === 'Artifact3D';
+  const isImage = type === 'image';
 
   const renderPreview = () => {
     if (isCode) {
       const lang = (article.primaryLanguage || article.metadata?.language || 'code').toLowerCase();
+      const fileExt = article.fileStorageKey ? article.fileStorageKey.split('.').pop() : '';
+      let headerLang = lang && lang !== 'code' ? lang : (fileExt ? `.${fileExt}` : 'Code');
+      
       const IconComponent = LANGUAGE_ICONS[lang] || faCode;
       const langColor = LANGUAGE_COLORS[lang] || '#569cd6';
       
       const bgName = article.metadata?.codeBackground || 'Pure White';
       const bgColor = CODE_BGS[bgName] || '#FFFFFF';
-
       const textBase = '#333333';
-      const keyword = '#0000ff';
-      const stringCol = '#a31515';
-      const funcCol = '#795e26';
-      const control = '#af00db';
 
       const rawSnippet = article.codeSnippet || article.metadata?.codeSnippet;
 
-      if (rawSnippet) {
-        return (
-          <div style={{ height: '220px', display: 'flex', flexDirection: 'column', backgroundColor: '#1e1e1e', overflow: 'hidden', position: 'relative', borderTopLeftRadius: '12px', borderTopRightRadius: '12px' }}>
-            <div style={{ padding: '16px 16px 8px 16px', borderBottom: '1px solid #333', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'Inter, system-ui, sans-serif' }}>
-              <FontAwesomeIcon icon={IconComponent} style={{ color: langColor, fontSize: '16px' }} />
-              <span style={{ color: '#FFF', fontWeight: 'bold', fontSize: '14px', textTransform: 'capitalize' }}>{lang || 'Code'}</span>
-            </div>
-            <div style={{ flex: 1, backgroundColor: bgColor, padding: '16px', color: textBase, fontFamily: 'monospace', fontSize: '24px', lineHeight: '1.4', overflow: 'hidden' }}>
-              <pre style={{ margin: 0, opacity: 0.9 }}>
-                <code style={{ display: 'block' }}>
-                  <span style={{ color: keyword }}>import</span> {'{'} optimize {'}'} <span style={{ color: keyword }}>from</span> <span style={{ color: stringCol }}>'@ffmpeg/core'</span>;<br/>
-                  <br/>
-                  <span style={{ color: keyword }}>async function</span> <span style={{ color: funcCol }}>processStream</span>(input) {'{'}<br/>
-                  &nbsp;&nbsp;<span style={{ color: keyword }}>const</span> buffer = <span style={{ color: control }}>await</span> optimize(input);<br/>
-                  &nbsp;&nbsp;<span style={{ color: control }}>return</span> buffer;<br/>
-                  {'}'}
-                </code>
-              </pre>
-            </div>
+      return (
+        <div style={{ height: '220px', display: 'flex', flexDirection: 'column', backgroundColor: '#1e1e1e', overflow: 'hidden', position: 'relative', borderTopLeftRadius: '12px', borderTopRightRadius: '12px' }}>
+          <div style={{ padding: '16px 16px 8px 16px', borderBottom: '1px solid #333', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'Inter, system-ui, sans-serif' }}>
+            <FontAwesomeIcon icon={IconComponent} style={{ color: langColor, fontSize: '16px' }} />
+            <span style={{ color: '#FFF', fontWeight: 'bold', fontSize: '14px', textTransform: 'capitalize' }}>{headerLang}</span>
           </div>
-        );
-      } else {
-        return (
-          <div style={{ height: '220px', display: 'flex', flexDirection: 'column', backgroundColor: '#1e1e1e', overflow: 'hidden', position: 'relative', borderTopLeftRadius: '12px', borderTopRightRadius: '12px' }}>
-            <div style={{ padding: '16px 16px 8px 16px', borderBottom: '1px solid #333', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'Inter, system-ui, sans-serif' }}>
-              <FontAwesomeIcon icon={IconComponent} style={{ color: langColor, fontSize: '16px' }} />
-              <span style={{ color: '#FFF', fontWeight: 'bold', fontSize: '14px', textTransform: 'capitalize' }}>{lang}</span>
-            </div>
-            <div style={{ flex: 1, backgroundColor: bgColor, padding: '16px', color: textBase, fontFamily: 'monospace', fontSize: '12px', lineHeight: '1.4', overflow: 'hidden' }}>
-              <pre style={{ margin: 0, opacity: 0.9, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-                <code>{rawSnippet || '// No preview available for this code artifact.'}</code>
-              </pre>
-            </div>
-          </div>
-        );
-      }
+          <DynamicCodePreview 
+            fileKey={article.fileStorageKey} 
+            fallbackSnippet={rawSnippet} 
+            bgColor={bgColor} 
+            textBase={textBase} 
+          />
+        </div>
+      );
     }
     
     if (is3D) {
@@ -160,16 +176,28 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
       );
     }
 
-    if (article.mainImage) {
-      // Original Collage Design for mock articles
+    let extraImages: any[] = [];
+    try {
+      if (article.extraFiles) {
+        extraImages = typeof article.extraFiles === 'string' ? JSON.parse(article.extraFiles) : article.extraFiles;
+      }
+    } catch(e) {}
+
+    const hasMultipleImages = (article.mainImage && (article.sideImage1 || article.sideImage2)) || (extraImages && extraImages.length > 0);
+
+    if (hasMultipleImages) {
+      const mainImg = article.mainImage || `https://press.openrockets.com/storage/${article.coverStorageKey || article.previewStorageKey}`;
+      const side1 = article.sideImage1 || (extraImages[0] ? `https://press.openrockets.com/storage/${extraImages[0]}` : mainImg);
+      const side2 = article.sideImage2 || (extraImages[1] ? `https://press.openrockets.com/storage/${extraImages[1]}` : mainImg);
+
       return (
         <div className="rich-article-collage">
           <div className="collage-main">
-            <img src={article.mainImage} alt="Main Collage" />
+            <img src={mainImg} alt="Main Collage" />
           </div>
           <div className="collage-side">
-            <img src={article.sideImage1 || article.mainImage} alt="Top Collage" />
-            <img src={article.sideImage2 || article.mainImage} alt="Bottom Collage" />
+            <img src={side1} alt="Top Collage" />
+            <img src={side2} alt="Bottom Collage" />
           </div>
         </div>
       );
@@ -188,7 +216,7 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
       ? `https://press.openrockets.com/storage/${article.previewStorageKey}` 
       : article.coverStorageKey 
         ? `https://press.openrockets.com/storage/${article.coverStorageKey}`
-        : '/brand/imagifact.png';
+        : (article.mainImage || '/brand/imagifact.png');
 
     return (
       <div className="rich-article-collage" style={{ height: '220px', position: 'relative', backgroundColor: '#f0f0f0', borderTopLeftRadius: '12px', borderTopRightRadius: '12px', overflow: 'hidden' }}>
@@ -199,13 +227,31 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
 
   const rawLicense = article.license || article.metadata?.license;
   let cleanLicense = '';
+  let iconLicense = '';
+  let licenseLink = '';
+  
   if (rawLicense) {
-    cleanLicense = rawLicense.replace('ORP_', '').trim();
-  }
-  // Title case for matching with LICENSE_ICONS, e.g. "beaver" -> "Beaver"
-  let iconLicense = cleanLicense;
-  if (iconLicense && iconLicense.length > 0) {
-    iconLicense = iconLicense.charAt(0).toUpperCase() + iconLicense.slice(1).toLowerCase();
+    if (rawLicense === 'ORP_EAGLE') {
+      cleanLicense = 'Hummingbird';
+      iconLicense = 'Hummingbird';
+      licenseLink = 'hummingbird';
+    } else if (rawLicense === 'ORP_BEAVER') {
+      cleanLicense = 'Beaver';
+      iconLicense = 'Beaver';
+      licenseLink = 'beaver';
+    } else if (rawLicense === 'ORP_KANGAROO') {
+      cleanLicense = 'Kangaroo';
+      iconLicense = 'Kangaroo';
+      licenseLink = 'kangaroo';
+    } else if (rawLicense.toLowerCase() === 'cc') {
+      cleanLicense = 'CC';
+      iconLicense = 'CC';
+      licenseLink = 'cc';
+    } else {
+      cleanLicense = rawLicense.replace('ORP_', '').trim();
+      iconLicense = cleanLicense.charAt(0).toUpperCase() + cleanLicense.slice(1).toLowerCase();
+      licenseLink = cleanLicense.toLowerCase();
+    }
   }
 
   return (
@@ -243,7 +289,7 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
           
           {cleanLicense && (
             <Link 
-              to={`/licenses/${encodeURIComponent(cleanLicense.toLowerCase())}` as any}
+              to={`/licenses/${encodeURIComponent(licenseLink)}` as any}
               style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#007185', fontWeight: 'bold', textDecoration: 'none', backgroundColor: '#e9ecef', padding: '4px 8px', borderRadius: '6px' }}
             >
               <img 
@@ -264,9 +310,9 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
           {article.subtitle || article.description}
         </p>
         
-        {/* HASHTAGS (Original Format) */}
-        <div className="rich-tags-container">
-          {parsedTags.map((tagObj, idx) => {
+        {/* HASHTAGS (Original Format with Limiting) */}
+        <div className="rich-tags-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '12px', position: 'relative', zIndex: 2 }}>
+          {displayTags.map((tagObj, idx) => {
             const tagName = typeof tagObj === 'string' ? tagObj : (tagObj.name || String(tagObj));
             const isMain = typeof tagObj === 'object' && tagObj.isMain;
             return (
@@ -278,13 +324,21 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
                   e.stopPropagation();
                   navigate({ to: `/hashtag/${encodeURIComponent(tagName)}` });
                 }}
-                style={{ cursor: 'pointer' }}
+                style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 8px', borderRadius: '12px', fontSize: '10px' }}
               >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
                 {tagName}
               </span>
             );
           })}
+          {totalTags > 5 && (
+            <span 
+              className="rich-tag tag-normal"
+              style={{ cursor: 'default', display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 8px', borderRadius: '12px', fontSize: '10px' }}
+            >
+              +{totalTags - 4} more
+            </span>
+          )}
         </div>
 
         {/* VIEWS SECTION AT THE BOTTOM */}

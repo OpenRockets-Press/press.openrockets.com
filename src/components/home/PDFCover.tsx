@@ -16,8 +16,8 @@ export function PDFCover({ url }: PDFCoverProps) {
 
   if (error) {
     return (
-      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f0f0', color: '#999' }}>
-        Failed to load PDF
+      <div style={{ width: '100%', height: '100%', overflow: 'hidden', backgroundColor: '#f0f0f0' }}>
+        <img src="/brand/imagifact.png" alt="Artifact Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
       </div>
     );
   }
