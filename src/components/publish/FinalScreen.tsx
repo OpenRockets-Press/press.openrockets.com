@@ -109,7 +109,8 @@ export function FinalScreen() {
         // Map frontend license to backend enum
         let mappedLicense = "ORP_BEAVER";
         if (rawLicense === "kangaroo") mappedLicense = "ORP_KANGAROO";
-        if (rawLicense === "hummingbird") mappedLicense = "ORP_EAGLE";
+        if (rawLicense === "hummingbird") mappedLicense = "ORP_HUMMINGBIRD";
+        if (rawLicense === "cc") mappedLicense = "CC";
         
         // Map frontend type to backend enum
         let mappedType = "other";

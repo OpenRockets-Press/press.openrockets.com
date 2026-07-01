@@ -39,24 +39,34 @@ export function Template1Page({ data }: { data?: any }) {
   const isPreviewMode = isAdmin && data?.status !== 'published';
   const shouldShow404 = data?.status !== 'published' && !isAdmin;
 
-
   const getAvatarUrl = () => {
     if (data?.authorAvatar) return data.authorAvatar;
     if ((user as any)?.avatarUrl) return (user as any).avatarUrl;
     if ((user as any)?.photoURL) return (user as any).photoURL;
-    if (user?.displayName) {
-      return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName)}&background=0D8A50&color=fff`;
-    }
-    if (user?.email) {
-      return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.email)}&background=0D8A50&color=fff`;
-    }
-    return `https://ui-avatars.com/api/?name=Author&background=0D8A50&color=fff`;
+    const seed = [user?.displayName || data?.authorName, user?.email].filter(Boolean).join(' ') || 'Author';
+    return `https://api.dicebear.com/10.x/stripes/svg?seed=${encodeURIComponent(seed)}`;
   };
 
   const authorName = data?.authorName || user?.displayName || user?.email || "Unknown Author";
 
   const fileStorageKey = data?.fileStorageKey;
   const extraFiles = data?.extraFiles ? (typeof data.extraFiles === 'string' ? JSON.parse(data.extraFiles) : data.extraFiles) : [];
+  
+  const getLicenseDetails = (licenseKey) => {
+    switch (licenseKey) {
+      case 'ORP_HUMMINGBIRD':
+        return { name: 'OpenRockets® Hummingbird', icon: '/brand/licences/hummingbird.png', link: 'https://press.openrockets.com/licenses/hummingbird' };
+      case 'ORP_KANGAROO':
+        return { name: 'OpenRockets® Kangaroo', icon: '/brand/licences/kangarooo.png', link: 'https://press.openrockets.com/licenses/kangaroo' };
+      case 'CC':
+        return { name: 'Creative Commons®', icon: '/brand/licences/creativecommons_usethisforall.png', link: 'https://creativecommons.org/licenses/by/4.0/' };
+      case 'ORP_BEAVER':
+      default:
+        return { name: 'OpenRockets® Beaver', icon: '/brand/licences/beaver,png.png', link: 'https://press.openrockets.com/licenses/beaver' };
+    }
+  };
+  const { name: lName, icon: lIcon, link: lLink } = getLicenseDetails(data?.license || 'ORP_BEAVER');
+
   const publishDate = data?.submittedAt 
     ? new Date(data.submittedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) 
     : "2 Mar. 2025";
@@ -563,9 +573,9 @@ export function Template1Page({ data }: { data?: any }) {
                   { url: "/brand/index.html", name: "index.html" },
                   { url: "/brand/vite.config.ts", name: "vite.config.ts" }
                 ]}
-                licenseName="OpenRockets® Beaver" 
-                licenseIcon="/brand/licences/beaver,png.png"
-                licenseLink="https://press.openrockets.com/licenses/beaver"
+                licenseName={lName} 
+                licenseIcon={lIcon}
+                licenseLink={lLink}
               />
 </Suspense>
             </div>

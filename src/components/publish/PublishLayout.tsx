@@ -96,10 +96,8 @@ export function PublishLayout({ children }: PublishLayoutProps) {
 
   const getAvatarUrl = () => {
     if ((user as any)?.avatarUrl) return (user as any).avatarUrl;
-    if (user?.displayName) {
-      return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName)}&background=0D8A50&color=fff`;
-    }
-    return `https://ui-avatars.com/api/?name=User&background=0D8A50&color=fff`;
+    const seed = [user?.displayName, user?.email].filter(Boolean).join(' ') || 'User';
+    return `https://api.dicebear.com/10.x/stripes/svg?seed=${encodeURIComponent(seed)}`;
   };
 
   return (

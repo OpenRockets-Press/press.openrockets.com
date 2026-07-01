@@ -19,10 +19,8 @@ export function ProfilePage() {
 
   const getAvatarUrl = () => {
     if ((user as any)?.avatarUrl) return (user as any).avatarUrl;
-    if (user?.displayName) {
-      return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName)}&background=0D8A50&color=fff&size=256`;
-    }
-    return `https://ui-avatars.com/api/?name=User&background=0D8A50&color=fff&size=256`;
+    const seed = [user?.displayName, user?.email].filter(Boolean).join(' ') || 'User';
+    return `https://api.dicebear.com/10.x/stripes/svg?seed=${encodeURIComponent(seed)}`;
   };
 
   const displayName = user?.displayName || "OpenRockets User";

@@ -161,20 +161,22 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
 
       const rawSnippet = article.codeSnippet || article.metadata?.codeSnippet;
 
-      return (
+      {
+        // Build seed from code snippet or title
+        const snippetSeed = rawSnippet ? rawSnippet.split('\n').slice(0, 2).join(' ') : (article.title || String(article.id));
+        const trianglesUrl = `https://api.dicebear.com/10.x/triangles/svg?seed=${encodeURIComponent(snippetSeed)}`;
+        return (
         <div style={{ height: '220px', display: 'flex', flexDirection: 'column', backgroundColor: '#1e1e1e', overflow: 'hidden', position: 'relative', borderTopLeftRadius: '12px', borderTopRightRadius: '12px' }}>
-          <div style={{ padding: '16px 16px 8px 16px', borderBottom: '1px solid #333', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'Inter, system-ui, sans-serif' }}>
+          <div style={{ padding: '10px 16px', borderBottom: '1px solid #333', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'Inter, system-ui, sans-serif' }}>
             <FontAwesomeIcon icon={IconComponent} style={{ color: langColor, fontSize: '16px' }} />
             <span style={{ color: '#FFF', fontWeight: 'bold', fontSize: '14px', textTransform: 'capitalize' }}>{headerLang}</span>
           </div>
-          <DynamicCodePreview 
-            fileKey={article.fileStorageKey} 
-            fallbackSnippet={rawSnippet} 
-            bgColor={bgColor} 
-            textBase={textBase} 
-          />
+          <div style={{ flex: 1, overflow: 'hidden' }}>
+            <img src={trianglesUrl} alt="Code Pattern" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </div>
         </div>
       );
+      }
     }
     
     if (is3D) {
@@ -279,7 +281,7 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
         
         {/* AUTHOR TOP ROW */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', minWidth: 0 }}>
-          <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${article.authorName || 'User'}`} alt="Author" style={{ width: '24px', height: '24px', borderRadius: '50%', flexShrink: 0 }} />
+          <img src={`https://api.dicebear.com/10.x/stripes/svg?seed=${encodeURIComponent(article.authorName || 'User')}`} alt="Author" style={{ width: '24px', height: '24px', borderRadius: '50%', flexShrink: 0 }} />
           <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#555', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>{article.authorName || 'Unknown Author'}</span>
         </div>
 

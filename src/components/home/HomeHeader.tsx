@@ -310,7 +310,7 @@ export function HomeHeader({ onOpenInfo }: HomeHeaderProps) {
                   onClick={() => setProfileOpen(!profileOpen)}
                 >
                   <img 
-                    src={session.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(session.displayName || 'User')}&background=0D8A50&color=fff`} 
+                    src={session.avatarUrl || `https://api.dicebear.com/10.x/stripes/svg?seed=${encodeURIComponent([session.displayName, session.email].filter(Boolean).join(' ') || 'User')}`} 
                     alt="Profile" 
                     className="profile-avatar-img" 
                   />
