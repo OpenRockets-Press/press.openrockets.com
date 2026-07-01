@@ -220,7 +220,8 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
     addImg(article.mainImage || null);
 
     // Research papers with PDF but no custom images → show PDF cover
-    const hasCustomImage = article.coverStorageKey || article.previewStorageKey || (extraImages && extraImages.length > 0);
+    const realExtraImages = extraImages ? extraImages.filter(k => k !== article.fileStorageKey) : [];
+    const hasCustomImage = article.coverStorageKey || article.previewStorageKey || realExtraImages.length > 0;
     if (!hasCustomImage && (type === 'research_paper' || type === 'ResearchPaper') && article.fileStorageKey && article.fileStorageKey !== 'null' && article.fileStorageKey.trim() !== '') {
       const pdfUrl = `/api/storage/fetch/${article.fileStorageKey}`;
       return (
