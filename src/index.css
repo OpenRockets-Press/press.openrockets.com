@@ -4202,7 +4202,7 @@ button.ad-attribution-why:hover {
 
   .menu-button,
   .mobile-nav {
-    display: none;
+    display: none !important;
   }
 
   .shelf-grid {
