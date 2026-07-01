@@ -64,17 +64,23 @@ publicationsRouter.get('/', zValidator('query', getListQuerySchema), async (c) =
   const data = await db
     .select({
       id: publications.id,
+      pubId: publications.pubId,
       title: publications.title,
+      subtitle: publications.subtitle,
       division: publications.division,
-      category: publications.category,
+      type: publications.type,
       license: publications.license,
       status: publications.status,
       viewCount: publications.viewCount,
       downloadCount: publications.downloadCount,
       abstract: publications.abstract,
-      coverImageUrl: publications.coverImageUrl,
+      coverStorageKey: publications.coverStorageKey,
+      customThumbnailStorageKey: publications.customThumbnailStorageKey,
+      codeSnippet: publications.codeSnippet,
+      primaryLanguage: publications.primaryLanguage,
+      previewStorageKey: publications.previewStorageKey,
+      shortId: publications.shortId,
       tags: publications.tags,
-      createdAt: publications.createdAt,
       submittedAt: publications.submittedAt,
       publishedAt: publications.publishedAt,
       authorId: publications.authorId,
@@ -179,6 +185,9 @@ publicationsRouter.post('/', authMiddleware, zValidator('json', createPublicatio
       tags: body.tags || null,
       communities: body.communities || null,
       links: body.links || null,
+      codeSnippet: body.codeSnippet || null,
+      primaryLanguage: body.primaryLanguage || null,
+      previewStorageKey: body.previewStorageKey || null,
     });
 
     // Trigger Discord Webhook Notification

@@ -271,7 +271,7 @@ export async function getHomeFeed(filters: HomeFeedFilters): Promise<HomeFeedRes
   if (type !== "all") params.set("type", type);
   const qs = params.toString();
 
-  return callApi<HomeFeedResponse>(`home-feed${qs ? `?${qs}` : ""}`, undefined, {
+  return callApi<HomeFeedResponse>(`publications${qs ? `?${qs}` : ""}`, undefined, {
     method: "GET",
     skipAuth: true,
   });

@@ -69,9 +69,15 @@ export interface PublicationCardDTO {
 }
 
 export interface HomeFeedResponse {
-  newReleases: PublicationCardDTO[];
-  featuredContributions: PublicationCardDTO[];
-  availableTypes: PublicationType[];
+  data: any[]; // The feed array
+  meta: {
+    page: number;
+    limit: number;
+    totalRecords: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
 }
 
 export interface RegisterPayload {

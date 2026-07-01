@@ -24,6 +24,9 @@ export const createPublicationSchema = z.object({
   tags: z.string().optional(),
   communities: z.string().optional(),
   links: z.string().optional(),
+  codeSnippet: z.string().optional(),
+  primaryLanguage: z.string().optional(),
+  previewStorageKey: z.string().optional(),
 });
 
 export const updatePublicationSchema = z.object({

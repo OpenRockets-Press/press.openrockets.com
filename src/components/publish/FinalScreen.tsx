@@ -125,6 +125,28 @@ export function FinalScreen() {
           mappedType = "poster";
         }
 
+        let codeSnippet = "";
+        let primaryLanguage = "";
+        let previewStorageKey = ""; // We'll set this if it's a 3D model or image and we uploaded it
+        
+        if (mappedType === "software_code" && activeFiles.length > 0) {
+          const mainFile = activeFiles[0];
+          const ext = mainFile.name.split('.').pop()?.toLowerCase();
+          
+          if (ext === 'zip') {
+             primaryLanguage = 'zip';
+          } else {
+             primaryLanguage = ext || 'code';
+             try {
+               const text = await mainFile.text();
+               codeSnippet = text.substring(0, 190);
+             } catch(e) {}
+          }
+        } else if (mappedType === "3d_model" || mappedType === "image") {
+          // If the user provided a cover image, use it as the preview
+          // (For now we don't have custom thumbnail uploading implemented in FinalScreen)
+        }
+
         const submitPayload = {
           title,
           subtitle,
@@ -137,7 +159,10 @@ export function FinalScreen() {
           communities: JSON.stringify(communities),
           links: JSON.stringify(links),
           fileStorageKey: uploadedKeys[0],
-          extraFiles: JSON.stringify(uploadedKeys)
+          extraFiles: JSON.stringify(uploadedKeys),
+          codeSnippet,
+          primaryLanguage,
+          previewStorageKey
         };
 
         const submitRes = await fetch('/api/publications', {

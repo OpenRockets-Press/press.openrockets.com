@@ -98,16 +98,33 @@ export function HomePage() {
   const [adsModalOpen, setAdsModalOpen] = useState(false);
   const debouncedSearch = useDebouncedValue(search, 300);
 
+  const combinedSearch = [debouncedSearch, ...selectedHashtags].filter(Boolean).join(' ');
+
   const { data } = useQuery({
-    queryKey: queryKeys.home.feed({ q: debouncedSearch, type: activeType as any }),
-    queryFn: () => getHomeFeed({ q: debouncedSearch, type: activeType as any }),
+    queryKey: queryKeys.home.feed({ q: combinedSearch, type: activeType as any }),
+    queryFn: () => getHomeFeed({ q: combinedSearch, type: activeType as any }),
     staleTime: 60_000,
     placeholderData: (previousData) => previousData,
   });
 
-  // Generate our 10-item lists
-  const newReleases = useMemo(() => generateMockArticles(25), []);
-  const featured = useMemo(() => generateMockArticles(25), []);
+  const feed = data?.data || [];
+
+  const newReleases = useMemo(() => {
+    return feed.slice(0, 15);
+  }, [feed]);
+
+  const featured = useMemo(() => {
+    return [...feed].sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0)).slice(0, 15);
+  }, [feed]);
+
+  const getCategoryItems = (cat: string) => {
+    return feed.filter(a => {
+      try {
+        const tags = typeof a.tags === 'string' ? JSON.parse(a.tags) : (a.tags || []);
+        return tags.includes(cat);
+      } catch (e) { return false; }
+    }).slice(0, 15);
+  };
 
   return (
     <div className="home-page">
@@ -249,7 +266,7 @@ export function HomePage() {
               <RichHomeShelf
                 testId={`home-shelf-${cat}`}
                 title={<span className="notranslate">{cat}</span>}
-                items={generateMockArticles(10, cat)}
+                items={getCategoryItems(cat)}
                 hashtagLink={`/hashtag/${encodeURIComponent(cat)}`}
               />
             </div>

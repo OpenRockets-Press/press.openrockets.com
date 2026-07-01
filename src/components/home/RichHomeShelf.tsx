@@ -1,13 +1,12 @@
 import { memo, useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import type { MockArticle } from "@/lib/mockArticles";
-import { RichMockArticleCard } from "@/components/home/RichMockArticleCard";
+import { RichArticleCard } from "@/components/home/RichArticleCard";
 import { useTranslationContext } from "@/lib/TranslationContext";
 
 interface RichHomeShelfProps {
   testId: string;
   title: React.ReactNode;
-  items: MockArticle[];
+  items: any[];
   hashtagLink?: string; // e.g. "/hashtag/Mathematics"
   emptyMessage?: React.ReactNode;
 }
@@ -111,7 +110,7 @@ function RichHomeShelfComponent({ testId, title, items, hashtagLink, emptyMessag
                 className={`rich-card-wrapper ${isLastAndMorphing ? 'morphing-wrapper' : ''}`}
                 style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}
               >
-                <RichMockArticleCard article={item} />
+                <RichArticleCard article={item} />
                 
                 {isLastAndMorphing && (
                   <div 
