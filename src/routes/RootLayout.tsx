@@ -55,6 +55,21 @@ export function RootLayout() {
   const [infoModal, setInfoModal] = useState<HomeInfoModalKind | null>(null);
   const [isSidebarOpen, setSidebarOpen] = useState(false);
 
+  const isLoading = isPending || isTranslating || isContentLoading;
+  const [loaderTimeoutExceeded, setLoaderTimeoutExceeded] = useState(false);
+
+  useEffect(() => {
+    if (isLoading) {
+      setLoaderTimeoutExceeded(false);
+      const timer = setTimeout(() => {
+        setLoaderTimeoutExceeded(true);
+      }, 20000);
+      return () => clearTimeout(timer);
+    } else {
+      setLoaderTimeoutExceeded(false);
+    }
+  }, [isLoading]);
+
   useEffect(() => {
     const routeTitleMap: Record<string, string> = {
       "/": "OpenRockets Press",
@@ -89,7 +104,7 @@ export function RootLayout() {
 
   return (
     <>
-      {(isPending || isTranslating || isContentLoading) && (
+      {isLoading && !loaderTimeoutExceeded && (
         <div className="ms-loader-container" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999 }}>
           <div className="anim-dot dot1" />
           <div className="anim-dot dot2" />

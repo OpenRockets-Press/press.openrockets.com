@@ -8,26 +8,32 @@ export function useAutoTranslate() {
   const isTranslatingRef = useRef(false);
 
   useEffect(() => {
+    let isMounted = true;
     const mainContainer = document.querySelector('#translate-root');
     if (!mainContainer) return;
 
     const runTranslation = async () => {
-      if (isTranslatingRef.current) return;
+      // Wait for any existing translation to finish
+      while (isTranslatingRef.current) {
+        if (!isMounted) return;
+        await new Promise(r => setTimeout(r, 100));
+      }
+      if (!isMounted) return;
       
       if (language === 'en') {
-        // Restore to original english text
+        isTranslatingRef.current = true;
         for (const [node, text] of originalTextMap.current.entries()) {
           if (document.contains(node) && node.nodeValue !== text) {
-            isTranslatingRef.current = true;
             node.nodeValue = text;
-            isTranslatingRef.current = false;
           }
         }
+        isTranslatingRef.current = false;
+        if (isMounted) setIsTranslating(false);
         return;
       }
 
       isTranslatingRef.current = true;
-      setIsTranslating(true);
+      if (isMounted) setIsTranslating(true);
 
       const textNodes: Node[] = [];
       const walker = document.createTreeWalker(mainContainer, NodeFilter.SHOW_TEXT, {
@@ -67,7 +73,7 @@ export function useAutoTranslate() {
       if (textsToTranslate.length > 0) {
         try {
           const translatedTexts = await translateTextBatch(textsToTranslate, language);
-          if (translatedTexts.length === textNodes.length) {
+          if (isMounted && translatedTexts.length === textNodes.length) {
             textNodes.forEach((node, i) => {
               if (document.contains(node) && node.nodeValue !== translatedTexts[i]) {
                 node.nodeValue = translatedTexts[i];
@@ -79,14 +85,12 @@ export function useAutoTranslate() {
         }
       }
       
-      setIsTranslating(false);
+      if (isMounted) setIsTranslating(false);
       isTranslatingRef.current = false;
     };
 
-    // Run translation immediately on language change
     runTranslation();
 
-    // Use MutationObserver to catch staggered lazily-loaded content!
     const observer = new MutationObserver((mutations) => {
       if (isTranslatingRef.current || language === 'en') return;
       let shouldRun = false;
@@ -96,13 +100,15 @@ export function useAutoTranslate() {
         }
       });
       if (shouldRun) {
-        // Debounce slightly to wait for DOM to settle
-        setTimeout(runTranslation, 200);
+        setTimeout(() => { if (isMounted) runTranslation(); }, 200);
       }
     });
 
     observer.observe(mainContainer, { childList: true, subtree: true });
 
-    return () => observer.disconnect();
+    return () => {
+      isMounted = false;
+      observer.disconnect();
+    };
   }, [language, setIsTranslating]);
 }
