@@ -56,20 +56,31 @@
   <body>
    
     <noscript>Free cookie consent management tool by <a href="https://www.termsfeed.com/">TermsFeed</a></noscript>
+    <style>
+      body { margin: 0; background-color: #ffffff; }
+      @media (prefers-color-scheme: dark) {
+        body { background-color: #0a0a0a; }
+      }
+      .initial-loader-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        width: 100vw;
+      }
+      @keyframes rotate { 100% { transform: rotate(360deg); } }
+      @keyframes dash {
+        0% { stroke-dasharray: 1, 200; stroke-dashoffset: 0; }
+        50% { stroke-dasharray: 89, 200; stroke-dashoffset: -35px; }
+        100% { stroke-dasharray: 89, 200; stroke-dashoffset: -124px; }
+      }
+    </style>
     <div id="root">
-      <div style="display:flex;justify-content:center;align-items:center;height:100vh;width:100vw;background:#ffffff;">
+      <div class="initial-loader-container">
         <svg viewBox="0 0 50 50" style="width:40px;height:40px;animation:rotate 2s linear infinite;">
           <circle cx="25" cy="25" r="20" fill="none" stroke-width="4" stroke="#1a73e8" style="stroke-dasharray:1,200;stroke-dashoffset:0;animation:dash 1.5s ease-in-out infinite;stroke-linecap:round;"></circle>
         </svg>
       </div>
-      <style>
-        @keyframes rotate { 100% { transform: rotate(360deg); } }
-        @keyframes dash {
-          0% { stroke-dasharray: 1, 200; stroke-dashoffset: 0; }
-          50% { stroke-dasharray: 89, 200; stroke-dashoffset: -35px; }
-          100% { stroke-dasharray: 89, 200; stroke-dashoffset: -124px; }
-        }
-      </style>
     </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
