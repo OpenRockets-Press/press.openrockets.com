@@ -384,10 +384,17 @@ export function CodeViewerBox({ initialFiles, licenseName, licenseIcon, licenseL
               </div>
               <div style={{ flex: 1, overflow: 'auto', backgroundColor: '#faf8f0', display: 'flex', flexDirection: 'column' }}>
                 {activeNode.isArchive ? (
-                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
-                    <span style={{ color: '#666', fontFamily: 'monospace', fontSize: '0.95rem' }}>
-                      {activeNode.isExtracted ? "" : "Archive selected. Click to extract contents."}
+                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem', gap: '16px' }}>
+                    <span style={{ color: '#000', fontFamily: '"Noto Sans", sans-serif', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <FontAwesomeIcon icon={faInfoCircle} />
+                      This file is too large to render, please click download all to download this
                     </span>
+                    <button 
+                      style={{ padding: '8px 24px', backgroundColor: '#000', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '0.95rem', fontWeight: 500, cursor: 'pointer', fontFamily: '"Noto Sans", sans-serif', display: 'flex', alignItems: 'center', gap: '8px' }}
+                    >
+                      <img src="/paper_clip_3d.png" alt="Download all" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
+                      Download all
+                    </button>
                   </div>
                 ) : activeNode.isTooLarge ? (
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem', gap: '16px' }}>
