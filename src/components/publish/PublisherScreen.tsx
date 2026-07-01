@@ -116,7 +116,7 @@ export function PublisherScreen() {
             Search publications
           </label>
           
-          <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ position: 'relative', flex: 1, display: 'flex', width: '100%', flexDirection: 'column' }}>
             <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
               <input
                 id="publisher-search"
