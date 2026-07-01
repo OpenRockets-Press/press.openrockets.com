@@ -1,10 +1,33 @@
 import { Hono } from 'hono';
-import { getPresignedUploadUrl } from '../storage/s3';
+import { getPresignedUploadUrl, s3Client, BUCKET_NAME } from '../storage/s3';
 import { authMiddleware } from '../middleware/auth';
 import { z } from 'zod';
 import { zValidator } from '@hono/zod-validator';
+import { GetObjectCommand } from '@aws-sdk/client-s3';
 
 export const storageRouter = new Hono();
+
+// Proxy to fetch images/files from storage
+storageRouter.get('/fetch/*', async (c) => {
+  const key = c.req.path.replace('/api/storage/fetch/', '');
+  try {
+    const command = new GetObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: key,
+    });
+    const response = await s3Client.send(command);
+    if (!response.Body) return c.text('Not found', 404);
+    
+    const headers = new Headers();
+    if (response.ContentType) headers.set('Content-Type', response.ContentType);
+    if (response.ContentLength) headers.set('Content-Length', response.ContentLength.toString());
+    
+    return new Response(response.Body as any, { headers });
+  } catch (e) {
+    console.error('Storage Fetch Error:', e);
+    return c.text('Error fetching file', 500);
+  }
+});
 
 const presignedUrlSchema = z.object({
   filename: z.string().min(1),

@@ -92,11 +92,14 @@ export function PublicationDetailPage() {
 
         {publication.tags.length > 0 ? (
           <div className="tag-list" aria-label="Tags">
-            {publication.tags.map((tag) => (
-              <span key={tag} className="tag">
-                {tag}
-              </span>
-            ))}
+            {publication.tags.map((tag: any, i: number) => {
+              const tagName = typeof tag === 'string' ? tag : (tag.name || String(tag));
+              return (
+                <span key={`${tagName}-${i}`} className="tag">
+                  {tagName}
+                </span>
+              );
+            })}
           </div>
         ) : null}
 

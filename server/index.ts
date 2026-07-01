@@ -146,6 +146,9 @@ app.onError((err, c) => {
   }, statusCode);
 });
 
+// Serve static assets from dist in production
+app.use('/*', serveStatic({ root: './dist' }));
+
 // Global Not Found Middleware for APIs
 app.notFound((c) => {
   if (c.req.path.startsWith('/api')) {

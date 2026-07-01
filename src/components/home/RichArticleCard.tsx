@@ -81,7 +81,7 @@ function DynamicCodePreview({ fileKey, fallbackSnippet, bgColor, textBase }: any
 
   useEffect(() => {
     if (fileKey && fileKey !== 'null' && fileKey.trim() !== '') {
-      fetch(`https://press.openrockets.com/storage/${fileKey}`)
+      fetch(`/api/storage/fetch/${fileKey}`)
         .then(res => res.text())
         .then(text => {
           const lines = text.split('\n').slice(0, 3).join('\n');
@@ -164,7 +164,7 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
     }
     
     if (is3D) {
-      const previewUrl = article.previewStorageKey ? `https://press.openrockets.com/storage/${article.previewStorageKey}` : (article.mainImage || '/brand/imagifact.png');
+      const previewUrl = article.previewStorageKey ? `/api/storage/fetch/${article.previewStorageKey}` : (article.mainImage || '/brand/imagifact.png');
       return (
         <div style={{ height: '220px', position: 'relative', backgroundColor: '#f0f0f0', borderTopLeftRadius: '12px', borderTopRightRadius: '12px', overflow: 'hidden' }}>
           <img src={previewUrl} alt="3D Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -186,9 +186,9 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
     const hasMultipleImages = (article.mainImage && (article.sideImage1 || article.sideImage2)) || (extraImages && extraImages.length > 0);
 
     if (hasMultipleImages) {
-      const mainImg = article.mainImage || `https://press.openrockets.com/storage/${article.coverStorageKey || article.previewStorageKey}`;
-      const side1 = article.sideImage1 || (extraImages[0] ? `https://press.openrockets.com/storage/${extraImages[0]}` : mainImg);
-      const side2 = article.sideImage2 || (extraImages[1] ? `https://press.openrockets.com/storage/${extraImages[1]}` : mainImg);
+      const mainImg = article.mainImage || `/api/storage/fetch/${article.coverStorageKey || article.previewStorageKey}`;
+      const side1 = article.sideImage1 || (extraImages[0] ? `/api/storage/fetch/${extraImages[0]}` : mainImg);
+      const side2 = article.sideImage2 || (extraImages[1] ? `/api/storage/fetch/${extraImages[1]}` : mainImg);
 
       return (
         <div className="rich-article-collage">
@@ -204,7 +204,7 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
     }
 
     if ((type === 'research_paper' || type === 'ResearchPaper') && !article.previewStorageKey && article.fileStorageKey && article.fileStorageKey !== 'null' && article.fileStorageKey.trim() !== '') {
-      const pdfUrl = `https://press.openrockets.com/storage/${article.fileStorageKey}`;
+      const pdfUrl = `/api/storage/fetch/${article.fileStorageKey}`;
       return (
         <div className="rich-article-collage" style={{ height: '220px', position: 'relative', backgroundColor: '#f0f0f0', borderTopLeftRadius: '12px', borderTopRightRadius: '12px', overflow: 'hidden' }}>
           <PDFCover url={pdfUrl} />
@@ -213,9 +213,9 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
     }
 
     const previewUrl = article.previewStorageKey 
-      ? `https://press.openrockets.com/storage/${article.previewStorageKey}` 
+      ? `/api/storage/fetch/${article.previewStorageKey}` 
       : article.coverStorageKey 
-        ? `https://press.openrockets.com/storage/${article.coverStorageKey}`
+        ? `/api/storage/fetch/${article.coverStorageKey}`
         : (article.mainImage || '/brand/imagifact.png');
 
     return (
@@ -314,7 +314,7 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
         <div className="rich-tags-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '12px', position: 'relative', zIndex: 2 }}>
           {displayTags.map((tagObj, idx) => {
             const tagName = typeof tagObj === 'string' ? tagObj : (tagObj.name || String(tagObj));
-            const isMain = typeof tagObj === 'object' && tagObj.isMain;
+            const isMain = typeof tagObj === 'object' ? (tagObj.isMain === true || tagObj.type === 'main' || tagObj.type === 'category') : CATEGORY_HASHTAGS.includes(tagName);
             return (
               <span 
                 key={`${tagName}-${idx}`}

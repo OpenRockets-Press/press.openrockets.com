@@ -1,3 +1,6 @@
+import { getHomeFeed } from '@/lib/api';
+import { queryKeys } from '@/lib/queryKeys';
+import { useQuery } from '@tanstack/react-query';
 import { useState, useContext, useMemo, useRef, useEffect } from "react";
 import { useParams, Link } from "@tanstack/react-router";
 import { AdsInfoModal } from "@/components/ui/AdsInfoModal";
@@ -98,42 +101,51 @@ export function HashtagPage() {
   const { search, setSearch, selectedHashtags, setSelectedHashtags } = useContext(SearchContext);
 
   // Generate mock data specific to this hashtag
-  const rawNewReleases = useMemo(() => generateMockArticles(25, decodedHashtag), [decodedHashtag]);
-  const rawFeatured = useMemo(() => generateMockArticles(25, decodedHashtag), [decodedHashtag]);
+  const { data } = useQuery({ queryKey: queryKeys.home.feed({ q: decodedHashtag }), queryFn: () => getHomeFeed({ q: decodedHashtag }), staleTime: 60_000 });
+  const rawFeed = data?.data || [];
+  const rawNewReleases = useMemo(() => [...rawFeed].sort((a,b) => new Date(b.publishedAt || 0).getTime() - new Date(a.publishedAt || 0).getTime()), [rawFeed]);
+  const rawFeatured = useMemo(() => [...rawFeed].sort((a,b) => (b.viewCount || 0) - (a.viewCount || 0)), [rawFeed]);
   
   // Create intersection shelves (Hashtag X and Hashtag Y)
   const rawIntersectionShelves = useMemo(() => {
     const cats = CATEGORY_HASHTAGS.filter(cat => cat.toLowerCase() !== decodedHashtag.toLowerCase()).slice(0, 3);
     return cats.map(cat => {
-      const articles = generateMockArticles(10, decodedHashtag).map(art => {
-         if (!art.tags.find(t => t.name === cat)) {
-            art.tags.push({ name: cat, isMain: false });
-         }
-         return art;
+      const articles = rawFeed.filter(art => {
+         let parsed = [];
+         try { parsed = typeof art.tags === 'string' ? JSON.parse(art.tags) : (Array.isArray(art.tags) ? art.tags : []); } catch(e){}
+         const tagNames = parsed.map(t => typeof t === 'string' ? t.toLowerCase() : (t.name || String(t)).toLowerCase());
+         return tagNames.includes(cat.toLowerCase());
       });
       return { cat, articles };
     });
-  }, [decodedHashtag]);
+  }, [decodedHashtag, rawFeed]);
 
   // Create further exploration shelves at the bottom
   const rawExplorationShelves = useMemo(() => {
     const cats = CATEGORY_HASHTAGS.filter(cat => cat.toLowerCase() !== decodedHashtag.toLowerCase()).slice(3, 5);
-    return cats.map(cat => ({
-      cat,
-      articles: generateMockArticles(10, cat)
-    }));
-  }, [decodedHashtag]);
+    return cats.map(cat => {
+      const articles = rawFeed.filter(art => {
+         let parsed = [];
+         try { parsed = typeof art.tags === 'string' ? JSON.parse(art.tags) : (Array.isArray(art.tags) ? art.tags : []); } catch(e){}
+         const tagNames = parsed.map(t => typeof t === 'string' ? t.toLowerCase() : (t.name || String(t)).toLowerCase());
+         return tagNames.includes(cat.toLowerCase());
+      });
+      return { cat, articles };
+    });
+  }, [decodedHashtag, rawFeed]);
 
   const filterArticles = (articles: any[]) => {
     return articles.filter(article => {
       if (search.trim()) {
         const query = search.toLowerCase();
-        if (!article.title.toLowerCase().includes(query) && !article.description.toLowerCase().includes(query)) {
+        if (!article.title?.toLowerCase().includes(query) && !article.description?.toLowerCase().includes(query) && !article.abstract?.toLowerCase().includes(query)) {
           return false;
         }
       }
       if (selectedHashtags.length > 0) {
-        const articleTagNames = article.tags.map((t: any) => t.name.toLowerCase());
+        let parsedTags = [];
+        try { parsedTags = typeof article.tags === 'string' ? JSON.parse(article.tags) : (Array.isArray(article.tags) ? article.tags : []); } catch(e) {}
+        const articleTagNames = parsedTags.map((t: any) => typeof t === 'string' ? t.toLowerCase() : (t.name || String(t)).toLowerCase());
         const hasAllTags = selectedHashtags.every(tag => articleTagNames.includes(tag.toLowerCase()));
         if (!hasAllTags) {
           return false;
@@ -315,7 +327,7 @@ export function HashtagPage() {
                    <div style={{ marginBottom: '2rem', paddingLeft: '20px' }}>
                      <RichHomeShelf
                        testId={`hashtag-shelf-intersect-${cat}-software`}
-                       title={<span style={{ fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}><img src="/brand/codeandsoftware.png" alt="Software and Code" style={{ width: '18px', height: '18px', objectFit: 'contain' }}/> Software and Code</span>}
+                       title={<span style={{ fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}><img src="/brand/software_icon.png" alt="Software and Code" style={{ width: '18px', height: '18px', objectFit: 'contain' }}/> Software and Code</span>}
                        items={software}
                        hashtagLink={`/hashtag/${encodeURIComponent(cat)}?type=Software`}
                      />
@@ -379,7 +391,7 @@ export function HashtagPage() {
                    <div style={{ marginBottom: '2rem', paddingLeft: '20px' }}>
                      <RichHomeShelf
                        testId={`hashtag-shelf-explore-${cat}-software`}
-                       title={<span style={{ fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}><img src="/brand/codeandsoftware.png" alt="Software and Code" style={{ width: '18px', height: '18px', objectFit: 'contain' }}/> Software and Code</span>}
+                       title={<span style={{ fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}><img src="/brand/software_icon.png" alt="Software and Code" style={{ width: '18px', height: '18px', objectFit: 'contain' }}/> Software and Code</span>}
                        items={software}
                        hashtagLink={`/hashtag/${encodeURIComponent(cat)}?type=Software`}
                      />
