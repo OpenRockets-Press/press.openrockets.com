@@ -212,15 +212,18 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
     const allImages: string[] = [];
     const addImg = (url: string | null | undefined) => { if (url && !allImages.includes(url)) allImages.push(url); };
 
+    // Filter out the main file key from extra images so we don't treat the PDF as a custom image
+    const customExtraImages = extraImages.filter(k => k !== article.fileStorageKey);
+
     addImg(getStorageUrl(article.coverStorageKey));
     addImg(getStorageUrl(article.previewStorageKey));
-    if (extraImages.length > 0) {
-      extraImages.slice(0, 5).forEach((key: string) => addImg(getStorageUrl(key)));
+    if (customExtraImages.length > 0) {
+      customExtraImages.slice(0, 5).forEach((key: string) => addImg(getStorageUrl(key)));
     }
     addImg(article.mainImage || null);
 
     // Research papers with PDF but no custom images → show PDF cover
-    const hasCustomImage = article.coverStorageKey || article.previewStorageKey || (extraImages && extraImages.length > 0);
+    const hasCustomImage = !!(article.coverStorageKey || article.previewStorageKey || customExtraImages.length > 0);
     if (!hasCustomImage && (type === 'research_paper' || type === 'ResearchPaper') && article.fileStorageKey && article.fileStorageKey !== 'null' && article.fileStorageKey.trim() !== '') {
       const pdfUrl = `/api/storage/fetch/${article.fileStorageKey}`;
       return (
@@ -276,7 +279,7 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
   let licenseLink = '';
   
   if (rawLicense) {
-    if (rawLicense === 'ORP_EAGLE') {
+    if (rawLicense === 'ORP_HUMMINGBIRD' || rawLicense === 'ORP_EAGLE') {
       cleanLicense = 'Hummingbird';
       iconLicense = 'Hummingbird';
       licenseLink = 'hummingbird';
@@ -288,10 +291,10 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
       cleanLicense = 'Kangaroo';
       iconLicense = 'Kangaroo';
       licenseLink = 'kangaroo';
-    } else if (rawLicense.toLowerCase() === 'cc') {
+    } else if (rawLicense === 'CC' || rawLicense?.toLowerCase() === 'cc') {
       cleanLicense = 'CC';
       iconLicense = 'CC';
-      licenseLink = 'cc';
+      licenseLink = 'https://creativecommons.org/licenses/by/4.0/';
     } else {
       cleanLicense = rawLicense.replace('ORP_', '').trim();
       iconLicense = cleanLicense.charAt(0).toUpperCase() + cleanLicense.slice(1).toLowerCase();
@@ -333,8 +336,10 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
           </button>
           
           {cleanLicense && (
-            <Link 
-              to={`/licenses/${encodeURIComponent(licenseLink)}` as any}
+            <a 
+              href={licenseLink.startsWith('http') ? licenseLink : `https://about.openrockets.com/docs/licenses`}
+              target="_blank"
+              rel="noopener noreferrer"
               style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#007185', fontWeight: 'bold', textDecoration: 'none', backgroundColor: '#e9ecef', padding: '4px 8px', borderRadius: '6px' }}
             >
               <img 
@@ -343,7 +348,7 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
                 style={{ width: '14px', height: '14px', objectFit: 'contain' }}
               />
               {cleanLicense}
-            </Link>
+            </a>
           )}
         </div>
 

@@ -101,10 +101,13 @@ export function generateMockArticles(count: number, forceCategory?: string, forc
     ];
 
     const type = forceType || getRandomItems(artifactTypes, 1)[0];
-    let metadata: any = {};
+    let metadata: any = {
+      license: getRandomItems(licenses, 1)[0]
+    };
+    
     if (type === ArtifactType.Software) {
       metadata = {
-        license: getRandomItems(licenses, 1)[0],
+        ...metadata,
         language: getRandomItems(languages, 1)[0],
         codeBackground: getRandomItems(codeBackgrounds, 1)[0]
       };

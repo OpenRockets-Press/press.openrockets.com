@@ -17,7 +17,7 @@ const getListQuerySchema = z.object({
   limit: z.string().transform(Number).default('20'),
   q: z.string().optional(),
   division: z.enum(['artifacts', '3d', 'code']).optional(),
-  license: z.enum(['ORP_BEAVER', 'ORP_EAGLE', 'ORP_KANGAROO']).optional(),
+  license: z.enum(['ORP_BEAVER', 'ORP_HUMMINGBIRD', 'ORP_KANGAROO', 'CC']).optional(),
   sort: z.enum(['newest', 'popular', 'oldest']).default('newest'),
 });
 

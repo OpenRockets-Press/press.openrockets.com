@@ -389,7 +389,7 @@ export function FinalScreen() {
           borderRadius: "8px"
         }}>
           <img 
-            src="/brand/email_icon.png" 
+            src="https://images.seeklogo.com/logo-png/27/2/google-gmail-logo-png_seeklogo-273201.png" 
             alt="Email Notification" 
             style={{ height: "4rem", width: "auto", objectFit: "contain", flexShrink: 0 }} 
           />
@@ -398,7 +398,7 @@ export function FinalScreen() {
               <span style={{ fontSize: "1.4rem", fontWeight: "bold" }}>E</span><span style={{ fontWeight: "bold", fontSize: "1.1rem" }}>mail Notifications</span>
             </p>
             <p style={{ margin: 0 }}>
-              Once your submission gets accepted to the relevant publisher you have chosen, we will send you an email from the publisher regarding the final decision on your submission.
+              Once your submission is accepted by the relevant publisher you have chosen, we will send you an email from the publisher regarding the final decision on your submission.
             </p>
           </div>
         </div>
