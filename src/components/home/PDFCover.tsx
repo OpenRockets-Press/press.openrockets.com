@@ -13,7 +13,7 @@ interface PDFCoverProps {
 export function PDFCover({ url }: PDFCoverProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [pdfData, setPdfData] = useState<ArrayBuffer | null>(null);
+  const [pdfData, setPdfData] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -43,7 +43,9 @@ export function PDFCover({ url }: PDFCoverProps) {
            throw new Error('Invalid PDF format');
         }
 
-        setPdfData(buffer);
+        const blob = new Blob([buffer], { type: 'application/pdf' });
+        const objUrl = URL.createObjectURL(blob);
+        setPdfData(objUrl);
       })
       .catch(err => {
         if (!active) return;
@@ -77,7 +79,7 @@ export function PDFCover({ url }: PDFCoverProps) {
       )}
       {pdfData && (
         <Document
-          file={{ data: pdfData }}
+          file={pdfData}
           onLoadSuccess={() => setLoading(false)}
           onLoadError={(err) => {
             setError(true);
