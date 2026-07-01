@@ -151,7 +151,11 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
       
       // Generate a consistent random pastel background based on article ID
       const PASTEL_COLORS = ['#e0f7fa', '#ffebee', '#f3e5f5', '#ffffff', '#f5f5f5'];
-      const bgIndex = (article.id ? article.id.charCodeAt(0) + (article.id.charCodeAt(article.id.length - 1) || 0) : 0) % PASTEL_COLORS.length;
+    const bgIndex = (() => {
+      if (!article.id) return 0;
+      const strId = String(article.id);
+      return (strId.charCodeAt(0) + (strId.charCodeAt(strId.length - 1) || 0)) % PASTEL_COLORS.length;
+    })();
       const bgColor = PASTEL_COLORS[bgIndex];
       const textBase = '#333333';
 
