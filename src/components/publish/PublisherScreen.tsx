@@ -109,7 +109,7 @@ export function PublisherScreen() {
       </p>
 
       {/* Exact Search Bar matching HomeHeader */}
-      <div style={{ width: "100%", maxWidth: "800px", position: "relative" }}>
+      <div style={{ width: "100%", position: "relative" }}>
         
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', position: 'relative', width: '100%', zIndex: 10 }}>
           <label htmlFor="publisher-search" className="sr-only">

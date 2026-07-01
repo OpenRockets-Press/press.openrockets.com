@@ -111,7 +111,6 @@ export function HashtagsScreen() {
       {selectedTags.length > 0 && (
         <div style={{
           width: "100%",
-          maxWidth: "800px",
           padding: "16px",
           backgroundColor: "#faf8f0",
           border: "1px solid #000",
@@ -154,7 +153,7 @@ export function HashtagsScreen() {
       )}
 
       {/* Exact Search Bar matching PublisherScreen */}
-      <div style={{ width: "100%", maxWidth: "800px", position: "relative" }}>
+      <div style={{ width: "100%", position: "relative" }}>
         
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', position: 'relative', width: '100%', zIndex: 10, marginInline: 0 }}>
           <label htmlFor="hashtag-search" className="sr-only">
@@ -244,7 +243,7 @@ export function HashtagsScreen() {
         </div>
       </div>
       
-      <div style={{ marginTop: "2rem", display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "800px" }}>
+      <div style={{ marginTop: "2rem", display: "flex", justifyContent: "space-between", width: "100%" }}>
         <button 
           onClick={() => window.location.hash = "#next-stage"}
           style={{
