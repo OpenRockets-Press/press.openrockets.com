@@ -15,6 +15,7 @@ interface PDFViewerBoxProps {
 export function PDFViewerBox({ files }: PDFViewerBoxProps) {
   const [activeIdx, setActiveIdx] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [numPages, setNumPages] = useState<number | null>(null);
   const [containerWidth, setContainerWidth] = useState(800);
   const containerRef = useRef<HTMLDivElement>(null);
   const [leftHovered, setLeftHovered] = useState(false);
@@ -31,12 +32,21 @@ export function PDFViewerBox({ files }: PDFViewerBoxProps) {
     return () => observer.disconnect();
   }, []);
 
-  const onDocumentLoadSuccess = () => {
+  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setIsLoading(false);
+    setNumPages(numPages);
   };
 
-  const goLeft = () => setActiveIdx(Math.max(0, activeIdx - 1));
-  const goRight = () => setActiveIdx(Math.min(files.length - 1, activeIdx + 1));
+  const goLeft = () => {
+    setIsLoading(true);
+    setNumPages(null);
+    setActiveIdx(Math.max(0, activeIdx - 1));
+  };
+  const goRight = () => {
+    setIsLoading(true);
+    setNumPages(null);
+    setActiveIdx(Math.min(files.length - 1, activeIdx + 1));
+  };
 
   const chevronStyle = (disabled: boolean, hovered: boolean): React.CSSProperties => ({
     background: 'none',
@@ -84,13 +94,14 @@ export function PDFViewerBox({ files }: PDFViewerBoxProps) {
           {/* PDF Viewer */}
           <div style={{
             width: '100%',
-            height: '500px',
-            backgroundColor: '#fff',
+            height: '600px',
+            backgroundColor: '#f3f4f6', // soft background to separate pages
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             position: 'relative',
             overflowY: 'auto',
+            padding: '16px 0',
           }}>
             <Document
               file={files[activeIdx]}
@@ -98,12 +109,16 @@ export function PDFViewerBox({ files }: PDFViewerBoxProps) {
               loading={<div />}
               error={<div style={{ padding: '40px', color: '#000', fontFamily: '"Noto Sans", sans-serif' }}>Error loading PDF.</div>}
             >
-              <Page
-                pageNumber={1}
-                renderTextLayer={true}
-                renderAnnotationLayer={true}
-                width={Math.min(containerWidth - 16, 900)}
-              />
+              {Array.from(new Array(numPages || 1), (el, index) => (
+                <div key={`page_${index + 1}`} style={{ marginBottom: '16px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
+                  <Page
+                    pageNumber={index + 1}
+                    renderTextLayer={true}
+                    renderAnnotationLayer={true}
+                    width={Math.min(containerWidth - 16, 900)}
+                  />
+                </div>
+              ))}
             </Document>
           </div>
 
