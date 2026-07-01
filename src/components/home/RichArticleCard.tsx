@@ -212,18 +212,15 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
     const allImages: string[] = [];
     const addImg = (url: string | null | undefined) => { if (url && !allImages.includes(url)) allImages.push(url); };
 
-    // Filter out the main file key from extra images so we don't treat the PDF as a custom image
-    const customExtraImages = extraImages.filter(k => k !== article.fileStorageKey);
-
     addImg(getStorageUrl(article.coverStorageKey));
     addImg(getStorageUrl(article.previewStorageKey));
-    if (customExtraImages.length > 0) {
-      customExtraImages.slice(0, 5).forEach((key: string) => addImg(getStorageUrl(key)));
+    if (extraImages.length > 0) {
+      extraImages.slice(0, 5).forEach((key: string) => addImg(getStorageUrl(key)));
     }
     addImg(article.mainImage || null);
 
     // Research papers with PDF but no custom images → show PDF cover
-    const hasCustomImage = !!(article.coverStorageKey || article.previewStorageKey || customExtraImages.length > 0);
+    const hasCustomImage = article.coverStorageKey || article.previewStorageKey || (extraImages && extraImages.length > 0);
     if (!hasCustomImage && (type === 'research_paper' || type === 'ResearchPaper') && article.fileStorageKey && article.fileStorageKey !== 'null' && article.fileStorageKey.trim() !== '') {
       const pdfUrl = `/api/storage/fetch/${article.fileStorageKey}`;
       return (

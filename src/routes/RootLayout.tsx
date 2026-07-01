@@ -33,7 +33,11 @@ export function RootLayout() {
   const pathname = location.pathname;
   
   // Robust check for template routes in case of Hash routing or nested paths
-  const isTemplateRoute = pathname.toLowerCase().includes("/template") || pathname.toLowerCase().includes("/artifacts/") || (typeof window !== 'undefined' && (window.location.href.toLowerCase().includes("/template") || window.location.href.toLowerCase().includes("/artifacts/"))) || /^\/[a-zA-Z0-9]{7,12}$/.test(pathname);
+  const knownPaths = ["/publish", "/profile", "/dashboard", "/submissions", "/cases", "/admin", "/about", "/books", "/login", "/register", "/moderation", "/hashtag"];
+  const isTemplateRoute = pathname.toLowerCase().includes("/template") || 
+                          pathname.toLowerCase().includes("/artifacts/") || 
+                          (typeof window !== 'undefined' && (window.location.href.toLowerCase().includes("/template") || window.location.href.toLowerCase().includes("/artifacts/"))) || 
+                          (/^\/[a-zA-Z0-9]{7,12}$/.test(pathname) && !knownPaths.includes(pathname.toLowerCase()));
   const isPending = useRouterState({
     select: (state) => state.status === "pending",
   });

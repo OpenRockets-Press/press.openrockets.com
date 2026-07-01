@@ -35,13 +35,12 @@ export function BooksPage() {
 
       {/* Content */}
       <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', padding: '2rem', maxWidth: '800px', color: '#fff', margin: 'auto' }}>
-        <h1 style={{ fontSize: '2.5rem', fontWeight: 900, marginBottom: '1.5rem', lineHeight: 1.2, fontFamily: 'Ubuntu, sans-serif', textShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
-          Publish a book<br />
-          with OpenRockets Press,<br />
+        <h1 style={{ fontSize: '2rem', fontWeight: 900, marginBottom: '1.5rem', lineHeight: 1.2, textShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
+          Publishing a book? Publish it with OpenRockets Press.<br />
           <span style={{ color: '#e0e0e0' }}>100% free of charge.</span>
         </h1>
         
-        <p style={{ fontSize: '1.25rem', lineHeight: 1.6, marginBottom: '2.5rem', color: '#eaeaea', fontWeight: 500, textShadow: '0 2px 8px rgba(0,0,0,0.5)', fontFamily: 'Ubuntu, sans-serif' }}>
+        <p style={{ fontSize: '1.25rem', lineHeight: 1.6, marginBottom: '2.5rem', color: '#eaeaea', fontWeight: 500, textShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>
           OpenRockets Press will begin accepting book submissions soon. We will notify everyone as soon as this feature becomes available.
         </p>
         
@@ -57,8 +56,7 @@ export function BooksPage() {
             borderRadius: '8px',
             cursor: 'pointer',
             transition: 'all 0.2s ease',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-            fontFamily: 'Ubuntu, sans-serif'
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
           }}
           onMouseOver={(e) => {
             e.currentTarget.style.backgroundColor = '#222';
