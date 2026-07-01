@@ -291,7 +291,8 @@ export function Template1Page({ data }: { data?: any }) {
   };
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(window.location.href);
+    const linkToCopy = data?.shortId ? `https://scienteen.com/${data.shortId}` : window.location.href;
+    navigator.clipboard.writeText(linkToCopy);
     setLinkCopied(true);
     setTimeout(() => setLinkCopied(false), 2000);
   };

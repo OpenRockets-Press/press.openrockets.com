@@ -386,11 +386,19 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
       </div>
       
       {/* Click Overlay */}
-      <Link 
-        to={generateSlug(article.title, article.pubId || article.id) as any}
-        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 }}
-        aria-label={`View ${article.title}`}
-      />
+      {article.shortId ? (
+        <a
+          href={`https://scienteen.com/${article.shortId}`}
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 }}
+          aria-label={`View ${article.title}`}
+        />
+      ) : (
+        <Link 
+          to={generateSlug(article.title, article.pubId || article.id) as any}
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 }}
+          aria-label={`View ${article.title}`}
+        />
+      )}
     </div>
   );
 }
