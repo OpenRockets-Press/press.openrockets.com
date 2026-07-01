@@ -41,7 +41,7 @@ export function SubmissionsPage() {
     initialData: () => getSessionUser() ?? undefined,
   });
 
-  const isAdmin = user?.email === "press@openrockets.com";
+  const isAdmin = user?.role === 'admin' || (user?.email && user.email.endsWith('@openrockets.com'));
 
   useEffect(() => {
     if (!isFetched) return;

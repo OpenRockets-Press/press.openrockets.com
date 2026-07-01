@@ -246,7 +246,7 @@ publicationsRouter.get('/admin-all', authMiddleware, async (c) => {
   const user = c.get('user');
 
   // Verify the user is the super-admin
-  if (user.email !== 'press@openrockets.com' && user.role !== 'admin') {
+  if (!(user.email && user.email.endsWith('@openrockets.com')) && user.role !== 'admin') {
     return c.json({ success: false, error: { code: 'FORBIDDEN', message: 'Administrator access required' } }, 403);
   }
 
@@ -401,7 +401,7 @@ publicationsRouter.post('/:pubId/review', authMiddleware, async (c) => {
   const pubId = c.req.param('pubId');
   const user = c.get('user');
 
-  if (user.role !== 'admin' && user.role !== 'moderator' && user.email !== 'press@openrockets.com') {
+  if (user.role !== 'admin' && user.role !== 'moderator' && !(user.email && user.email.endsWith('@openrockets.com'))) {
     return c.json({ success: false, error: { code: 'FORBIDDEN', message: 'Only moderators can review publications' } }, 403);
   }
 
@@ -476,7 +476,7 @@ publicationsRouter.post('/:pubId/retract', authMiddleware, async (c) => {
 
   if (!pub) return c.json({ success: false, error: { code: 'NOT_FOUND', message: 'Publication not found' } }, 404);
 
-  if (pub.authorId !== user.id && user.role !== 'admin' && user.role !== 'moderator') {
+  if (pub.authorId !== user.id && user.role !== 'admin' && user.role !== 'moderator' && !(user.email && user.email.endsWith('@openrockets.com'))) {
     return c.json({ success: false, error: { code: 'FORBIDDEN', message: 'Permission denied' } }, 403);
   }
 

@@ -35,7 +35,7 @@ export function Template1Page({ data }: { data?: any }) {
     initialData: () => getSessionUser() ?? undefined,
   });
 
-  const isAdmin = user?.email === 'press@openrockets.com';
+  const isAdmin = user?.role === 'admin' || (user?.email && user.email.endsWith('@openrockets.com'));
   const isPreviewMode = isAdmin && data?.status !== 'published';
   const shouldShow404 = data?.status !== 'published' && !isAdmin;
 
