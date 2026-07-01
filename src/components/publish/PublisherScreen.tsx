@@ -174,8 +174,8 @@ export function PublisherScreen() {
                         alt={pub.name} 
                         style={{ width: "32px", height: "32px", objectFit: "contain", borderRadius: "8px", marginRight: "12px" }} 
                       />
-                      <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "8px", overflow: "hidden" }}>
-                        <span style={{ fontSize: "0.95rem", fontFamily: "Ubuntu, sans-serif", color: "#000", fontWeight: "bold", whiteSpace: "nowrap" }}>
+                      <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "8px", overflow: "hidden", flexWrap: "wrap" }}>
+                        <span style={{ fontSize: "0.95rem", fontFamily: "Ubuntu, sans-serif", color: "#000", fontWeight: "bold", whiteSpace: "normal", wordBreak: "break-word" }}>
                           {pub.name}
                         </span>
                         
@@ -228,14 +228,12 @@ export function PublisherScreen() {
                     {isExpanded && (
                       <div className="fade-in" style={{ padding: "16px 24px 24px 24px", backgroundColor: isSelected ? "rgba(199, 81, 31, 0.04)" : "#fafafa", borderBottom: "1px solid #eee" }}>
                         
-                        <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "16px" }}>
-                          <div style={{ width: "100%", maxWidth: "9rem", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            <img 
-                              src={pub.logoUrl} 
-                              alt={pub.name} 
-                              style={{ width: "100%", height: "auto", objectFit: "contain" }} 
-                            />
-                          </div>
+                        <div className="publisher-expanded-logo-wrapper" style={{ display: "flex", justifyContent: "flex-start", marginBottom: "16px", width: "100%" }}>
+                          <img 
+                            src={pub.logoUrl} 
+                            alt={pub.name} 
+                            style={{ width: "100%", height: "auto", objectFit: "contain" }} 
+                          />
                         </div>
 
                         <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "16px", justifyContent: "flex-start" }}>

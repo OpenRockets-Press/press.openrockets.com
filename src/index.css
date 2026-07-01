@@ -5762,3 +5762,14 @@ button.ad-attribution-why:hover {
     margin-top: 10px !important;
   }
 }
+
+/* Publisher Logo Responsive Fix */
+.publisher-expanded-logo-wrapper {
+  max-width: 9rem;
+}
+
+@media (max-width: 915px) {
+  .publisher-expanded-logo-wrapper {
+    max-width: 100% !important;
+  }
+}
