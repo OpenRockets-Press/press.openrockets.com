@@ -165,6 +165,14 @@ export function HomePage() {
                 <FontAwesomeIcon icon={faTimes} />
               </button>
             </div>
+            
+            <button 
+              className="mobile-only"
+              style={{ width: '100%', padding: '10px', backgroundColor: '#f5f5f5', border: '1px solid #ddd', borderRadius: '4px', marginBottom: '15px', fontWeight: 'bold', cursor: 'pointer', textAlign: 'center' }}
+              onClick={() => setSidebarOpen(false)}
+            >
+              Close Menu
+            </button>
             <ul className="sidebar-category-list">
               {CATEGORIES.map((category) => {
                 const hasSub = category.subcategories && category.subcategories.length > 0;

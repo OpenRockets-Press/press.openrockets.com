@@ -314,7 +314,7 @@ button {
   color: #111827;
 }
 
-.search-wrap {
+.home-header .search-wrap {
   flex: 1;
   max-width: 42rem;
   margin-inline: 1rem;
@@ -4249,7 +4249,7 @@ button.ad-attribution-why:hover {
     padding-block: 0.625rem;
   }
 
-  .search-wrap {
+  .home-header .search-wrap {
     order: 3;
     flex-basis: 100%;
     width: 100%;
@@ -5705,5 +5705,60 @@ button.ad-attribution-why:hover {
   /* Footer hide huge text */
   .big-text, .background-text {
     display: none !important;
+  }
+}
+
+@media (max-width: 915px) {
+  /* Type Selector Mobile Overrides */
+  .type-selector-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+  }
+  
+  .type-box {
+    width: 100% !important;
+    grid-column: span 1 !important;
+    height: auto !important;
+    padding: 24px !important;
+  }
+  .type-box .ripple {
+    display: none !important; /* Ripple effect logic gets wonky when size changes drastically */
+  }
+
+  /* License Screen Overrides */
+  .license-card {
+    flex-direction: column !important;
+  }
+  
+  .license-card-left {
+    width: 100% !important;
+    border-right: none !important;
+    border-bottom: 1px solid #eee !important;
+  }
+  
+  .license-card-right {
+    width: 100% !important;
+  }
+  
+  /* Publisher Screen Overrides */
+  /* Assuming the split layout uses Flex on the main container in PublisherScreen */
+  .publisher-screen-container > div {
+    flex-direction: column !important;
+  }
+  
+  .publisher-screen-container > div > div {
+    width: 100% !important;
+  }
+  
+  /* Make sure the search bar drops down correctly */
+  .home-header .top-row {
+    flex-wrap: wrap !important;
+  }
+  
+  .home-header .search-wrap {
+    order: 3 !important;
+    width: 100% !important;
+    margin-top: 10px !important;
   }
 }
