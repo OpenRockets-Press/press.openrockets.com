@@ -17,8 +17,8 @@ export const publications = mysqlTable('publications', {
   title: varchar('title', { length: 255 }).notNull(),
   subtitle: varchar('subtitle', { length: 512 }),
   abstract: text('abstract'),
-  type: mysqlEnum('type', ['book', 'research_paper', 'magazine', 'poster', 'other', '3d_artifact', 'code_gist', '3d_model', 'software_code', 'image']).notNull(),
-  license: mysqlEnum('license', ['ORP_BEAVER', 'ORP_HUMMINGBIRD', 'ORP_KANGAROO', 'CC']).notNull(), // V4 Custom Licenses
+  type: mysqlEnum('type', ['book', 'research_paper', 'magazine', 'poster', 'other', '3d_artifact', 'code_gist']).notNull(),
+  license: mysqlEnum('license', ['ORP_BEAVER', 'ORP_EAGLE', 'ORP_KANGAROO']).notNull(), // V4 Custom Licenses
   status: mysqlEnum('status', ['pending_review', 'published', 'rejected']).default('pending_review'),
   division: mysqlEnum('division', ['artifacts', '3d', 'code']).notNull().default('artifacts'),
   publisherId: varchar('publisher_id', { length: 255 }),

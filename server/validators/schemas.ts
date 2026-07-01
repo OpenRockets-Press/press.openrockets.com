@@ -2,8 +2,8 @@ import { z } from 'zod';
 
 // Reusable parts
 const divisionEnum = z.enum(['artifacts', '3d', 'code']);
-const licenseEnum = z.enum(['ORP_BEAVER', 'ORP_HUMMINGBIRD', 'ORP_KANGAROO', 'CC']);
-const typeEnum = z.enum(['book', 'research_paper', 'magazine', 'poster', 'other', '3d_artifact', 'code_gist', '3d_model', 'software_code', 'image']);
+const licenseEnum = z.enum(['ORP_BEAVER', 'ORP_EAGLE', 'ORP_KANGAROO']);
+const typeEnum = z.enum(['book', 'research_paper', 'magazine', 'poster', 'other', '3d_artifact', 'code_gist']);
 const priorityEnum = z.enum(['low', 'normal', 'high', 'urgent']);
 
 // Publications

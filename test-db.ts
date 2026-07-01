@@ -1,0 +1,1 @@
+import { db } from './server/db/index'; import { publications } from './server/db/schema'; async function run() { try { await db.insert(publications).values({ pubId: 'test1234', authorId: 'mock-user-id', title: 'test', type: 'book', license: 'ORP_BEAVER', division: 'artifacts' }); console.log('success'); } catch (e) { console.error('DB Error:', e); } process.exit(0); } run();

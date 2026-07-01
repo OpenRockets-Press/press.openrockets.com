@@ -106,24 +106,25 @@ export function FinalScreen() {
         const rawType = localStorage.getItem("publish_artifact_type") || "unknown";
         const rawLicense = localStorage.getItem("publish_artifact_license") || "ORP_BEAVER";
 
-        // Map frontend license to backend enum
+        // Map frontend license to backend enum (strictly matching production DB schema)
         let mappedLicense = "ORP_BEAVER";
         if (rawLicense === "kangaroo") mappedLicense = "ORP_KANGAROO";
-        if (rawLicense === "hummingbird") mappedLicense = "ORP_HUMMINGBIRD";
-        if (rawLicense === "cc") mappedLicense = "CC";
+        if (rawLicense === "hummingbird" || rawLicense === "eagle") mappedLicense = "ORP_EAGLE";
         
-        // Map frontend type to backend enum
+        // Map frontend type to backend enum (strictly matching production DB schema)
         let mappedType = "other";
         if (["research", "lit-review", "meta-analysis", "case-study", "survey-results", "math-proof"].includes(rawType)) {
           mappedType = "research_paper";
-        } else if (["painting", "creative-photo", "still-photo", "landscape", "portrait", "abstract-art"].includes(rawType)) {
-          mappedType = "image";
         } else if (["software", "mobile-app", "web-code", "web-game", "algorithm", "code-solution", "breakthrough", "scripts", "web-ui", "backend", "robotics", "arduino", "neural-net", "data-vis", "cli-tool"].includes(rawType)) {
-          mappedType = "software_code";
+          mappedType = "code_gist";
         } else if (["3d-model", "3d-animation", "3d-print", "cad-model", "topology"].includes(rawType)) {
-          mappedType = "3d_model";
+          mappedType = "3d_artifact";
         } else if (["club-posters", "presentation", "posters", "flyer", "brochure"].includes(rawType)) {
           mappedType = "poster";
+        } else if (["book", "textbook", "novel", "guide"].includes(rawType)) {
+          mappedType = "book";
+        } else if (["magazine", "zine"].includes(rawType)) {
+          mappedType = "magazine";
         }
 
         let codeSnippet = "";
