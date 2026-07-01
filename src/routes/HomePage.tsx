@@ -1,6 +1,6 @@
 import { useState, useContext, useMemo, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { HomeBanner } from "@/components/home/HomeBanner";
 import { MagazineArticles } from "@/components/home/MagazineArticles";
 import { RichHomeShelf } from "@/components/home/RichHomeShelf";
@@ -92,6 +92,7 @@ function DynamicAdLoader({ onOpenAdsInfo }: { onOpenAdsInfo: () => void }) {
 }
 
 export function HomePage() {
+  const navigate = useNavigate();
   const { search, setSearch, selectedHashtags, setSelectedHashtags } = useContext(SearchContext);
   const [activeType, setActiveType] = useState<string>("all");
   const [expandedCats, setExpandedCats] = useState<Record<string, boolean>>({});
@@ -170,10 +171,7 @@ export function HomePage() {
                       type="button"
                       className={clsx("sidebar-category-btn", activeType === category.value && "active")}
                       onClick={() => {
-                        setActiveType(category.value);
-                        if (hasSub) {
-                          setExpandedCats(prev => ({ ...prev, [category.value]: !prev[category.value] }));
-                        }
+                        navigate({ to: '/books', search: { v: category.value } });
                       }}
                     >
                       <div className="sidebar-category-left">

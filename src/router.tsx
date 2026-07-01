@@ -46,6 +46,7 @@ const SuspendedPage = lazy(() =>
 );
 const NotFoundPage = lazy(() => import("@/routes/NotFoundPage").then((module) => ({ default: module.NotFoundPage })));
 const ArtifactViewPage = lazy(() => import("@/routes/ArtifactViewPage").then((module) => ({ default: module.ArtifactViewPage })));
+const BooksPage = lazy(() => import("@/routes/BooksPage").then((module) => ({ default: module.BooksPage })));
 
 // ── Skeleton components ──────────────────────────────────────────────────────
 
@@ -157,6 +158,12 @@ const homeRoute = createRoute({
   path: "/",
   beforeLoad: async () => { await fetchSessionUser(); },
   component: () => withRouteSuspense(<HomePage />),
+});
+
+const booksRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/books",
+  component: () => withRouteSuspense(<BooksPage />),
 });
 
 const registerRoute = createRoute({
@@ -466,6 +473,7 @@ const routeTree = rootRoute.addChildren([
   template1Route,
   artifactViewRoute,
   shortLinkRoute,
+  booksRoute,
 ]);
 
 export const router = createRouter({

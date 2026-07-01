@@ -219,8 +219,9 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
     }
     addImg(article.mainImage || null);
 
-    // Research papers with PDF but no images → show PDF cover
-    if (allImages.length === 0 && (type === 'research_paper' || type === 'ResearchPaper') && article.fileStorageKey && article.fileStorageKey !== 'null' && article.fileStorageKey.trim() !== '') {
+    // Research papers with PDF but no custom images → show PDF cover
+    const hasCustomImage = article.coverStorageKey || article.previewStorageKey || (extraImages && extraImages.length > 0);
+    if (!hasCustomImage && (type === 'research_paper' || type === 'ResearchPaper') && article.fileStorageKey && article.fileStorageKey !== 'null' && article.fileStorageKey.trim() !== '') {
       const pdfUrl = `/api/storage/fetch/${article.fileStorageKey}`;
       return (
         <div className="rich-article-collage" style={{ height: '220px', position: 'relative', backgroundColor: '#f0f0f0', borderTopLeftRadius: '12px', borderTopRightRadius: '12px', overflow: 'hidden' }}>
