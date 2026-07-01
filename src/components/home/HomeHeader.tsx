@@ -308,7 +308,7 @@ export function HomeHeader({ onOpenInfo }: HomeHeaderProps) {
 
           <nav className="desktop-nav" aria-label="Primary" style={{ alignItems: 'center' }}>
             <LanguagePicker />
-            <a href="https://about.openrockets.com/press/get-started" className="nav-link" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#000' }}>
+            <a href="https://about.openrockets.com/docs/press/get-started" className="nav-link" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#000' }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
               Get started
             </a>
@@ -355,7 +355,7 @@ export function HomeHeader({ onOpenInfo }: HomeHeaderProps) {
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
                         About
                       </a>
-                      <a href="https://about.openrockets.com/press/publishing-guidelines" className="dropdown-item" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <a href="https://about.openrockets.com/docs/press/get-started" className="dropdown-item" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
                         Publishing Guidelines
                       </a>
