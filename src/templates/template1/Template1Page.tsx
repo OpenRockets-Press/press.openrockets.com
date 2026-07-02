@@ -264,7 +264,21 @@ export function Template1Page({ data }: { data?: any }) {
           margin:       0.5,
           filename:     'document.pdf',
           image:        { type: 'jpeg', quality: 0.98 },
-          html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
+          html2canvas:  { 
+            scale: 2, 
+            useCORS: true, 
+            scrollY: 0,
+            onclone: (clonedDoc) => {
+              const imgs = clonedDoc.querySelectorAll('img');
+              for (let i = 0; i < imgs.length; i++) {
+                const img = imgs[i];
+                if (img.src && img.src.startsWith('http') && !img.src.includes(window.location.host)) {
+                  img.crossOrigin = "anonymous";
+                  img.src = 'https://corsproxy.io/?' + encodeURIComponent(img.src);
+                }
+              }
+            }
+          },
           jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
         };
         
