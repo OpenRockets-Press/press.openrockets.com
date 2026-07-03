@@ -22,8 +22,18 @@ export function ImageViewerBox({ files }: ImageViewerBoxProps) {
   // We limit to 5 images max
   const displayFiles = files.slice(0, 5);
 
-  const goLeft = () => { setIsLoading(true); setActiveIdx(Math.max(0, activeIdx - 1)); };
-  const goRight = () => { setIsLoading(true); setActiveIdx(Math.min(displayFiles.length - 1, activeIdx + 1)); };
+  const goLeft = () => { 
+    if (activeIdx > 0) {
+      setIsLoading(true); 
+      setActiveIdx(activeIdx - 1); 
+    }
+  };
+  const goRight = () => { 
+    if (activeIdx < displayFiles.length - 1) {
+      setIsLoading(true); 
+      setActiveIdx(activeIdx + 1); 
+    }
+  };
 
   const handleMouseEnter = (e: React.MouseEvent<HTMLImageElement>) => {
     const elem = e.currentTarget;
@@ -141,7 +151,12 @@ export function ImageViewerBox({ files }: ImageViewerBoxProps) {
             {displayFiles.map((file, idx) => (
               <button
                 key={idx}
-                onClick={() => { setIsLoading(true); setActiveIdx(idx); }}
+                onClick={() => { 
+                  if (activeIdx !== idx) {
+                    setIsLoading(true); 
+                    setActiveIdx(idx); 
+                  }
+                }}
                 style={{
                   padding: '4px',
                   border: activeIdx === idx ? '2px solid #000' : '1px solid #ccc',

@@ -2,61 +2,61 @@
   {
     "id": "innovating-without-patents",
     "name": "Innovating Without Patents",
-    "image": "https://static.fsf.org/nosvn/esp/logos/innovating-without-patents.svg"
+    "image": "/brand/communities/innovating-without-patents.svg"
   },
   {
     "id": "sdg-7",
     "name": "SDG Goal 7: Affordable and Clean Energy",
-    "image": "https://www.un.org/sustainabledevelopment/wp-content/uploads/2019/08/E-Goal-07-1024x1024.png"
+    "image": "/brand/communities/sdg-7.png"
   },
   {
     "id": "sdg-9",
     "name": "SDG Goal 9: Industry, Innovation and Infrastructure",
-    "image": "https://www.un.org/sustainabledevelopment/wp-content/uploads/2019/08/E-Goal-09-1024x1024.png"
+    "image": "/brand/communities/sdg-9.png"
   },
   {
     "id": "sdg-13",
     "name": "SDG Goal 13: Climate Action",
-    "image": "https://www.un.org/sustainabledevelopment/wp-content/uploads/2019/08/E-Goal-13-1024x1024.png"
+    "image": "/brand/communities/sdg-13.png"
   },
   {
     "id": "sdg-6",
     "name": "SDG Goal 6: Clean Water and Sanitation",
-    "image": "https://www.un.org/sustainabledevelopment/wp-content/uploads/2019/08/E-Goal-06-1024x1024.png"
+    "image": "/brand/communities/sdg-6.png"
   },
   {
     "id": "sdg-16",
     "name": "SDG Goal 16: Peace, Justice and Strong Institutions",
-    "image": "https://www.un.org/sustainabledevelopment/wp-content/uploads/2019/08/E-Goal-16-1024x1024.png"
+    "image": "/brand/communities/sdg-16.png"
   },
   {
     "id": "sdg-3",
     "name": "SDG Goal 3: Good Health and Well-being",
-    "image": "https://www.un.org/sustainabledevelopment/wp-content/uploads/2019/08/E-Inverted-Icons_WEB-03-1024x1024.png"
+    "image": "/brand/communities/sdg-3.png"
   },
   {
     "id": "un-sdg",
     "name": "UN Sustainable Development Goals",
-    "image": "https://www.un.org/sustainabledevelopment/wp-content/uploads/2019/08/SDG-Wheel_WEB-600x600.png"
+    "image": "/brand/communities/un-sdg.png"
   },
   {
     "id": "oshw",
     "name": "Open Source Hardware",
-    "image": "https://resources.oshwa.org/files/assets/oshw-logo-filled-black.png"
+    "image": "/brand/communities/oshw.png"
   },
   {
     "id": "osi",
     "name": "Open Source Initiative",
-    "image": "https://upload.wikimedia.org/wikipedia/commons/e/eb/Open_Source_Initiative.svg"
+    "image": "/brand/communities/osi.svg"
   },
   {
     "id": "100-human",
     "name": "100% Human Intelligence",
-    "image": "https://imageio.forbes.com/specials-images/imageserve/6697c61e784f71205a1d7179/original-human-intelligence-badge-by-Beth-Spencer/0x0.jpg?height=711&width=480&fit=bounds"
+    "image": "/brand/communities/100-human.jpg"
   },
   {
     "id": "2050-net-zero",
     "name": "2050 Net Zero",
-    "image": "https://cdn.vectorstock.com/i/500p/55/56/2050-net-zero-icon-vector-42855556.jpg"
+    "image": "/brand/communities/2050-net-zero.jpg"
   }
 ]
