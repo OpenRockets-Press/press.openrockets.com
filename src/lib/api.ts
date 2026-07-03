@@ -229,9 +229,15 @@ async function hydrateCurrentUserFromRemote(forceProbe = false) {
       consentTier: string;
       avatarUrl?: string;
       dateOfBirth?: string;
-    }>("users/me", undefined, { method: "GET" });
+      loggedIn?: boolean;
+    }>("users/me", undefined, { method: "GET", skipAuth: false });
 
     remoteAuthBackoffUntil = 0;
+
+    if (profile.loggedIn === false) {
+      clearSessionUser();
+      return null;
+    }
 
     const next = {
       userId: profile.userId,

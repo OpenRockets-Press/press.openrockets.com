@@ -6,17 +6,37 @@ import { authMiddleware } from '../middleware/auth';
 
 export const usersRouter = new Hono();
 
-usersRouter.get('/me', authMiddleware, async (c) => {
-  const user = c.get('user');
-  
-  return c.json({
-    userId: user.id,
-    displayName: user.displayName,
-    email: user.email,
-    role: user.role,
-    accountStatus: user.isSuspended ? 'suspended' : 'active',
-    consentTier: 'general', // Mocked or fetched from another table if it existed
-  });
+usersRouter.get('/me', async (c) => {
+  const authHeader = c.req.header('Authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return c.json({ loggedIn: false });
+  }
+
+  const token = authHeader.split(' ')[1];
+  try {
+    const response = await fetch("https://openrocketsauth.alwaysdata.net/api/auth/me", {
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+    });
+    if (!response.ok) return c.json({ loggedIn: false });
+
+    const userData = await response.json();
+    const userId = String(userData.id);
+    let [user] = await db.select().from(users).where(eq(users.id, userId));
+    
+    if (!user) return c.json({ loggedIn: false });
+
+    return c.json({
+      userId: user.id,
+      displayName: user.displayName,
+      email: user.email,
+      role: user.role,
+      accountStatus: user.isSuspended ? 'suspended' : 'active',
+      consentTier: 'general',
+      loggedIn: true
+    });
+  } catch (e) {
+    return c.json({ loggedIn: false });
+  }
 });
 
 usersRouter.get('/', authMiddleware, async (c) => {
