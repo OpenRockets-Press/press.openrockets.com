@@ -189,19 +189,32 @@ export function Template1Page({ data }: { data?: any }) {
   url={https://${pubDomain}/${pubId}}
 }`;
 
-  const isCode = artifactType === "software_code" || artifactType === "code_gist";
-  const is3DModel = artifactType === "3d_model" || artifactType === "3d_artifact";
-  const isImage = artifactType === "image" || artifactType === "poster";
-  const isPDF = artifactType === "book" || artifactType === "research_paper" || artifactType === "magazine";
+  const allFileKeys: string[] = [];
+  if (fileStorageKey) allFileKeys.push(fileStorageKey);
+  if (extraFiles && Array.isArray(extraFiles)) allFileKeys.push(...extraFiles);
+  const uniqueFileKeys = Array.from(new Set(allFileKeys)).filter(Boolean);
+  
+  let isCode = artifactType === "software_code" || artifactType === "code_gist";
+  let is3DModel = artifactType === "3d_model" || artifactType === "3d_artifact";
+  let isImage = artifactType === "image" || artifactType === "poster";
+  let isPDF = artifactType === "book" || artifactType === "research_paper" || artifactType === "magazine";
+
+  if (artifactType === "other" && uniqueFileKeys.length > 0) {
+    const ext = uniqueFileKeys[0].split('.').pop()?.toLowerCase();
+    if (ext === 'pdf') isPDF = true;
+    else if (['zip', 'rar', 'js', 'py', 'java', 'cpp', 'html', 'css', 'ts', 'tsx'].includes(ext || '')) isCode = true;
+    else if (['obj', 'gltf', 'glb', 'fbx'].includes(ext || '')) is3DModel = true;
+    else isImage = true; // fallback to image for jpg, png, etc or unknown
+  } else if (artifactType === "other") {
+    isImage = true;
+  }
+
   const isResearch = artifactType === "research_paper";
 
   const downloadText = isResearch ? "Download abstract only" : "Download basic only";
   const contentHeading = isResearch ? "Abstract" : "Description";
 
-  const allFileKeys: string[] = [];
-  if (fileStorageKey) allFileKeys.push(fileStorageKey);
-  if (extraFiles && Array.isArray(extraFiles)) allFileKeys.push(...extraFiles);
-  const uniqueFileKeys = Array.from(new Set(allFileKeys)).filter(Boolean);
+
   
   const fileUrls = uniqueFileKeys.length > 0 
     ? uniqueFileKeys.map(k => k.startsWith('http') ? k : `${getApiBaseUrl()}/api/storage/fetch/${k}`)
