@@ -14,6 +14,8 @@ const ImageViewerBox = lazy(() => import("./ImageViewerBox").then(module => ({ d
 import { AdsInfoModal } from "@/components/ui/AdsInfoModal";
 import labelsData from "@/data/labels.json";
 import "react-quill-new/dist/quill.snow.css";
+import { Document, Page, pdfjs } from 'react-pdf';
+import { getApiBaseUrl } from "@/lib/api";
 import { AlertModal } from "@/components/ui/AlertModal";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
@@ -157,7 +159,8 @@ export function Template1Page({ data }: { data?: any }) {
   useEffect(() => {
     if (data && !isPreviewMode && data.pubId) {
       // Fire and forget view increment
-      fetch(`/api/publications/${data.pubId}/view`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => {});
+      const baseUrl = getApiBaseUrl();
+      fetch(`${baseUrl}/api/publications/${data.pubId}/view`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => {});
     }
   }, [data?.pubId, isPreviewMode]);
 
@@ -201,7 +204,7 @@ export function Template1Page({ data }: { data?: any }) {
   const uniqueFileKeys = Array.from(new Set(allFileKeys)).filter(Boolean);
   
   const fileUrls = uniqueFileKeys.length > 0 
-    ? uniqueFileKeys.map(k => k.startsWith('http') ? k : `/api/storage/fetch/${k}`)
+    ? uniqueFileKeys.map(k => k.startsWith('http') ? k : `${getApiBaseUrl()}/api/storage/fetch/${k}`)
     : []; // fallback used later if empty
 
   // 3D Model state

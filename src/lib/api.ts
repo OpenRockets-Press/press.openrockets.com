@@ -83,6 +83,15 @@ function invalidateJWT() {
 
 // ── API call helper ──────────────────────────────────────────────────────────
 
+export function getApiBaseUrl(): string {
+  if (typeof window === "undefined") return "";
+  const host = window.location.hostname;
+  if (host !== "localhost" && host !== "127.0.0.1" && host !== "press.openrockets.com") {
+    return "https://press.openrockets.com";
+  }
+  return "";
+}
+
 async function callApi<T>(
   path: string,
   body?: unknown,
@@ -100,7 +109,8 @@ async function callApi<T>(
     if (token) headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`/api/${path}`, {
+  const baseUrl = getApiBaseUrl();
+  const res = await fetch(`${baseUrl}/api/${path}`, {
     method,
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
