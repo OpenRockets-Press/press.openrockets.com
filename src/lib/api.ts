@@ -416,16 +416,9 @@ export async function getCurrentUser(forceRefresh = false) {
 }
 
 export async function getContributorPublications(limit = 20): Promise<Publication[]> {
-  const user = await requireCurrentUser();
-  const { db, databaseId } = requireDatabaseServices();
-
-  const publications = await db.listDocuments(databaseId, "publications", [
-    Query.equal("author_user_id", user.userId),
-    Query.orderDesc("submitted_at"),
-    Query.limit(limit),
-  ]);
-
-  return publications.documents.map((doc: any) => mapPublication(doc as unknown as AppwriteDocument));
+  await requireCurrentUser();
+  const res = await callApi<any[]>(`publications/contributor?limit=${limit}`, undefined, { method: "GET" });
+  return res;
 }
 
 export async function getContributorCases(limit = 30): Promise<CaseSummary[]> {

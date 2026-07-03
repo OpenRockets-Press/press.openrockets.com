@@ -201,7 +201,7 @@ export function Template1Page({ data }: { data?: any }) {
   const uniqueFileKeys = Array.from(new Set(allFileKeys)).filter(Boolean);
   
   const fileUrls = uniqueFileKeys.length > 0 
-    ? uniqueFileKeys.map(k => k.startsWith('http') ? k : `/api/publications/${data?.pubId || data?.id}/download?fileKey=${encodeURIComponent(k)}`)
+    ? uniqueFileKeys.map(k => k.startsWith('http') ? k : `/api/storage/fetch/${k}`)
     : []; // fallback used later if empty
 
   // 3D Model state
