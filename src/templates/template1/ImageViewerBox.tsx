@@ -23,16 +23,22 @@ export function ImageViewerBox({ files }: ImageViewerBoxProps) {
   const displayFiles = files.slice(0, 5);
 
   const goLeft = () => { 
-    if (activeIdx > 0) {
-      setIsLoading(true); 
-      setActiveIdx(activeIdx - 1); 
-    }
+    setActiveIdx(prev => {
+      if (prev > 0) {
+        setIsLoading(true);
+        return prev - 1;
+      }
+      return prev;
+    });
   };
   const goRight = () => { 
-    if (activeIdx < displayFiles.length - 1) {
-      setIsLoading(true); 
-      setActiveIdx(activeIdx + 1); 
-    }
+    setActiveIdx(prev => {
+      if (prev < displayFiles.length - 1) {
+        setIsLoading(true);
+        return prev + 1;
+      }
+      return prev;
+    });
   };
 
   const handleMouseEnter = (e: React.MouseEvent<HTMLImageElement>) => {
@@ -105,6 +111,7 @@ export function ImageViewerBox({ files }: ImageViewerBoxProps) {
                 src={displayFiles[activeIdx]} 
                 alt={`Image ${activeIdx + 1}`} 
                 style={{ maxWidth: '100%', maxHeight: '500px', display: 'block', objectFit: 'contain', cursor: showMagnifier ? 'none' : 'default' }} 
+                decoding="async"
                 onLoad={() => setIsLoading(false)}
                 onMouseEnter={handleMouseEnter}
                 onMouseMove={handleMouseMove}
@@ -152,10 +159,13 @@ export function ImageViewerBox({ files }: ImageViewerBoxProps) {
               <button
                 key={idx}
                 onClick={() => { 
-                  if (activeIdx !== idx) {
-                    setIsLoading(true); 
-                    setActiveIdx(idx); 
-                  }
+                  setActiveIdx(prev => {
+                    if (prev !== idx) {
+                      setIsLoading(true);
+                      return idx;
+                    }
+                    return prev;
+                  });
                 }}
                 style={{
                   padding: '4px',
@@ -173,7 +183,7 @@ export function ImageViewerBox({ files }: ImageViewerBoxProps) {
                 }}
                 title={`Image ${idx + 1}`}
               >
-                <img src={file} alt={`Thumbnail ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src={file} alt={`Thumbnail ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} decoding="async" />
               </button>
             ))}
           </div>

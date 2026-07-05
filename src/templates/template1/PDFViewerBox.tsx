@@ -38,18 +38,24 @@ export function PDFViewerBox({ files }: PDFViewerBoxProps) {
   };
 
   const goLeft = () => {
-    if (activeIdx > 0) {
-      setIsLoading(true);
-      setNumPages(null);
-      setActiveIdx(activeIdx - 1);
-    }
+    setActiveIdx(prev => {
+      if (prev > 0) {
+        setIsLoading(true);
+        setNumPages(null);
+        return prev - 1;
+      }
+      return prev;
+    });
   };
   const goRight = () => {
-    if (activeIdx < files.length - 1) {
-      setIsLoading(true);
-      setNumPages(null);
-      setActiveIdx(activeIdx + 1);
-    }
+    setActiveIdx(prev => {
+      if (prev < files.length - 1) {
+        setIsLoading(true);
+        setNumPages(null);
+        return prev + 1;
+      }
+      return prev;
+    });
   };
 
   const chevronStyle = (disabled: boolean, hovered: boolean): React.CSSProperties => ({
@@ -137,11 +143,14 @@ export function PDFViewerBox({ files }: PDFViewerBoxProps) {
               <button
                 key={idx}
                 onClick={() => {
-                  if (activeIdx !== idx) {
-                    setIsLoading(true);
-                    setNumPages(null);
-                    setActiveIdx(idx);
-                  }
+                  setActiveIdx(prev => {
+                    if (prev !== idx) {
+                      setIsLoading(true);
+                      setNumPages(null);
+                      return idx;
+                    }
+                    return prev;
+                  });
                 }}
                 style={{
                   padding: '4px',
