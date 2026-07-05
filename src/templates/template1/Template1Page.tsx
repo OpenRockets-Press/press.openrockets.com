@@ -27,6 +27,22 @@ export function Template1Page({ data }: { data?: any }) {
   useEffect(() => {
     if (data?.title) {
       document.title = `${data.title} - OpenRockets`;
+    } else {
+      // While loading, show a formatted domain name as the page title
+      const hostname = typeof window !== 'undefined' ? window.location.hostname : 'press.openrockets.com';
+      const parts = hostname.replace(/\.com$|\.org$|\.net$|\.io$/, '').split('.');
+      if (parts.length > 1) {
+        // Subdomain case: press.openrockets → "Open Rockets Press"
+        const domainPart = parts.slice(1).join(' '); // e.g. "openrockets"
+        const subdomainPart = parts[0]; // e.g. "press"
+        // Split camelCase/joined words and capitalize each
+        const formatWord = (w: string) => w.replace(/([a-z])([A-Z])/g, '$1 $2').split(/[-_]/).map(s => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()).join(' ');
+        document.title = `${formatWord(domainPart)} ${formatWord(subdomainPart)}`;
+      } else {
+        // Single domain: example → "Example"
+        const formatWord = (w: string) => w.replace(/([a-z])([A-Z])/g, '$1 $2').split(/[-_]/).map(s => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()).join(' ');
+        document.title = formatWord(parts[0]);
+      }
     }
   }, [data]);
 
@@ -743,7 +759,7 @@ export function Template1Page({ data }: { data?: any }) {
             gap: '1rem'
           }}>
             <h3 style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1.25rem', fontWeight: 500, color: '#111', margin: 0 }}>
-              Bibliography
+              {isResearch ? 'Bibliography' : 'Cite in your work'}
             </h3>
             <textarea 
               readOnly 
@@ -756,7 +772,7 @@ export function Template1Page({ data }: { data?: any }) {
                 style={{ padding: '8px 24px', backgroundColor: '#000', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '0.95rem', fontWeight: 500, cursor: 'pointer', fontFamily: '"Noto Sans", sans-serif', display: 'flex', alignItems: 'center', gap: '8px' }}
               >
                 <img src="/bibtex_badge.png" alt="Copy BibTeX" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
-                Copy Bibliography
+                {isResearch ? 'Copy Bibliography' : 'Copy Citation'}
               </button>
               
               <button 

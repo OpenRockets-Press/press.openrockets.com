@@ -1,5 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
-import { Spinner } from '@/components/ui/Spinner';
+import { useState, useRef, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 
@@ -8,54 +7,30 @@ interface ImageViewerBoxProps {
 }
 
 export function ImageViewerBox({ files }: ImageViewerBoxProps) {
+  // We limit to 5 images max
   const displayFiles = files.slice(0, 5);
-  
+
   const [activeIdx, setActiveIdx] = useState(0);
-  const [loadedStates, setLoadedStates] = useState<boolean[]>(new Array(displayFiles.length).fill(false));
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [loadedSet, setLoadedSet] = useState<Set<number>>(new Set());
   const [leftHovered, setLeftHovered] = useState(false);
   const [rightHovered, setRightHovered] = useState(false);
 
-  // Magnifier state
-  const [showMagnifier, setShowMagnifier] = useState(false);
-  const [[x, y], setXY] = useState([0, 0]);
-  const [[imgWidth, imgHeight], setSize] = useState([0, 0]);
+  const goLeft = useCallback(() => {
+    setActiveIdx(prev => (prev > 0 ? prev - 1 : prev));
+  }, []);
 
-  const goLeft = () => { 
-    setActiveIdx(prev => {
-      if (prev > 0) return prev - 1;
-      return prev;
+  const goRight = useCallback(() => {
+    setActiveIdx(prev => (prev < displayFiles.length - 1 ? prev + 1 : prev));
+  }, [displayFiles.length]);
+
+  const handleImageLoad = useCallback((idx: number) => {
+    setLoadedSet(prev => {
+      if (prev.has(idx)) return prev;
+      const next = new Set(prev);
+      next.add(idx);
+      return next;
     });
-  };
-  const goRight = () => { 
-    setActiveIdx(prev => {
-      if (prev < displayFiles.length - 1) return prev + 1;
-      return prev;
-    });
-  };
-
-  const handleMouseEnter = (e: React.MouseEvent<HTMLImageElement>) => {
-    const elem = e.currentTarget;
-    const { width, height } = elem.getBoundingClientRect();
-    setSize([width, height]);
-    setShowMagnifier(true);
-  };
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLImageElement>) => {
-    const elem = e.currentTarget;
-    const { top, left } = elem.getBoundingClientRect();
-    const cursorX = e.pageX - left - window.scrollX;
-    const cursorY = e.pageY - top - window.scrollY;
-    setXY([cursorX, cursorY]);
-  };
-
-  const handleMouseLeave = () => {
-    setShowMagnifier(false);
-  };
-
-  // Magnifier settings
-  const magnifierSize = 150;
-  const zoomLevel = 2.5;
+  }, []);
 
   const chevronStyle = (disabled: boolean, hovered: boolean): React.CSSProperties => ({
     background: 'none',
@@ -67,6 +42,8 @@ export function ImageViewerBox({ files }: ImageViewerBoxProps) {
     transition: 'color 0.2s ease',
     opacity: disabled ? 0.3 : 1,
   });
+
+  const isCurrentLoaded = loadedSet.has(activeIdx);
 
   return (
     <div style={{ position: 'relative', width: '100%' }}>
@@ -86,7 +63,7 @@ export function ImageViewerBox({ files }: ImageViewerBoxProps) {
         </div>
 
         {/* Main Image Area */}
-        <div ref={containerRef} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0', overflow: 'hidden' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0', overflow: 'hidden' }}>
           {/* Main Viewer */}
           <div style={{
             width: '100%',
@@ -99,58 +76,27 @@ export function ImageViewerBox({ files }: ImageViewerBoxProps) {
             position: 'relative',
             overflow: 'hidden'
           }}>
-            <div style={{ position: 'relative', display: 'inline-block', maxWidth: '100%', maxHeight: '100%' }}>
-              {displayFiles.map((file, idx) => (
-                <img 
-                  key={idx}
-                  src={file} 
-                  alt={`Image ${idx + 1}`} 
-                  style={{ 
-                    maxWidth: '100%', 
-                    maxHeight: '500px', 
-                    display: activeIdx === idx ? 'block' : 'none', 
-                    objectFit: 'contain', 
-                    cursor: showMagnifier ? 'none' : 'default' 
-                  }} 
-                  decoding="async"
-                  onLoad={() => {
-                    setLoadedStates(prev => {
-                      const newStates = [...prev];
-                      newStates[idx] = true;
-                      return newStates;
-                    });
-                  }}
-                  onMouseEnter={handleMouseEnter}
-                  onMouseMove={handleMouseMove}
-                  onMouseLeave={handleMouseLeave}
-                />
-              ))}
-              {showMagnifier && (
-                <div
-                  style={{
-                    position: "absolute",
-                    pointerEvents: "none",
-                    height: `${magnifierSize}px`,
-                    width: `${magnifierSize}px`,
-                    top: `${y - magnifierSize / 2}px`,
-                    left: `${x - magnifierSize / 2}px`,
-                    opacity: 1,
-                    border: "2px solid #ccc",
-                    borderRadius: "50%",
-                    boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
-                    backgroundColor: "white",
-                    backgroundImage: `url('${displayFiles[activeIdx]}')`,
-                    backgroundRepeat: "no-repeat",
-                    backgroundSize: `${imgWidth * zoomLevel}px ${imgHeight * zoomLevel}px`,
-                    backgroundPositionX: `${-x * zoomLevel + magnifierSize / 2}px`,
-                    backgroundPositionY: `${-y * zoomLevel + magnifierSize / 2}px`,
-                    zIndex: 20
-                  }}
-                />
-              )}
-            </div>
-            {!loadedStates[activeIdx] && (
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.8)', zIndex: 10 }}>
+            {/* Render ALL images simultaneously — toggle visibility via CSS only */}
+            {displayFiles.map((file, idx) => (
+              <img
+                key={idx}
+                src={file}
+                alt={`Image ${idx + 1}`}
+                loading="eager"
+                decoding="async"
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '500px',
+                  objectFit: 'contain',
+                  display: activeIdx === idx ? 'block' : 'none',
+                }}
+                onLoad={() => handleImageLoad(idx)}
+              />
+            ))}
+
+            {/* Loading indicator — only if the currently active image hasn't finished loading */}
+            {!isCurrentLoaded && (
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.85)', zIndex: 10 }}>
                 <span style={{ fontFamily: '"Noto Sans", sans-serif', fontWeight: 600, color: '#0067b8' }}>Loading...</span>
               </div>
             )}
@@ -166,12 +112,7 @@ export function ImageViewerBox({ files }: ImageViewerBoxProps) {
             {displayFiles.map((file, idx) => (
               <button
                 key={idx}
-                onClick={() => { 
-                  setActiveIdx(prev => {
-                    if (prev !== idx) return idx;
-                    return prev;
-                  });
-                }}
+                onClick={() => setActiveIdx(idx)}
                 style={{
                   padding: '4px',
                   border: activeIdx === idx ? '2px solid #000' : '1px solid #ccc',
@@ -188,7 +129,7 @@ export function ImageViewerBox({ files }: ImageViewerBoxProps) {
                 }}
                 title={`Image ${idx + 1}`}
               >
-                <img src={file} alt={`Thumbnail ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} decoding="async" />
+                <img src={file} alt={`Thumbnail ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} decoding="async" loading="lazy" />
               </button>
             ))}
           </div>
