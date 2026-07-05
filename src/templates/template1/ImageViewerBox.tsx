@@ -8,8 +8,10 @@ interface ImageViewerBoxProps {
 }
 
 export function ImageViewerBox({ files }: ImageViewerBoxProps) {
+  const displayFiles = files.slice(0, 5);
+  
   const [activeIdx, setActiveIdx] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loadedStates, setLoadedStates] = useState<boolean[]>(new Array(displayFiles.length).fill(false));
   const containerRef = useRef<HTMLDivElement>(null);
   const [leftHovered, setLeftHovered] = useState(false);
   const [rightHovered, setRightHovered] = useState(false);
@@ -19,24 +21,15 @@ export function ImageViewerBox({ files }: ImageViewerBoxProps) {
   const [[x, y], setXY] = useState([0, 0]);
   const [[imgWidth, imgHeight], setSize] = useState([0, 0]);
 
-  // We limit to 5 images max
-  const displayFiles = files.slice(0, 5);
-
   const goLeft = () => { 
     setActiveIdx(prev => {
-      if (prev > 0) {
-        setIsLoading(true);
-        return prev - 1;
-      }
+      if (prev > 0) return prev - 1;
       return prev;
     });
   };
   const goRight = () => { 
     setActiveIdx(prev => {
-      if (prev < displayFiles.length - 1) {
-        setIsLoading(true);
-        return prev + 1;
-      }
+      if (prev < displayFiles.length - 1) return prev + 1;
       return prev;
     });
   };
@@ -107,16 +100,31 @@ export function ImageViewerBox({ files }: ImageViewerBoxProps) {
             overflow: 'hidden'
           }}>
             <div style={{ position: 'relative', display: 'inline-block', maxWidth: '100%', maxHeight: '100%' }}>
-              <img 
-                src={displayFiles[activeIdx]} 
-                alt={`Image ${activeIdx + 1}`} 
-                style={{ maxWidth: '100%', maxHeight: '500px', display: 'block', objectFit: 'contain', cursor: showMagnifier ? 'none' : 'default' }} 
-                decoding="async"
-                onLoad={() => setIsLoading(false)}
-                onMouseEnter={handleMouseEnter}
-                onMouseMove={handleMouseMove}
-                onMouseLeave={handleMouseLeave}
-              />
+              {displayFiles.map((file, idx) => (
+                <img 
+                  key={idx}
+                  src={file} 
+                  alt={`Image ${idx + 1}`} 
+                  style={{ 
+                    maxWidth: '100%', 
+                    maxHeight: '500px', 
+                    display: activeIdx === idx ? 'block' : 'none', 
+                    objectFit: 'contain', 
+                    cursor: showMagnifier ? 'none' : 'default' 
+                  }} 
+                  decoding="async"
+                  onLoad={() => {
+                    setLoadedStates(prev => {
+                      const newStates = [...prev];
+                      newStates[idx] = true;
+                      return newStates;
+                    });
+                  }}
+                  onMouseEnter={handleMouseEnter}
+                  onMouseMove={handleMouseMove}
+                  onMouseLeave={handleMouseLeave}
+                />
+              ))}
               {showMagnifier && (
                 <div
                   style={{
@@ -141,9 +149,9 @@ export function ImageViewerBox({ files }: ImageViewerBoxProps) {
                 />
               )}
             </div>
-            {isLoading && (
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' }}>
-                <Spinner color="#0067b8" />
+            {!loadedStates[activeIdx] && (
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.8)', zIndex: 10 }}>
+                <span style={{ fontFamily: '"Noto Sans", sans-serif', fontWeight: 600, color: '#0067b8' }}>Loading...</span>
               </div>
             )}
           </div>
@@ -160,10 +168,7 @@ export function ImageViewerBox({ files }: ImageViewerBoxProps) {
                 key={idx}
                 onClick={() => { 
                   setActiveIdx(prev => {
-                    if (prev !== idx) {
-                      setIsLoading(true);
-                      return idx;
-                    }
+                    if (prev !== idx) return idx;
                     return prev;
                   });
                 }}
