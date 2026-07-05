@@ -15,6 +15,14 @@ export function ImageViewerBox({ files }: ImageViewerBoxProps) {
   const [leftHovered, setLeftHovered] = useState(false);
   const [rightHovered, setRightHovered] = useState(false);
 
+  // Magnifier state
+  const [showMagnifier, setShowMagnifier] = useState(false);
+  const [[magX, magY], setMagXY] = useState([0, 0]);
+  const imgRef = useRef<HTMLImageElement | null>(null);
+
+  const magnifierSize = 150;
+  const zoomLevel = 2.5;
+
   const goLeft = useCallback(() => {
     setActiveIdx(prev => (prev > 0 ? prev - 1 : prev));
   }, []);
@@ -32,6 +40,23 @@ export function ImageViewerBox({ files }: ImageViewerBoxProps) {
     });
   }, []);
 
+  const handleMouseEnter = useCallback(() => {
+    setShowMagnifier(true);
+  }, []);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLImageElement>) => {
+    const elem = e.currentTarget;
+    const { top, left } = elem.getBoundingClientRect();
+    const cursorX = e.clientX - left;
+    const cursorY = e.clientY - top;
+    setMagXY([cursorX, cursorY]);
+    imgRef.current = elem;
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setShowMagnifier(false);
+  }, []);
+
   const chevronStyle = (disabled: boolean, hovered: boolean): React.CSSProperties => ({
     background: 'none',
     border: 'none',
@@ -44,6 +69,11 @@ export function ImageViewerBox({ files }: ImageViewerBoxProps) {
   });
 
   const isCurrentLoaded = loadedSet.has(activeIdx);
+
+  // Calculate magnifier lens position and the transform for the zoomed image clone
+  const imgEl = imgRef.current;
+  const imgW = imgEl?.offsetWidth || 1;
+  const imgH = imgEl?.offsetHeight || 1;
 
   return (
     <div style={{ position: 'relative', width: '100%' }}>
@@ -76,23 +106,65 @@ export function ImageViewerBox({ files }: ImageViewerBoxProps) {
             position: 'relative',
             overflow: 'hidden'
           }}>
-            {/* Render ALL images simultaneously — toggle visibility via CSS only */}
-            {displayFiles.map((file, idx) => (
-              <img
-                key={idx}
-                src={file}
-                alt={`Image ${idx + 1}`}
-                loading="eager"
-                decoding="async"
-                style={{
-                  maxWidth: '100%',
-                  maxHeight: '500px',
-                  objectFit: 'contain',
-                  display: activeIdx === idx ? 'block' : 'none',
-                }}
-                onLoad={() => handleImageLoad(idx)}
-              />
-            ))}
+            <div style={{ position: 'relative', display: 'inline-block', maxWidth: '100%', maxHeight: '100%' }}>
+              {/* Render ALL images simultaneously — toggle visibility via CSS only */}
+              {displayFiles.map((file, idx) => (
+                <img
+                  key={idx}
+                  src={file}
+                  alt={`Image ${idx + 1}`}
+                  loading="eager"
+                  decoding="async"
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '500px',
+                    objectFit: 'contain',
+                    display: activeIdx === idx ? 'block' : 'none',
+                    cursor: showMagnifier ? 'none' : 'default',
+                  }}
+                  onLoad={() => handleImageLoad(idx)}
+                  onMouseEnter={handleMouseEnter}
+                  onMouseMove={handleMouseMove}
+                  onMouseLeave={handleMouseLeave}
+                />
+              ))}
+
+              {/* Magnifier lens — uses a clipped <img> with transform:scale instead of backgroundImage to reuse already-decoded bitmap */}
+              {showMagnifier && imgEl && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    pointerEvents: 'none',
+                    width: `${magnifierSize}px`,
+                    height: `${magnifierSize}px`,
+                    top: `${magY - magnifierSize / 2}px`,
+                    left: `${magX - magnifierSize / 2}px`,
+                    borderRadius: '50%',
+                    border: '2px solid #ccc',
+                    boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
+                    overflow: 'hidden',
+                    zIndex: 20,
+                    backgroundColor: 'white',
+                  }}
+                >
+                  <img
+                    src={displayFiles[activeIdx]}
+                    alt=""
+                    decoding="async"
+                    style={{
+                      position: 'absolute',
+                      width: `${imgW * zoomLevel}px`,
+                      height: `${imgH * zoomLevel}px`,
+                      left: `${-magX * zoomLevel + magnifierSize / 2}px`,
+                      top: `${-magY * zoomLevel + magnifierSize / 2}px`,
+                      pointerEvents: 'none',
+                      maxWidth: 'none',
+                      maxHeight: 'none',
+                    }}
+                  />
+                </div>
+              )}
+            </div>
 
             {/* Loading indicator — only if the currently active image hasn't finished loading */}
             {!isCurrentLoaded && (
