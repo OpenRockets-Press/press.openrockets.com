@@ -228,7 +228,7 @@ export function HomePage() {
         <main className="amazon-main-content">
           <HomeBanner />
 
-          <div className="hashtag-header-container">
+          <div className="hashtag-header-container" id="search-results-section">
             <Link to="/" className="hashtag-header-link">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="4" y1="9" x2="20" y2="9"></line>

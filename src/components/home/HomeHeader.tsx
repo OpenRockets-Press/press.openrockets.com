@@ -158,6 +158,13 @@ export function HomeHeader({ onOpenInfo }: HomeHeaderProps) {
     } else {
       navigate({ to: `/` });
     }
+    setTimeout(() => {
+      const el = document.getElementById('search-results-section');
+      if (el) {
+        const y = el.getBoundingClientRect().top + window.scrollY - 80;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }
+    }, 100);
   };
 
   return (

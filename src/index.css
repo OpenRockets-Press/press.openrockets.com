@@ -5884,3 +5884,13 @@ button.ad-attribution-why:hover {
     display: none !important;
   }
 }
+
+.mobile-only {
+  display: none !important;
+}
+
+@media (max-width: 915px) {
+  .mobile-only {
+    display: block !important;
+  }
+}

@@ -228,7 +228,7 @@ export function HashtagPage() {
         </aside>
 
         <main className="amazon-main-content">
-          <div className="hashtag-header-container">
+          <div className="hashtag-header-container" id="search-results-section">
             <Link 
               to={`/hashtag/${encodeURIComponent(decodedHashtag)}`} 
               className="hashtag-header-link"
