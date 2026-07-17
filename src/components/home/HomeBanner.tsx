@@ -5,6 +5,10 @@ const SLIDE_INTERVAL_MS = 20_000;
 
 const SLIDES = [
   {
+    src: "/brand/static/wp-content/slide0.png",
+    alt: "Open Rockets Press feature banner new",
+  },
+  {
     src: "/brand/static/wp-content/slide1.png?v=3",
     alt: "Open Rockets Press feature banner 0",
   },
