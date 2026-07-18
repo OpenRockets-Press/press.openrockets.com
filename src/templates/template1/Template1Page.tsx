@@ -194,7 +194,7 @@ export function Template1Page({ data }: { data?: any }) {
   const communities: string[] = data?.communities ? (typeof data.communities === 'string' ? JSON.parse(data.communities) : data.communities) : [];
   
   const pubDomain = typeof window !== 'undefined' ? window.location.hostname : "press.openrockets.com";
-  const pubSlug = data?.urlSlug || data?.id || "A8F29X";
+  const pubSlug = data?.shortId || data?.urlSlug || data?.id || "A8F29X";
   const pubYear = data?.createdAt ? new Date(data.createdAt).getFullYear() : new Date().getFullYear();
   
   const bibtex = `@article{${authorName.replace(/\s+/g, "_").toLowerCase()}_${pubYear},
@@ -658,7 +658,7 @@ export function Template1Page({ data }: { data?: any }) {
             <div className="ql-snow">
               <div 
                 className="ql-editor"
-                style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1.1rem', lineHeight: 1.8, color: '#111827', textAlign: 'justify', margin: 0, fontWeight: 400, padding: 0 }}
+                style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1.1rem', lineHeight: 1.8, color: '#111827', textAlign: 'left', margin: 0, fontWeight: 400, padding: 0 }}
                 dangerouslySetInnerHTML={{ __html: abstract }}
               />
             </div>
@@ -695,6 +695,7 @@ export function Template1Page({ data }: { data?: any }) {
           </div>
 
           {/* Link Previews Section - NOT translatable */}
+          {mockLinkUrls.length > 0 && (
           <div translate="no" className="notranslate" style={{ marginTop: '32px', display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', maxWidth: '800px' }}>
             <h3 style={{ fontFamily: '"Noto Sans", sans-serif', fontSize: '1.25rem', fontWeight: 500, color: '#111', margin: '0 0 8px 0' }}>
               External Links
@@ -749,6 +750,7 @@ export function Template1Page({ data }: { data?: any }) {
               ))
             )}
           </div>
+          )}
 
           {/* Bibliography Section - NOT translatable */}
           <div translate="no" className="notranslate no-print" style={{ 
