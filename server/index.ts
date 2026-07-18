@@ -294,6 +294,7 @@ app.get('*', async (c) => {
           // because on production (GitHub Actions build) only dist/ exists
           let publisherName = 'OpenRockets Press';
           let publisherDomain = 'press.openrockets.com';
+          let publisherLogo = 'https://press.openrockets.com/brand/welcomepage2.png';
           const pubJsonPaths = [
             path.join(process.cwd(), 'public/config/publishers.json'),
             path.join(process.cwd(), 'dist/config/publishers.json'),
@@ -306,6 +307,9 @@ app.get('*', async (c) => {
                 if (pubInfo) {
                   publisherName = pubInfo.name;
                   publisherDomain = pubInfo.domain;
+                  publisherLogo = pubInfo.logoUrl.startsWith('/')
+                    ? `https://press.openrockets.com${pubInfo.logoUrl}`
+                    : pubInfo.logoUrl;
                 }
                 break;
               }
@@ -318,9 +322,10 @@ app.get('*', async (c) => {
           const ogDescription = esc(rawDesc || `Published on ${publisherName}`);
           const ogUrl = `https://${publisherDomain}/${shortId}`;
 
-          // Use our own OG image endpoint — it generates publisher logo
-          // centered on a white background, or redirects to cover image
-          const ogImage = `https://press.openrockets.com/api/og/${shortId}`;
+          // Use cover image if the artifact has one, otherwise the publisher logo
+          const ogImage = pub.coverStorageKey
+            ? (pub.coverStorageKey.startsWith('http') ? pub.coverStorageKey : `https://press.openrockets.com/api/storage/fetch/${pub.coverStorageKey}`)
+            : publisherLogo;
 
           const metaTags = `
     <title>${ogTitle}</title>
