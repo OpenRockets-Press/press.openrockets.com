@@ -249,24 +249,29 @@ app.use('/*', async (c, next) => {
 });
 
 // Client-side Routing Fallback (React Router)
-// For 7-character shortIds: inject OG meta tags server-side so link previews work
+// For shortId routes (7 char alphanumeric), inject dynamic OG meta tags
+// so that link-preview bots (WhatsApp, Twitter, Discord, etc.) see the
+// paper title and publisher instead of the generic "OpenRockets Press".
 app.get('*', async (c) => {
   if (c.req.path.startsWith('/api') || c.req.path.startsWith('/assets')) {
     return c.json({ success: false, error: { code: 'NOT_FOUND', message: 'Not found' } }, 404);
   }
-
   try {
     const indexPath = path.resolve('./dist/index.html');
     let html = fs.readFileSync(indexPath, 'utf-8');
 
-    // Check if the path looks like a 7-character shortId (e.g. /845s73v)
+    // Detect /<shortId> routes – exactly 7 alphanumeric characters
     const shortIdMatch = c.req.path.match(/^\/([a-zA-Z0-9]{7})$/);
     if (shortIdMatch) {
       const shortId = shortIdMatch[1];
       try {
-        const [pubRow] = await db
+        const [pub] = await db
           .select({
-            pub: publications,
+            title: publications.title,
+            subtitle: publications.subtitle,
+            abstract: publications.abstract,
+            coverStorageKey: publications.coverStorageKey,
+            publisherId: publications.publisherId,
             authorName: users.displayName,
           })
           .from(publications)
@@ -274,56 +279,52 @@ app.get('*', async (c) => {
           .where(eq(publications.shortId, shortId))
           .limit(1);
 
-        if (pubRow) {
-          const pub = pubRow.pub;
-          const authorName = pubRow.authorName || 'A contributor';
-          const title = pub.title || 'Untitled Artifact';
-          const description = pub.subtitle
-            ? pub.subtitle
-            : pub.abstract
-            ? pub.abstract.replace(/<[^>]+>/g, '').slice(0, 200)
-            : `Published on OpenRockets Press by ${authorName}.`;
-
-          // Resolve publisher info for og:site_name
+        if (pub) {
+          // Resolve publisher info
           let publisherName = 'OpenRockets Press';
-          let coverImageUrl = 'https://press.openrockets.com/brand/welcomepage2.png';
+          let publisherDomain = 'press.openrockets.com';
           try {
-            const pubsPath = path.join(process.cwd(), 'public/config/publishers.json');
-            if (fs.existsSync(pubsPath)) {
-              const pubsData = JSON.parse(fs.readFileSync(pubsPath, 'utf8'));
-              const pubInfo = pubsData.publishers.find((p: any) => p.id === pub.publisherId);
-              if (pubInfo) publisherName = pubInfo.name;
+            const pubJsonPath = path.join(process.cwd(), 'public/config/publishers.json');
+            if (fs.existsSync(pubJsonPath)) {
+              const pubData = JSON.parse(fs.readFileSync(pubJsonPath, 'utf8'));
+              const pubInfo = pubData.publishers.find((p: any) => p.id === pub.publisherId);
+              if (pubInfo) {
+                publisherName = pubInfo.name;
+                publisherDomain = pubInfo.domain;
+              }
             }
           } catch (_) { /* ignore */ }
 
-          // Use cover image if available
-          if (pub.coverStorageKey) {
-            const baseUrl = process.env.API_BASE_URL || 'https://press.openrockets.com';
-            coverImageUrl = `${baseUrl}/api/storage/fetch/${pub.coverStorageKey}`;
-          }
+          const ogTitle = `${pub.title} – ${publisherName}`;
+          // Strip HTML tags from abstract for og:description
+          const rawDesc = (pub.subtitle || pub.abstract || '').replace(/<[^>]*>/g, '').slice(0, 200);
+          const ogDescription = rawDesc || `Published on ${publisherName}`;
+          const ogUrl = `https://${publisherDomain}/${shortId}`;
+          const ogImage = pub.coverStorageKey
+            ? (pub.coverStorageKey.startsWith('http') ? pub.coverStorageKey : `https://press.openrockets.com/api/storage/fetch/${pub.coverStorageKey}`)
+            : 'https://openrockets.com/v/openrockets-w.png';
 
-          const ogTags = `
-    <title>${title} — ${publisherName}</title>
-    <meta name="description" content="${description.replace(/"/g, '&quot;')}" />
+          const metaTags = `
+    <title>${ogTitle}</title>
+    <meta name="description" content="${ogDescription}" />
+    <meta property="og:title" content="${ogTitle}" />
+    <meta property="og:description" content="${ogDescription}" />
+    <meta property="og:url" content="${ogUrl}" />
+    <meta property="og:image" content="${ogImage}" />
     <meta property="og:type" content="article" />
-    <meta property="og:title" content="${title.replace(/"/g, '&quot;')}" />
-    <meta property="og:description" content="${description.replace(/"/g, '&quot;')}" />
-    <meta property="og:image" content="${coverImageUrl}" />
-    <meta property="og:url" content="https://${c.req.header('host') || 'press.openrockets.com'}/${shortId}" />
     <meta property="og:site_name" content="${publisherName}" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="${title.replace(/"/g, '&quot;')}" />
-    <meta name="twitter:description" content="${description.replace(/"/g, '&quot;')}" />
-    <meta name="twitter:image" content="${coverImageUrl}" />`;
+    <meta name="twitter:title" content="${ogTitle}" />
+    <meta name="twitter:description" content="${ogDescription}" />
+    <meta name="twitter:image" content="${ogImage}" />`;
 
-          // Inject before </head> — replaces the generic title and injects OG tags
+          // Replace the existing <title> and inject OG tags before </head>
           html = html
-            .replace(/<title>.*?<\/title>/, '')
-            .replace('</head>', `${ogTags}\n  </head>`);
+            .replace(/<title>[^<]*<\/title>/, '')
+            .replace('</head>', `${metaTags}\n  </head>`);
         }
-      } catch (dbErr) {
-        console.error('[OG Injection] DB error for shortId', shortId, dbErr);
-        // Fall through and serve generic HTML on error
+      } catch (lookupErr) {
+        console.error('[OG Injection] DB lookup failed:', lookupErr);
       }
     }
 
@@ -332,7 +333,6 @@ app.get('*', async (c) => {
     return c.text('Frontend build not found. Please run npm run build.', 500);
   }
 });
-
 
 const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 
