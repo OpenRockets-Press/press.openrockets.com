@@ -12,7 +12,7 @@ export async function sendReviewEmail(
   title: string,
   publisherId: string,
   status: 'published' | 'rejected',
-  pubId: string
+  shortId: string
 ) {
   let publisherName = "OpenRockets Press";
   let publisherLogo = "https://openrockets.com/v/openrockets-w.png";
@@ -38,8 +38,7 @@ export async function sendReviewEmail(
     console.error("Failed to load publishers.json for email", e);
   }
 
-  const generatedSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-  const artifactLink = `https://${publisherDomain}/artifacts/${generatedSlug}-${pubId}`;
+  const artifactLink = `https://${publisherDomain}/${shortId}`;
   
   const isAccepted = status === 'published';
   const subject = isAccepted 

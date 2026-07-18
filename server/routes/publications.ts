@@ -455,7 +455,7 @@ publicationsRouter.post('/:pubId/review', authMiddleware, async (c) => {
         pubData.pub.title,
         pubData.pub.publisherId || 'nyrj', // default to an arbitrary one if null
         newStatus,
-        pubData.pub.pubId
+        pubData.pub.shortId
       ).catch(e => console.error("Email dispatch failed:", e));
     }
 

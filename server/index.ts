@@ -249,18 +249,90 @@ app.use('/*', async (c, next) => {
 });
 
 // Client-side Routing Fallback (React Router)
+// For 7-character shortIds: inject OG meta tags server-side so link previews work
 app.get('*', async (c) => {
   if (c.req.path.startsWith('/api') || c.req.path.startsWith('/assets')) {
     return c.json({ success: false, error: { code: 'NOT_FOUND', message: 'Not found' } }, 404);
   }
+
   try {
     const indexPath = path.resolve('./dist/index.html');
-    const html = fs.readFileSync(indexPath, 'utf-8');
+    let html = fs.readFileSync(indexPath, 'utf-8');
+
+    // Check if the path looks like a 7-character shortId (e.g. /845s73v)
+    const shortIdMatch = c.req.path.match(/^\/([a-zA-Z0-9]{7})$/);
+    if (shortIdMatch) {
+      const shortId = shortIdMatch[1];
+      try {
+        const [pubRow] = await db
+          .select({
+            pub: publications,
+            authorName: users.displayName,
+          })
+          .from(publications)
+          .leftJoin(users, eq(publications.authorId, users.id))
+          .where(eq(publications.shortId, shortId))
+          .limit(1);
+
+        if (pubRow) {
+          const pub = pubRow.pub;
+          const authorName = pubRow.authorName || 'A contributor';
+          const title = pub.title || 'Untitled Artifact';
+          const description = pub.subtitle
+            ? pub.subtitle
+            : pub.abstract
+            ? pub.abstract.replace(/<[^>]+>/g, '').slice(0, 200)
+            : `Published on OpenRockets Press by ${authorName}.`;
+
+          // Resolve publisher info for og:site_name
+          let publisherName = 'OpenRockets Press';
+          let coverImageUrl = 'https://press.openrockets.com/brand/welcomepage2.png';
+          try {
+            const pubsPath = path.join(process.cwd(), 'public/config/publishers.json');
+            if (fs.existsSync(pubsPath)) {
+              const pubsData = JSON.parse(fs.readFileSync(pubsPath, 'utf8'));
+              const pubInfo = pubsData.publishers.find((p: any) => p.id === pub.publisherId);
+              if (pubInfo) publisherName = pubInfo.name;
+            }
+          } catch (_) { /* ignore */ }
+
+          // Use cover image if available
+          if (pub.coverStorageKey) {
+            const baseUrl = process.env.API_BASE_URL || 'https://press.openrockets.com';
+            coverImageUrl = `${baseUrl}/api/storage/fetch/${pub.coverStorageKey}`;
+          }
+
+          const ogTags = `
+    <title>${title} — ${publisherName}</title>
+    <meta name="description" content="${description.replace(/"/g, '&quot;')}" />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="${title.replace(/"/g, '&quot;')}" />
+    <meta property="og:description" content="${description.replace(/"/g, '&quot;')}" />
+    <meta property="og:image" content="${coverImageUrl}" />
+    <meta property="og:url" content="https://${c.req.header('host') || 'press.openrockets.com'}/${shortId}" />
+    <meta property="og:site_name" content="${publisherName}" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${title.replace(/"/g, '&quot;')}" />
+    <meta name="twitter:description" content="${description.replace(/"/g, '&quot;')}" />
+    <meta name="twitter:image" content="${coverImageUrl}" />`;
+
+          // Inject before </head> — replaces the generic title and injects OG tags
+          html = html
+            .replace(/<title>.*?<\/title>/, '')
+            .replace('</head>', `${ogTags}\n  </head>`);
+        }
+      } catch (dbErr) {
+        console.error('[OG Injection] DB error for shortId', shortId, dbErr);
+        // Fall through and serve generic HTML on error
+      }
+    }
+
     return c.html(html);
   } catch (e) {
     return c.text('Frontend build not found. Please run npm run build.', 500);
   }
 });
+
 
 const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 
