@@ -302,7 +302,7 @@ app.get('*', async (c) => {
           const ogUrl = `https://${publisherDomain}/${shortId}`;
           const ogImage = pub.coverStorageKey
             ? (pub.coverStorageKey.startsWith('http') ? pub.coverStorageKey : `https://press.openrockets.com/api/storage/fetch/${pub.coverStorageKey}`)
-            : 'https://openrockets.com/v/openrockets-w.png';
+            : `https://api.dicebear.com/9.x/rings/png?seed=${encodeURIComponent(shortId)}&size=1200&backgroundType=gradientLinear&backgroundColor=0d1b2a,415a77,778da9&backgroundRotation=135`;
 
           const metaTags = `
     <title>${ogTitle}</title>
