@@ -257,78 +257,96 @@ export function Template1Page({ data }: { data?: any }) {
       const JSZipModule = await import("jszip");
       const JSZip = JSZipModule.default || JSZipModule;
       const mainZip = new JSZip();
-      const filesZip = new JSZip();
       
-      // Add nested zip containing the files
-      for (let i = 0; i < fileUrls.length; i++) {
-        const url = fileUrls[i];
-        let filename = `file-${i}`;
+      // --- Step 1: Download all artifact files into a nested zip ---
+      if (fileUrls.length > 0) {
+        const filesZip = new JSZip();
         
-        if (url.includes('fileKey=')) {
-          const key = decodeURIComponent(url.split('fileKey=')[1]);
-          filename = key.split('/').pop() || filename;
-        } else {
-          filename = url.split('/').pop() || filename;
+        for (let i = 0; i < fileUrls.length; i++) {
+          const url = fileUrls[i];
+          let filename = `file-${i}`;
+          
+          if (url.includes('fileKey=')) {
+            const key = decodeURIComponent(url.split('fileKey=')[1]);
+            filename = key.split('/').pop() || filename;
+          } else {
+            filename = url.split('/').pop() || filename;
+          }
+          
+          if (filename.includes('worker-bundle')) continue;
+          
+          try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 30000); // 30s timeout
+            const response = await fetch(url, { signal: controller.signal });
+            clearTimeout(timeout);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const blob = await response.blob();
+            filesZip.file(filename, blob);
+          } catch (error) {
+            console.warn(`Skipping file ${filename}:`, error);
+          }
         }
-        
-        // Exclude specific files from raw data if needed
-        if (filename.includes('worker-bundle')) continue;
         
         try {
-          const response = await fetch(url);
-          if (!response.ok) throw new Error("Failed to fetch file");
-          const blob = await response.blob();
-          
-          filesZip.file(filename, blob);
+          const filesZipBlob = await filesZip.generateAsync({ type: "blob" });
+          mainZip.file("files.zip", filesZipBlob);
         } catch (error) {
-          console.error("Error fetching file to zip:", error);
+          console.error("Failed to generate inner files.zip:", error);
         }
       }
-      
-      // Generate the inner files.zip as a blob and add it to mainZip
-      const filesZipBlob = await filesZip.generateAsync({ type: "blob" });
-      mainZip.file("files.zip", filesZipBlob);
 
-      // Generate the PDF
-      const element = document.getElementById("printable-area");
-      if (element && (window as any).html2pdf) {
-        const opt = {
-          margin:       0.5,
-          filename:     'document.pdf',
-          image:        { type: 'jpeg', quality: 0.98 },
-          html2canvas:  { 
-            scale: 2, 
-            useCORS: true, 
-            scrollY: 0,
-            ignoreElements: (node) => node.classList && node.classList.contains('no-print'),
-            onclone: (clonedDoc) => {
-              const imgs = clonedDoc.querySelectorAll('img');
-              for (let i = 0; i < imgs.length; i++) {
-                const img = imgs[i];
-                if (img.src && img.src.startsWith('http') && !img.src.includes(window.location.host)) {
-                  img.crossOrigin = "anonymous";
-                  img.src = 'https://corsproxy.io/?' + encodeURIComponent(img.src);
-                }
-              }
-            }
-          },
-          jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
-        };
-        
-        const pdfBlob = await (window as any).html2pdf().from(element).set(opt).output('blob');
-        mainZip.file("content.pdf", pdfBlob);
+      // --- Step 2: Generate a PDF of the text content (best-effort, never blocks download) ---
+      try {
+        const element = document.getElementById("printable-area");
+        if (element && (window as any).html2pdf) {
+          const pdfBlob = await (window as any).html2pdf()
+            .from(element)
+            .set({
+              margin: 0.5,
+              filename: 'document.pdf',
+              image: { type: 'jpeg', quality: 0.90 },
+              html2canvas: { 
+                scale: 1.5,
+                useCORS: true, 
+                scrollY: 0,
+                logging: false,
+                allowTaint: true,
+                ignoreElements: (node: Element) => {
+                  // Skip all heavy viewers and interactive elements
+                  if (node.classList && (
+                    node.classList.contains('no-print') ||
+                    node.tagName === 'CANVAS' ||
+                    node.tagName === 'VIDEO' ||
+                    node.tagName === 'IFRAME'
+                  )) return true;
+                  return false;
+                },
+              },
+              jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            })
+            .output('blob');
+          
+          if (pdfBlob && pdfBlob.size > 0) {
+            mainZip.file("content.pdf", pdfBlob);
+          }
+        }
+      } catch (pdfError) {
+        console.warn("PDF generation failed (non-blocking):", pdfError);
+        // PDF generation failure does NOT block the download
       }
       
-      // Generate the outer zip file
+      // --- Step 3: Generate and trigger the final download ---
       const content = await mainZip.generateAsync({ type: "blob" });
       
-      // Trigger download
+      const slugName = (title || 'artifact').toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40);
       const a = document.createElement("a");
       a.href = URL.createObjectURL(content);
+      a.download = `${slugName}-openrockets.zip`;
       document.body.appendChild(a);
       a.click();
       a.remove();
-      URL.revokeObjectURL(a.href);
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     } catch (error) {
       console.error("Failed to generate zip", error);
       setAlertState({ isOpen: true, message: "Failed to download files.", title: "Warning" });
