@@ -300,6 +300,7 @@ export function Template1Page({ data }: { data?: any }) {
             scale: 2, 
             useCORS: true, 
             scrollY: 0,
+            ignoreElements: (node) => node.classList && node.classList.contains('no-print'),
             onclone: (clonedDoc) => {
               const imgs = clonedDoc.querySelectorAll('img');
               for (let i = 0; i < imgs.length; i++) {
