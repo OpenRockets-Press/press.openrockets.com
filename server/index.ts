@@ -280,6 +280,14 @@ app.get('*', async (c) => {
           .limit(1);
 
         if (pub) {
+          // HTML-escape helper – prevents broken meta tags when titles
+          // contain special characters like quotes, ampersands, or angle brackets
+          const esc = (s: string) => s
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+
           // Resolve publisher info
           let publisherName = 'OpenRockets Press';
           let publisherDomain = 'press.openrockets.com';
@@ -295,14 +303,17 @@ app.get('*', async (c) => {
             }
           } catch (_) { /* ignore */ }
 
-          const ogTitle = `${pub.title} – ${publisherName}`;
+          const ogTitle = esc(`${pub.title} – ${publisherName}`);
           // Strip HTML tags from abstract for og:description
           const rawDesc = (pub.subtitle || pub.abstract || '').replace(/<[^>]*>/g, '').slice(0, 200);
-          const ogDescription = rawDesc || `Published on ${publisherName}`;
+          const ogDescription = esc(rawDesc || `Published on ${publisherName}`);
           const ogUrl = `https://${publisherDomain}/${shortId}`;
+
+          // Plain gradient image: shapes style with scale=0 so only the
+          // gradient background is visible (no avatar shapes on top)
           const ogImage = pub.coverStorageKey
             ? (pub.coverStorageKey.startsWith('http') ? pub.coverStorageKey : `https://press.openrockets.com/api/storage/fetch/${pub.coverStorageKey}`)
-            : `https://api.dicebear.com/9.x/rings/png?seed=${encodeURIComponent(shortId)}&size=1200&backgroundType=gradientLinear&backgroundColor=0d1b2a,415a77,778da9&backgroundRotation=135`;
+            : `https://api.dicebear.com/9.x/shapes/png?seed=${encodeURIComponent(shortId)}&size=512&backgroundType=gradientLinear&backgroundColor=0d1b2a,415a77,778da9&backgroundRotation=135&scale=0`;
 
           const metaTags = `
     <title>${ogTitle}</title>
@@ -312,7 +323,7 @@ app.get('*', async (c) => {
     <meta property="og:url" content="${ogUrl}" />
     <meta property="og:image" content="${ogImage}" />
     <meta property="og:type" content="article" />
-    <meta property="og:site_name" content="${publisherName}" />
+    <meta property="og:site_name" content="${esc(publisherName)}" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${ogTitle}" />
     <meta name="twitter:description" content="${ogDescription}" />
