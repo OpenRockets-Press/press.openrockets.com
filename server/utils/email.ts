@@ -20,18 +20,24 @@ export async function sendReviewEmail(
   let learnMoreLink = "";
   
   try {
-    const pubPath = path.join(process.cwd(), 'public/config/publishers.json');
-    if (fs.existsSync(pubPath)) {
-      const pubData = JSON.parse(fs.readFileSync(pubPath, 'utf8'));
-      const pubInfo = pubData.publishers.find((p: any) => p.id === publisherId);
-      if (pubInfo) {
-        publisherName = pubInfo.name;
-        // Fix relative URLs if any
-        publisherLogo = pubInfo.logoUrl.startsWith('/') 
-          ? `https://press.openrockets.com${pubInfo.logoUrl}` 
-          : pubInfo.logoUrl;
-        publisherDomain = pubInfo.domain;
-        learnMoreLink = pubInfo.learnMoreLink || "";
+    const candidates = [
+      path.join(process.cwd(), 'public/config/publishers.json'),
+      path.join(process.cwd(), 'dist/config/publishers.json'),
+    ];
+    for (const pubPath of candidates) {
+      if (fs.existsSync(pubPath)) {
+        const pubData = JSON.parse(fs.readFileSync(pubPath, 'utf8'));
+        const pubInfo = pubData.publishers.find((p: any) => p.id === publisherId);
+        if (pubInfo) {
+          publisherName = pubInfo.name;
+          // Fix relative URLs if any
+          publisherLogo = pubInfo.logoUrl.startsWith('/') 
+            ? `https://press.openrockets.com${pubInfo.logoUrl}` 
+            : pubInfo.logoUrl;
+          publisherDomain = pubInfo.domain;
+          learnMoreLink = pubInfo.learnMoreLink || "";
+        }
+        break;
       }
     }
   } catch (e) {

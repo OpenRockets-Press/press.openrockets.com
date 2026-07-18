@@ -31,6 +31,7 @@ import { dashboardsRouter } from './routes/dashboards';
 import { storageRouter } from './routes/storage';
 import { auditRouter } from './routes/audit';
 import { cronRouter } from './routes/cron';
+import { ogRouter } from './routes/og';
 
 // Middleware
 app.use('*', logger());
@@ -111,6 +112,7 @@ app.route('/api/dashboards', dashboardsRouter);
 app.route('/api/storage', storageRouter);
 app.route('/api/audit-logs', auditRouter);
 app.route('/api/cron', cronRouter);
+app.route('/api/og', ogRouter);
 
 // Basic Health Check
 app.get('/api/health', (c) => {
@@ -288,20 +290,27 @@ app.get('*', async (c) => {
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;');
 
-          // Resolve publisher info
+          // Resolve publisher info — try both public/ and dist/ paths
+          // because on production (GitHub Actions build) only dist/ exists
           let publisherName = 'OpenRockets Press';
           let publisherDomain = 'press.openrockets.com';
-          try {
-            const pubJsonPath = path.join(process.cwd(), 'public/config/publishers.json');
-            if (fs.existsSync(pubJsonPath)) {
-              const pubData = JSON.parse(fs.readFileSync(pubJsonPath, 'utf8'));
-              const pubInfo = pubData.publishers.find((p: any) => p.id === pub.publisherId);
-              if (pubInfo) {
-                publisherName = pubInfo.name;
-                publisherDomain = pubInfo.domain;
+          const pubJsonPaths = [
+            path.join(process.cwd(), 'public/config/publishers.json'),
+            path.join(process.cwd(), 'dist/config/publishers.json'),
+          ];
+          for (const pubJsonPath of pubJsonPaths) {
+            try {
+              if (fs.existsSync(pubJsonPath)) {
+                const pubData = JSON.parse(fs.readFileSync(pubJsonPath, 'utf8'));
+                const pubInfo = pubData.publishers.find((p: any) => p.id === pub.publisherId);
+                if (pubInfo) {
+                  publisherName = pubInfo.name;
+                  publisherDomain = pubInfo.domain;
+                }
+                break;
               }
-            }
-          } catch (_) { /* ignore */ }
+            } catch (_) { continue; }
+          }
 
           const ogTitle = esc(`${pub.title} – ${publisherName}`);
           // Strip HTML tags from abstract for og:description
@@ -309,11 +318,9 @@ app.get('*', async (c) => {
           const ogDescription = esc(rawDesc || `Published on ${publisherName}`);
           const ogUrl = `https://${publisherDomain}/${shortId}`;
 
-          // Plain gradient image: shapes style with scale=0 so only the
-          // gradient background is visible (no avatar shapes on top)
-          const ogImage = pub.coverStorageKey
-            ? (pub.coverStorageKey.startsWith('http') ? pub.coverStorageKey : `https://press.openrockets.com/api/storage/fetch/${pub.coverStorageKey}`)
-            : `https://api.dicebear.com/9.x/shapes/png?seed=${encodeURIComponent(shortId)}&size=512&backgroundType=gradientLinear&backgroundColor=0d1b2a,415a77,778da9&backgroundRotation=135&scale=0`;
+          // Use our own OG image endpoint — it generates publisher logo
+          // centered on a white background, or redirects to cover image
+          const ogImage = `https://press.openrockets.com/api/og/${shortId}`;
 
           const metaTags = `
     <title>${ogTitle}</title>
@@ -329,9 +336,11 @@ app.get('*', async (c) => {
     <meta name="twitter:description" content="${ogDescription}" />
     <meta name="twitter:image" content="${ogImage}" />`;
 
-          // Replace the existing <title> and inject OG tags before </head>
+          // Remove ALL existing conflicting meta tags before injecting ours
           html = html
             .replace(/<title>[^<]*<\/title>/, '')
+            .replace(/<meta\s+name="description"[^>]*\/?>/i, '')
+            .replace(/<meta\s+property="og:site_name"[^>]*\/?>/i, '')
             .replace('</head>', `${metaTags}\n  </head>`);
         }
       } catch (lookupErr) {
