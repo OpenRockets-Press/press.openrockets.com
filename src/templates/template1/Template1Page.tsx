@@ -296,51 +296,9 @@ export function Template1Page({ data }: { data?: any }) {
         }
       }
 
-      // --- Step 2: Generate a PDF (best-effort with hard 15s timeout — never blocks download) ---
-      try {
-        const element = document.getElementById("printable-area");
-        if (element && (window as any).html2pdf) {
-          const pdfPromise = (window as any).html2pdf()
-            .from(element)
-            .set({
-              margin: 0.5,
-              filename: 'document.pdf',
-              image: { type: 'jpeg', quality: 0.85 },
-              html2canvas: { 
-                scale: 1,
-                useCORS: false, 
-                allowTaint: true,
-                scrollY: 0,
-                logging: false,
-                windowWidth: 800,
-                ignoreElements: (node: any) => {
-                  if (!node || !node.tagName) return false;
-                  const tag = node.tagName.toUpperCase();
-                  // Skip all heavy/interactive/3D elements
-                  if (tag === 'CANVAS' || tag === 'VIDEO' || tag === 'IFRAME' || tag === 'MODEL-VIEWER') return true;
-                  if (node.classList && node.classList.contains('no-print')) return true;
-                  // Skip any element with a WebGL context
-                  if (node.querySelector && node.querySelector('canvas')) return true;
-                  return false;
-                },
-              },
-              jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-            })
-            .output('blob');
-
-          // Race: PDF generation vs 15-second timeout
-          const timeoutPromise = new Promise((_resolve, reject) =>
-            setTimeout(() => reject(new Error('PDF generation timed out after 15s')), 15000)
-          );
-
-          const pdfBlob = await Promise.race([pdfPromise, timeoutPromise]) as Blob;
-          if (pdfBlob && pdfBlob.size > 0) {
-            mainZip.file("content.pdf", pdfBlob);
-          }
-        }
-      } catch (pdfError) {
-        console.warn("PDF generation skipped:", pdfError);
-      }
+      // --- Step 2: PDF Generation has been removed ---
+      // html2pdf and html2canvas were causing the browser's main UI thread to completely freeze.
+      // We now skip this step and proceed directly to downloading the ZIP of the files.
       
       // --- Step 3: Generate and trigger the final download ---
       const content = await mainZip.generateAsync({ type: "blob" });
