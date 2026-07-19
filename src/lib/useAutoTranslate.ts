@@ -42,7 +42,7 @@ export function useAutoTranslate() {
           let parent = node.parentElement;
           while (parent && parent !== mainContainer) {
             if (
-              parent.classList.contains('notranslate') || 
+              (parent.classList && parent.classList.contains('notranslate')) || 
               parent.getAttribute('translate') === 'no' ||
               parent.tagName === 'SCRIPT' ||
               parent.tagName === 'STYLE' ||

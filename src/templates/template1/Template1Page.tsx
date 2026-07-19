@@ -729,9 +729,10 @@ export function Template1Page({ data }: { data?: any }) {
             {isLinksLoading ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {[1, 2].map((i) => (
-                  <div key={i} className="ads-modal-shimmer" style={{ border: "1px solid #ccc", padding: "16px", borderRadius: "8px", backgroundColor: "#fff" }}>
-                    <div className="shimmer-line" style={{ height: '30px', width: '50%', marginBottom: '16px', backgroundColor: '#eee', borderRadius: '4px' }}></div>
-                    <div className="shimmer-line" style={{ height: '100px', width: '100%', marginBottom: '16px', backgroundColor: '#eee', borderRadius: '4px' }}></div>
+                  <div key={i} className="ads-modal-shimmer" style={{ border: "1px solid #ccc", padding: "24px", borderRadius: "8px", backgroundColor: "#fdfdfd", display: "flex", alignItems: "center", justifyContent: "center", minHeight: "130px" }}>
+                    <span style={{ color: '#888', fontSize: '0.9rem', fontWeight: 500, letterSpacing: '0.5px' }}>
+                      Copyright &copy; Scienteen Library of Science.
+                    </span>
                   </div>
                 ))}
               </div>
