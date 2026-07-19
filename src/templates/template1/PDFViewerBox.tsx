@@ -70,7 +70,7 @@ export function PDFViewerBox({ files }: PDFViewerBoxProps) {
   });
 
   return (
-    <div style={{ position: 'relative', width: '100%' }}>
+    <div translate="no" className="notranslate" style={{ position: 'relative', width: '100%' }}>
       {isLoading && (
         <div style={{ 
           position: 'absolute', 
