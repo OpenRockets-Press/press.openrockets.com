@@ -128,7 +128,7 @@ function DynamicCollage({ allImages }: { allImages: string[] }) {
           const res = await fetch(allImages[i], { method: 'HEAD' });
           const sizeStr = res.headers.get('content-length');
           const size = sizeStr ? parseInt(sizeStr, 10) : 0;
-          if (size <= 3 * 1024 * 1024) {
+          if (size <= 1 * 1024 * 1024) {
             valid.push(allImages[i]);
           } else {
             skipped++;
