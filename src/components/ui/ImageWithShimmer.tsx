@@ -1,14 +1,20 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState } from 'react';
 
 interface ImageWithShimmerProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   wrapperClassName?: string;
 }
 
-export function ImageWithShimmer({ wrapperClassName = '', className = '', src, alt, ...props }: ImageWithShimmerProps) {
+export function ImageWithShimmer({
+  wrapperClassName = '',
+  className = '',
+  src,
+  alt,
+  ...props
+}: ImageWithShimmerProps) {
   const [isLoaded, setIsLoaded] = useState(false);
 
   return (
-    <div 
+    <div
       className={`image-shimmer-wrapper ${wrapperClassName}`}
       style={{
         position: 'relative',
@@ -16,25 +22,33 @@ export function ImageWithShimmer({ wrapperClassName = '', className = '', src, a
         width: '100%',
         height: '100%',
         background: isLoaded ? 'transparent' : '#e5e7eb',
-        ...props.style
+        ...props.style,
       }}
     >
-      {/* Standard Gray/White Shimmer Animation Layer */}
+      {/* Copyright Placeholder */}
       {!isLoaded && (
         <div
-          className="shimmer-animation-layer"
+          className="copyright-placeholder"
           style={{
             position: 'absolute',
             top: 0,
             left: 0,
             width: '100%',
             height: '100%',
-            background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(200,200,200,0.5) 50%, rgba(255,255,255,0) 100%)',
-            backgroundSize: '200% 100%',
-            animation: 'shimmerSlide 1.5s infinite linear',
-            zIndex: 1
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+            padding: '16px',
+            boxSizing: 'border-box',
+            color: '#6b7280',
+            fontSize: '14px',
+            lineHeight: '1.5',
+            zIndex: 1,
           }}
-        />
+        >
+          Copyrighted content. All rights reserved.
+        </div>
       )}
 
       {/* Actual Image */}
@@ -51,7 +65,6 @@ export function ImageWithShimmer({ wrapperClassName = '', className = '', src, a
           height: '100%',
           position: 'relative',
           zIndex: 2,
-          // Preserve the original object-fit behavior from className
         }}
         {...props}
       />
