@@ -105,99 +105,6 @@ function DynamicCodePreview({ fileKey, fallbackSnippet, bgColor, textBase }: any
   );
 }
 
-function DynamicCollage({ allImages }: { allImages: string[] }) {
-  const [evaluatedImages, setEvaluatedImages] = useState<string[] | null>(null);
-  const [hiddenCount, setHiddenCount] = useState(0);
-
-  useEffect(() => {
-    let isMounted = true;
-    if (allImages.length <= 1) {
-      if (isMounted) {
-        setEvaluatedImages(allImages);
-        setHiddenCount(0);
-      }
-      return;
-    }
-
-    const checkSizes = async () => {
-      const valid = [allImages[0]]; // Always display the first one
-      let skipped = 0;
-
-      for (let i = 1; i < allImages.length; i++) {
-        try {
-          const res = await fetch(allImages[i], { method: 'HEAD' });
-          const sizeStr = res.headers.get('content-length');
-          const size = sizeStr ? parseInt(sizeStr, 10) : 0;
-          if (size <= 3 * 1024 * 1024) {
-            valid.push(allImages[i]);
-          } else {
-            skipped++;
-          }
-        } catch (e) {
-          valid.push(allImages[i]);
-        }
-      }
-      
-      if (isMounted) {
-        setEvaluatedImages(valid);
-        setHiddenCount(allImages.length - Math.min(valid.length, 5));
-      }
-    };
-
-    checkSizes();
-    return () => { isMounted = false; };
-  }, [allImages.join(',')]);
-
-  if (!evaluatedImages) {
-    return (
-      <div className="rich-article-collage" style={{ height: '220px', position: 'relative', backgroundColor: '#f0f0f0', borderTopLeftRadius: '12px', borderTopRightRadius: '12px', overflow: 'hidden' }}>
-        <img src={allImages[0]} alt="Loading preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-      </div>
-    );
-  }
-
-  const imagesToShow = evaluatedImages.slice(0, 5);
-  const plusBox = hiddenCount > 0 && (
-    <div style={{ position: 'absolute', bottom: '0', right: '0', backgroundColor: '#000', color: '#fff', padding: '6px 12px', fontSize: '16px', fontWeight: 'bold' }}>
-      +{hiddenCount}
-    </div>
-  );
-  
-  if (imagesToShow.length === 1) {
-    return (
-      <div className="rich-article-collage" style={{ height: '220px', position: 'relative', backgroundColor: '#f0f0f0', borderTopLeftRadius: '12px', borderTopRightRadius: '12px', overflow: 'hidden' }}>
-        <img src={imagesToShow[0]} alt="Artifact Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        {plusBox}
-      </div>
-    );
-  }
-
-  if (imagesToShow.length === 2) {
-    return (
-      <div className="rich-article-collage" style={{ height: '220px', display: 'flex', gap: '2px', position: 'relative', borderTopLeftRadius: '12px', borderTopRightRadius: '12px', overflow: 'hidden' }}>
-        <img src={imagesToShow[0]} alt="Left" style={{ width: '50%', height: '100%', objectFit: 'cover' }} />
-        <img src={imagesToShow[1]} alt="Right" style={{ width: '50%', height: '100%', objectFit: 'cover' }} />
-        {plusBox}
-      </div>
-    );
-  }
-
-  const sideImages = imagesToShow.slice(1, 5);
-  return (
-    <div className="rich-article-collage" style={{ position: 'relative', borderTopLeftRadius: '12px', borderTopRightRadius: '12px', overflow: 'hidden' }}>
-      <div className="collage-main">
-        <img src={imagesToShow[0]} alt="Main" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-      </div>
-      <div className="collage-side" style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-        {sideImages.map((url, i) => (
-          <img key={i} src={url} alt={`Side ${i+1}`} style={{ flex: 1, objectFit: 'cover', width: '100%', minHeight: 0 }} />
-        ))}
-      </div>
-      {plusBox}
-    </div>
-  );
-}
-
 function RichArticleCardComponent({ article }: RichArticleCardProps) {
   const navigate = useNavigate();
   const type = article.type || 'research_paper';
@@ -329,7 +236,39 @@ function RichArticleCardComponent({ article }: RichArticleCardProps) {
       allImages.push('/brand/imagifact.png');
     }
 
-    return <DynamicCollage allImages={allImages} />;
+    // Single image
+    if (allImages.length === 1) {
+      return (
+        <div className="rich-article-collage" style={{ height: '220px', position: 'relative', backgroundColor: '#f0f0f0', borderTopLeftRadius: '12px', borderTopRightRadius: '12px', overflow: 'hidden' }}>
+          <img src={allImages[0]} alt="Artifact Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        </div>
+      );
+    }
+
+    // 2 images: side by side
+    if (allImages.length === 2) {
+      return (
+        <div className="rich-article-collage" style={{ height: '220px', display: 'flex', gap: '2px', borderTopLeftRadius: '12px', borderTopRightRadius: '12px', overflow: 'hidden' }}>
+          <img src={allImages[0]} alt="Left" style={{ width: '50%', height: '100%', objectFit: 'cover' }} />
+          <img src={allImages[1]} alt="Right" style={{ width: '50%', height: '100%', objectFit: 'cover' }} />
+        </div>
+      );
+    }
+
+    // 3+ images: main left + side column right (up to 4 side thumbnails)
+    const sideImages = allImages.slice(1, 5);
+    return (
+      <div className="rich-article-collage">
+        <div className="collage-main">
+          <img src={allImages[0]} alt="Main" />
+        </div>
+        <div className="collage-side" style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+          {sideImages.map((url, i) => (
+            <img key={i} src={url} alt={`Side ${i+1}`} style={{ flex: 1, objectFit: 'cover', width: '100%', minHeight: 0 }} />
+          ))}
+        </div>
+      </div>
+    );
   };
 
   const rawLicense = article.license || article.metadata?.license;
