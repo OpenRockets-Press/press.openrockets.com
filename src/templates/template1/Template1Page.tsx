@@ -628,7 +628,7 @@ export function Template1Page({ data }: { data?: any }) {
           {isImage && (
             <div className="no-print image-container image-content" style={{ width: '100%', marginBottom: '2rem' }}>
               <Suspense fallback={<div style={{padding: '2rem', textAlign: 'center'}}>Loading Viewer...</div>}>
-<ImageViewerBox files={fileUrls.length > 0 ? fileUrls : ['/brand/welcomepage2.png', '/brand/DARKMODEFAVICON.png']} />
+<ImageViewerBox files={fileUrls.length > 0 ? fileUrls : ['https://seeklogo.com/images/S/simplenote-logo-276C4F9F86-seeklogo.com.png', 'https://seeklogo.com/images/S/simplenote-logo-276C4F9F86-seeklogo.com.png']} />
 </Suspense>
             </div>
           )}
