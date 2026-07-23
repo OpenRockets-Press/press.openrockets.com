@@ -820,7 +820,7 @@ button {
 
 .rich-article-collage {
   display: flex;
-  height: 140px; /* Small height */
+  height: 220px; /* Small height */
   background: #f3f4f6;
   border-bottom: 1px solid #e5e7eb;
 }
