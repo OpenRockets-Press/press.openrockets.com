@@ -1554,7 +1554,7 @@ button.ad-attribution-why:hover {
 
 .skeleton-bar {
   border-radius: 4px;
-  background: linear-gradient(90deg, #e8e3d8 25%, #f0ece3 50%, #e8e3d8 75%);
+  background: white;
   background-size: 800px 100%;
   animation: shimmer 1.4s ease-in-out infinite;
 }
