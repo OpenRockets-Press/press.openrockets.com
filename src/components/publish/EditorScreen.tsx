@@ -231,7 +231,7 @@ export function EditorScreen() {
   }, []);
 
   const wordCount = title.trim().split(/\s+/).filter(w => w.length > 0).length;
-  const isTitleValid = wordCount >= 3 && title.length <= 230;
+  const isTitleValid = wordCount >= 3 && title.length <= 200;
   const isTaglineValid = tagline.length <= 600;
   const isDescValid = descLength > 0 && descLength <= 4000;
 
@@ -418,7 +418,7 @@ export function EditorScreen() {
                   handleNext("tagline");
                 }
               }}
-              maxLength={70}
+              maxLength={200}
               style={{ 
                 fontSize: "1rem", 
                 padding: "10px 14px",
@@ -433,7 +433,7 @@ export function EditorScreen() {
               </span>
               <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#000' }}>
                 <img src="/brand/3d-alarm-clock.png" alt="" style={{ width: "16px", height: "16px", objectFit: "contain" }} />
-                {70 - title.length} left
+                {200 - title.length} left
               </span>
             </div>
 
@@ -488,7 +488,7 @@ export function EditorScreen() {
                   handleNext("description");
                 }
               }}
-              maxLength={150}
+              maxLength={600}
               style={{ 
                 fontSize: "1rem", 
                 padding: "10px 14px",
@@ -499,7 +499,7 @@ export function EditorScreen() {
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem', fontSize: '0.85rem', color: '#000', fontFamily: 'Ubuntu, sans-serif' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#000' }}>
                 <img src="/brand/3d-alarm-clock.png" alt="" style={{ width: "16px", height: "16px", objectFit: "contain" }} />
-                {150 - tagline.length} left
+                {600 - tagline.length} left
               </span>
             </div>
 

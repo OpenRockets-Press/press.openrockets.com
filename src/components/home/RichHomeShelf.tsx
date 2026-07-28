@@ -36,13 +36,13 @@ function RichHomeShelfComponent({ testId, title, items, hashtagLink, emptyMessag
   useEffect(() => {
     if (!isVisible) return;
     
-    // Initial load of 5 items
+    // Initial load one by one
     if (loadedCount === 0) {
       setIsContentLoading(true);
       const timer = setTimeout(() => {
-        setLoadedCount(5);
+        setLoadedCount(1);
         setIsContentLoading(false);
-      }, 1000);
+      }, 400);
       return () => clearTimeout(timer);
     }
 
@@ -51,9 +51,9 @@ function RichHomeShelfComponent({ testId, title, items, hashtagLink, emptyMessag
       if (entry.isIntersecting && loadedCount > 0 && loadedCount < maxDisplay && loadedCount < items.length) {
         setIsContentLoading(true);
         setTimeout(() => {
-          setLoadedCount(prev => Math.min(prev + 5, maxDisplay, items.length));
+          setLoadedCount(prev => Math.min(prev + 1, maxDisplay, items.length));
           setIsContentLoading(false);
-        }, 1500);
+        }, 350);
       }
     }, { rootMargin: "100px" });
 
@@ -122,7 +122,7 @@ function RichHomeShelfComponent({ testId, title, items, hashtagLink, emptyMessag
                         setIsExpanded(true);
                         setIsContentLoading(true);
                         setTimeout(() => {
-                          setLoadedCount(prev => Math.min(prev + 5, items.length));
+                          setLoadedCount(prev => Math.min(prev + 1, items.length));
                           setIsContentLoading(false);
                         }, 1000);
                       }

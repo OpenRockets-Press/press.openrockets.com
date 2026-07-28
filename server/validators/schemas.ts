@@ -8,8 +8,8 @@ const priorityEnum = z.enum(['low', 'normal', 'high', 'urgent']);
 
 // Publications
 export const createPublicationSchema = z.object({
-  title: z.string().min(1, 'Title is required').max(255, 'Title is too long'),
-  subtitle: z.string().max(512).optional(),
+  title: z.string().min(1, 'Title is required').max(200, 'Title is too long'),
+  subtitle: z.string().max(600).optional(),
   abstract: z.string().optional(),
   type: typeEnum,
   license: licenseEnum,
@@ -30,7 +30,7 @@ export const createPublicationSchema = z.object({
 });
 
 export const updatePublicationSchema = z.object({
-  title: z.string().min(1).max(255).optional(),
+  title: z.string().min(1).max(200).optional(),
   abstract: z.string().min(50).optional(),
   tags: z.string().optional(),
 });
