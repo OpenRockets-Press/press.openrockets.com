@@ -15,7 +15,7 @@ export const publications = mysqlTable('publications', {
   pubId: varchar('pub_id', { length: 50 }).unique().notNull(), // e.g. ORP-1234
   authorId: varchar('author_id', { length: 255 }).references(() => users.id),
   title: varchar('title', { length: 255 }).notNull(),
-  subtitle: varchar('subtitle', { length: 512 }),
+  subtitle: varchar('subtitle', { length: 600 }),
   abstract: text('abstract'),
   type: mysqlEnum('type', ['book', 'research_paper', 'magazine', 'poster', 'other', '3d_artifact', 'code_gist']).notNull(),
   license: mysqlEnum('license', ['ORP_BEAVER', 'ORP_EAGLE', 'ORP_KANGAROO']).notNull(), // V4 Custom Licenses

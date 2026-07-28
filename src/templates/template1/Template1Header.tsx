@@ -32,7 +32,7 @@ export function Template1Header({ onOpenInfo }: Template1HeaderProps) {
   />
 </a>
 
-          <nav className="desktop-nav" aria-label="Primary" style={{ alignItems: 'center', marginLeft: 'auto' }}>
+          <nav className="template-language-slot" aria-label="Primary" style={{ alignItems: 'center', marginLeft: 'auto' }}>
             <LanguagePicker />
           </nav>
 
