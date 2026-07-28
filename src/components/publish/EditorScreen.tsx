@@ -231,8 +231,8 @@ export function EditorScreen() {
   }, []);
 
   const wordCount = title.trim().split(/\s+/).filter(w => w.length > 0).length;
-  const isTitleValid = wordCount >= 3 && title.length <= 70;
-  const isTaglineValid = tagline.length <= 150;
+  const isTitleValid = wordCount >= 3 && title.length <= 230;
+  const isTaglineValid = tagline.length <= 600;
   const isDescValid = descLength > 0 && descLength <= 4000;
 
   const handleNext = (nextTarget: StepType) => {
