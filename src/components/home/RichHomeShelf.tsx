@@ -1,12 +1,12 @@
-import { memo, useState, useEffect, useRef } from "react";
+import { memo, useState, useEffect, useMemo, useRef } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { RichArticleCard } from "@/components/home/RichArticleCard";
+import { RichArticleCard, type RichArticleCardProps } from "@/components/home/RichArticleCard";
 import { useTranslationContext } from "@/lib/TranslationContext";
 
 interface RichHomeShelfProps {
   testId: string;
   title: React.ReactNode;
-  items: any[];
+  items: RichArticleCardProps["article"][];
   hashtagLink?: string; // e.g. "/hashtag/Mathematics"
   emptyMessage?: React.ReactNode;
 }
@@ -14,10 +14,9 @@ interface RichHomeShelfProps {
 function RichHomeShelfComponent({ testId, title, items, hashtagLink, emptyMessage }: RichHomeShelfProps) {
   const navigate = useNavigate();
   const [isVisible, setIsVisible] = useState(false);
-  const [loadedCount, setLoadedCount] = useState(0);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [loadState, setLoadState] = useState({ signature: "", loadedCount: 0, isExpanded: false });
   const sectionRef = useRef<HTMLElement>(null);
-  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const itemsSignature = useMemo(() => items.map(item => item?.id ?? item?.title ?? "").join("|"), [items]);
   
   const { setIsContentLoading } = useTranslationContext();
 
@@ -32,40 +31,46 @@ function RichHomeShelfComponent({ testId, title, items, hashtagLink, emptyMessag
     return () => observer.disconnect();
   }, []);
 
-  // Handle loading more items when the bottom intersects
+
+  // Once a shelf is close enough to view, keep loading cards one at a time
+  // instead of waiting for the user to scroll to a bottom sentinel.
   useEffect(() => {
     if (!isVisible) return;
-    
-    // Initial load one by one
-    if (loadedCount === 0) {
-      setIsContentLoading(true);
-      const timer = setTimeout(() => {
-        setLoadedCount(1);
-        setIsContentLoading(false);
-      }, 400);
-      return () => clearTimeout(timer);
-    }
 
-    const maxDisplay = isExpanded ? items.length : 10;
-    const loadMoreObserver = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting && loadedCount > 0 && loadedCount < maxDisplay && loadedCount < items.length) {
-        setIsContentLoading(true);
-        setTimeout(() => {
-          setLoadedCount(prev => Math.min(prev + 1, maxDisplay, items.length));
-          setIsContentLoading(false);
-        }, 350);
-      }
-    }, { rootMargin: "100px" });
+    const activeLoadedCount = loadState.signature === itemsSignature ? loadState.loadedCount : 0;
+    const activeIsExpanded = loadState.signature === itemsSignature ? loadState.isExpanded : false;
+    const maxDisplay = activeIsExpanded ? items.length : 10;
+    if (activeLoadedCount >= maxDisplay || activeLoadedCount >= items.length) return;
 
-    if (loadMoreRef.current) loadMoreObserver.observe(loadMoreRef.current);
-    return () => loadMoreObserver.disconnect();
-  }, [isVisible, loadedCount, items.length, setIsContentLoading, isExpanded]);
+    setIsContentLoading(true);
+    const timer = setTimeout(() => {
+      setLoadState(prev => {
+        const loadedCount = prev.signature === itemsSignature ? prev.loadedCount : 0;
+        const isExpanded = prev.signature === itemsSignature ? prev.isExpanded : false;
+        const maxDisplay = isExpanded ? items.length : 10;
 
-  const maxDisplay = isExpanded ? items.length : 10;
-  // Display up to loadedCount items (max maxDisplay)
-  const displayItems = items.slice(0, loadedCount);
-  const hasMore = !isExpanded && loadedCount >= 10 && items.length > 10;
-  const isLoadingMore = isVisible && loadedCount > 0 && loadedCount < maxDisplay && loadedCount < items.length;
+        return {
+          signature: itemsSignature,
+          loadedCount: Math.min(loadedCount + 1, maxDisplay, items.length),
+          isExpanded,
+        };
+      });
+      setIsContentLoading(false);
+    }, activeLoadedCount === 0 ? 400 : 350);
+
+    return () => {
+      clearTimeout(timer);
+      setIsContentLoading(false);
+    };
+  }, [isVisible, loadState, items.length, itemsSignature, setIsContentLoading]);
+
+  const activeLoadedCount = loadState.signature === itemsSignature ? loadState.loadedCount : 0;
+  const activeIsExpanded = loadState.signature === itemsSignature ? loadState.isExpanded : false;
+  const maxDisplay = activeIsExpanded ? items.length : 10;
+  // Display up to activeLoadedCount items (max maxDisplay)
+  const displayItems = items.slice(0, activeLoadedCount);
+  const hasMore = !activeIsExpanded && activeLoadedCount >= 10 && items.length > 10;
+  const isLoadingMore = isVisible && activeLoadedCount > 0 && activeLoadedCount < maxDisplay && activeLoadedCount < items.length;
 
   return (
     <section ref={sectionRef} data-testid={testId} style={{ marginBottom: "2rem", minHeight: "240px" }}>
@@ -84,7 +89,7 @@ function RichHomeShelfComponent({ testId, title, items, hashtagLink, emptyMessag
         )}
       </div>
       <div className="shelf-grid">
-        {!isVisible || loadedCount === 0 ? (
+        {!isVisible || activeLoadedCount === 0 ? (
           // Shimmer loading state
           Array.from({ length: 5 }).map((_, i) => (
             <div key={`shimmer-${i}`} className="rich-article-card" style={{ height: "300px", background: "#f9f9f9", animation: "pulse 1.5s infinite" }} />
@@ -119,10 +124,18 @@ function RichHomeShelfComponent({ testId, title, items, hashtagLink, emptyMessag
                       if (hashtagLink) {
                         navigate({ to: hashtagLink });
                       } else {
-                        setIsExpanded(true);
+                        setLoadState(prev => ({
+                          signature: itemsSignature,
+                          loadedCount: prev.signature === itemsSignature ? prev.loadedCount : 0,
+                          isExpanded: true,
+                        }));
                         setIsContentLoading(true);
                         setTimeout(() => {
-                          setLoadedCount(prev => Math.min(prev + 1, items.length));
+                          setLoadState(prev => ({
+                            signature: itemsSignature,
+                            loadedCount: Math.min((prev.signature === itemsSignature ? prev.loadedCount : 0) + 1, items.length),
+                            isExpanded: true,
+                          }));
                           setIsContentLoading(false);
                         }, 1000);
                       }
@@ -157,10 +170,6 @@ function RichHomeShelfComponent({ testId, title, items, hashtagLink, emptyMessag
         </div>
       )}
       
-      {/* Invisible element to trigger load more */}
-      {isVisible && loadedCount < maxDisplay && loadedCount < items.length && (
-        <div ref={loadMoreRef} style={{ height: '20px', width: '100%' }} />
-      )}
     </section>
   );
 }
