@@ -1,9 +1,10 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-// API Key provided by user
-const RESEND_API_KEY = 're_M5Fnm48E_9pEL2U5NeR4sqZ3yvDYNHd9v';
+
+const RESEND_API_KEY = 're_FHerTmyB_D687vUDu3NWgWDsgrp8WHn4Z';
 const SENDER_EMAIL = 'press@mail.openrockets.com';
+
 
 
 export async function sendReviewEmail(
