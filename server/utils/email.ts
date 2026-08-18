@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 // API Key provided by user
-const RESEND_API_KEY = 're_eSe2b8bP_GnwHcJPKR3gVM41fEGtnx1mb';
+const RESEND_API_KEY = 're_M5Fnm48E_9pEL2U5NeR4sqZ3yvDYNHd9v';
 const SENDER_EMAIL = 'press@mail.openrockets.com';
 
 
