@@ -105,7 +105,7 @@ export function RootLayout() {
   return (
     <>
       {isLoading && !loaderTimeoutExceeded && (
-        <div className="ms-loader-container" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999 }}>
+        <div className="ms-loader-container" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999, display: 'none', visibility: 'hidden', opacity: 0, pointerEvents: 'none' }}>
           <div className="anim-dot dot1" />
           <div className="anim-dot dot2" />
           <div className="anim-dot dot3" />
